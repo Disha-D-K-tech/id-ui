@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/x-icon" href="ld.png">
+  <title>Livision DataHub — Dashboard</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --lv-purple-1: #6a5acd;
+      --lv-purple-2: #7c63ff;
+      --lv-indigo: #5b3ed6;
+      --muted: #6b6b80;
+      --glass: rgba(255,255,255,0.86);
+      --accent-1: #7c3aed;
+      --accent-2: #ff9ab1;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    body{
+      background: radial-gradient(1000px 400px at 10% 10%, rgba(123,97,255,0.06), transparent),
+                  linear-gradient(120deg,#eef0ff,#fbf8ff);
+      color:#172033;
+      padding-bottom:80px; /* space for footer */
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position:fixed; left:0; top:0; bottom:0;
+      width:280px; padding:22px 20px;
+      background: var(--glass);
+      border-right: 1px solid rgba(120,110,220,0.06);
+      box-shadow: 0 12px 40px rgba(91,62,214,0.04);
+      backdrop-filter: blur(6px);
+    }
+    .brand { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+    .brand .logo {
+      width:56px; height:56px; border-radius:12px; overflow:hidden;
+      background: linear-gradient(135deg,var(--lv-purple-1),var(--lv-indigo));
+      display:grid; place-items:center; color:white; font-weight:700;
+      box-shadow: 0 10px 34px rgba(91,62,214,0.12);
+      flex-shrink:0;
+    }
+    .brand h4{ margin:0; font-size:16px; color:var(--lv-indigo); }
+    .brand small{ display:block; color:var(--muted); margin-top:3px; font-size:12px; }
+
+    .nav-section{ margin-top:12px; display:block; font-weight:600; }
+    .nav-item{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:#333; text-decoration:none; margin-bottom:6px; transition:all .12s ease; }
+    .nav-item i{ width:20px; text-align:center; color:var(--lv-indigo); }
+    .nav-item:hover, .nav-item.active { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); color:white; transform:translateY(-2px); box-shadow: 0 8px 26px rgba(91,62,214,0.08); }
+
+     /* Nested menu */
+    .nav-sub { margin-left:28px; margin-top:6px; margin-bottom:10px; display:block; }
+    .nav-sub .nav-leaf { padding:6px 10px; border-radius:6px; display:flex; align-items:center; gap:8px; color:#444; text-decoration:none; font-weight:600; margin-bottom:6px; cursor:pointer; }
+    .nav-leaf:hover { background:rgba(120,110,220,0.04); color:var(--lv-indigo); }
+
+    /* Main */
+    .main { margin-left:320px; padding:22px 34px 140px 34px; } /* leave room for footer */
+    .topbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--glass); padding:12px 18px; border-radius:12px; border:1px solid rgba(120,110,220,0.06); }
+    .topbar .title { font-size:18px; font-weight:700; color:var(--lv-indigo); }
+    .topbar .sub { font-size:13px; color:var(--muted); }
+
+    /* Start migration */
+    .start-wrap { margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .start-btn { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); border:none; padding:10px 16px; color:white; border-radius:10px; font-weight:700; box-shadow:0 12px 32px rgba(91,62,214,0.08); transition: transform .12s ease, box-shadow .12s ease;}
+    .start-btn:hover { transform: translateY(-4px); box-shadow:0 18px 44px rgba(91,62,214,0.12); }
+
+    .user-initials {
+      width: 40px;
+      height: 40px;
+      background: #4a4cff;     /* adjust to your theme */
+      color: white;
+      font-weight: 600;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+ 
+    /* Cards row */
+    .cards-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; margin-top:18px; }
+    .card-compact {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.95));
+      border-radius:14px; padding:18px; box-shadow: 0 10px 28px rgba(23,26,38,0.04);
+      transition: transform .18s ease, box-shadow .18s ease;
+      border:1px solid rgba(120,110,220,0.05);
+    }
+    .card-compact:hover { transform: translateY(-6px); box-shadow: 0 18px 46px rgba(91,62,214,0.08); }
+
+    .card-compact h6 { margin:0; color:var(--muted); font-weight:700; font-size:13px; }
+    .card-compact h3 { margin:8px 0 0 0; color:var(--lv-indigo); font-weight:800; }
+
+    .card-compact .mini { font-size:12px; color:var(--muted); margin-top:6px; }
+
+    /* DB count chart container */
+    .db-overview { margin-top:18px; padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.96)); border:1px solid rgba(120,110,220,0.06); box-shadow:0 14px 40px rgba(91,62,214,0.03); }
+
+    .db-overview .controls { display:flex; gap:8px; align-items:center; }
+
+    .badge-pill { padding:8px 12px; border-radius:999px; font-weight:700; }
+
+
+    /* Schema Explorer panel (full-width inside main) */
+    .schema-shell {
+      margin-top:18px;
+      padding:18px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,246,255,0.98));
+      border:1px solid rgba(120,110,220,0.04);
+      box-shadow: 0 10px 28px rgba(91,62,214,0.03);
+    }
+    .chip {
+      padding:7px 14px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid rgba(160,140,240,0.22);
+      cursor:pointer;
+      font-weight:700;
+      transition:all .12s;
+      font-size:13px;
+    }
+    .chip.active { background: linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; box-shadow:0 8px 16px rgba(124,58,237,0.12); }
+
+    .badge-low { background:#22c55e;color:#fff;padding:6px 8px;border-radius:8px;font-weight:700; }
+    .badge-mid { background:#f59e0b;color:#fff;padding:6px 8px;border-radius:8px;font-weight:700; }
+    .badge-high { background:#ef4444;color:#fff;padding:6px 8px;border-radius:8px;font-weight:700; }
+
+    /* footer fixed */
+    footer { position:fixed; left:320px; right:0; bottom:0; height:72px; background: linear-gradient(180deg,#fff, #fbfbff); border-top:1px solid rgba(120,110,220,0.05); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; box-shadow: 0 -6px 20px rgba(91,62,214,0.02); }
+
+    /* Modal tweaks */
+    .modal-content { border-radius:12px; }
+    .form-required::after { content:" *"; color:#d33; font-weight:700; margin-left:4px; }
+
+    /* Responsive */
+    @media(max-width:1000px){
+      .main{ margin-left:20px; padding:18px; }
+      .cards-row{ grid-template-columns:1fr; }
+      footer { left:0; }
+      .sidebar{ display:none; }
+    }
+
+    /* small helpers */
+    .muted { color:var(--muted); font-size:13px; }
+
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row g-4">
+
+      <!-- RDBMS -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+          <div class="card-body">
+            <div>
+              <h5 class="feature-title">RDBMS</h5>
+              <p class="feature-desc">
+                Configure and manage relational database connections.
+              </p>
+            </div>
+            <button class="btn btn-primary mt-3">
+              Add Database
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Transfer -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+          <div class="card-body">
+            <div>
+              <h5 class="feature-title">File Transfer</h5>
+              <p class="feature-desc">
+                Set up secure file transfer integrations.
+              </p>
+            </div>
+            <button class="btn btn-success mt-3">
+              Add File Transfer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cloud Platform -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+          <div class="card-body">
+            <div>
+              <h5 class="feature-title">Cloud Platform</h5>
+              <p class="feature-desc">
+                Connect and manage cloud infrastructure platforms.
+              </p>
+            </div>
+            <button class="btn btn-warning mt-3 text-white">
+              Add Cloud Platform
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Migration -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card feature-card">
+          <div class="card-body">
+            <div>
+              <h5 class="feature-title">Migration</h5>
+              <p class="feature-desc">
+                Initiate and track data migration workflows.
+              </p>
+            </div>
+            <button class="btn btn-danger mt-3">
+              Start Migration
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- Libraries -->
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script src="js/jquery-3.7.1.min.js" ></script>
+  <script src="js/jquery.modal.min.js" ></script>
+  <!-- <script src="js/session-expiry.js"></script> -->
+  <!-- <script src="js/authentication.js"></script> -->
+  <script src="js/dashboard_new.js"></script>
+  <script src="js/logout.js"></script>
+</body>
+</html>

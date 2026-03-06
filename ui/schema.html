@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Livision DataHub — Schema Explorer</title>
+
+  <!-- Google Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  
+  <style>
+    :root{
+      --lv-purple-1: #6a5acd;
+      --lv-purple-2: #7c63ff;
+      --lv-indigo: #5b3ed6;
+      --muted: #6b6b80;
+      --glass: rgba(255,255,255,0.86);
+      --accent-1: #7c3aed;
+      --accent-2: #ff9ab1;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    body{
+      background: radial-gradient(1000px 400px at 10% 10%, rgba(123,97,255,0.06), transparent),
+                  linear-gradient(120deg,#eef0ff,#fbf8ff);
+      color:#172033;
+      padding-bottom:80px; /* space for footer */
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position:fixed; left:0; top:0; bottom:0;
+      width:280px; padding:22px 20px;
+      background: var(--glass);
+      border-right: 1px solid rgba(120,110,220,0.06);
+      box-shadow: 0 12px 40px rgba(91,62,214,0.04);
+      backdrop-filter: blur(6px);
+    }
+    .brand { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+    .brand .logo {
+      width:56px; height:56px; border-radius:12px; overflow:hidden;
+      background: linear-gradient(135deg,var(--lv-purple-1),var(--lv-indigo));
+      display:grid; place-items:center; color:white; font-weight:700;
+      box-shadow: 0 10px 34px rgba(91,62,214,0.12);
+      flex-shrink:0;
+    }
+    .brand h4{ margin:0; font-size:16px; color:var(--lv-indigo); }
+    .brand small{ display:block; color:var(--muted); margin-top:3px; font-size:12px; }
+
+    .nav-section{ margin-top:12px; display:block; font-weight:600; }
+    .nav-item{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:#333; text-decoration:none; margin-bottom:6px; transition:all .12s ease; }
+    .nav-item i{ width:20px; text-align:center; color:var(--lv-indigo); }
+    .nav-item:hover, .nav-item.active { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); color:white; transform:translateY(-2px); box-shadow: 0 8px 26px rgba(91,62,214,0.08); }
+
+     /* Nested menu */
+    .nav-sub { margin-left:28px; margin-top:6px; margin-bottom:10px; display:block; }
+    .nav-sub .nav-leaf { padding:6px 10px; border-radius:6px; display:flex; align-items:center; gap:8px; color:#444; text-decoration:none; font-weight:600; margin-bottom:6px; cursor:pointer; }
+    .nav-leaf:hover { background:rgba(120,110,220,0.04); color:var(--lv-indigo); }
+
+    /* Main */
+    .main { margin-left:320px; padding:22px 34px 140px 34px; } /* leave room for footer */
+    .topbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--glass); padding:12px 18px; border-radius:12px; border:1px solid rgba(120,110,220,0.06); }
+    .topbar .title { font-size:18px; font-weight:700; color:var(--lv-indigo); }
+    .topbar .sub { font-size:13px; color:var(--muted); }
+
+    /* Start migration */
+    .start-wrap { margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .start-btn { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); border:none; padding:10px 16px; color:white; border-radius:10px; font-weight:700; box-shadow:0 12px 32px rgba(91,62,214,0.08); transition: transform .12s ease, box-shadow .12s ease;}
+    .start-btn:hover { transform: translateY(-4px); box-shadow:0 18px 44px rgba(91,62,214,0.12); }
+
+    .user-initials {
+      width: 40px;
+      height: 40px;
+      background: #4a4cff;     /* adjust to your theme */
+      color: white;
+      font-weight: 600;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+ 
+
+    /* header */
+    .top {
+      display:flex; align-items:center; gap:14px;
+      padding:22px 36px;
+    }
+    .logo {
+      width:56px; height:56px; border-radius:12px;
+      display:grid; place-items:center;
+      background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
+      color:#fff; font-weight:700; font-size:20px;
+      box-shadow:0 8px 30px rgba(124,58,237,0.18);
+      cursor:pointer;
+    }
+    .brand {
+      display:flex; flex-direction:column;
+    }
+    .brand .title { font-weight:700; font-size:18px; color:#2d1b4e; }
+    .brand .sub { font-size:12px; color:#6b6690; margin-top:2px; }
+
+    /* main card */
+    .card {
+      max-width:1100px;
+      margin:28px auto;
+      background: rgba(255,255,255,0.9);
+      border-radius:16px;
+      padding:26px;
+      box-shadow:0 12px 40px rgba(18,24,33,0.06);
+      border:1px solid rgba(255,255,255,0.6);
+    }
+
+    .card h1{
+      margin:0 0 14px 0;
+      font-size:22px;
+      color:#2d1b4e;
+    }
+
+    /* controls */
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    .search {
+      flex:1;
+      min-width:240px;
+    }
+    input[type="search"]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(100,100,140,0.12);
+      font-size:14px;
+    }
+    .btn {
+      padding:10px 14px;
+      border-radius:10px;
+      border:none;
+      background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+      color:#fff;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow:0 8px 18px rgba(124,58,237,0.12);
+    }
+    .btn.ghost {
+      background:transparent;
+      color:#4b4b63;
+      border:1px solid rgba(80,80,115,0.08);
+      box-shadow:none;
+    }
+
+    /* schema buttons (small) */
+    .schema-buttons{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin: 10px 0 18px 0;
+    }
+    .schema-chip{
+      padding:8px 12px;
+      border-radius:999px;
+      background: #fff;
+      border:1px solid rgba(160,140,240,0.28);
+      cursor:pointer;
+      font-weight:600;
+      color:#3b2b6b;
+      font-size:13px;
+      transition: all .18s;
+    }
+    .schema-chip:hover{
+      transform:translateY(-2px);
+      box-shadow:0 8px 20px rgba(124,58,237,0.08);
+    }
+    .schema-chip.active{
+      background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+      color:white;
+      box-shadow:0 10px 26px rgba(124,58,237,0.14);
+    }
+
+    /* schema container */
+    .schema-list {
+      display:grid;
+      gap:10px;
+    }
+
+    .schema-row {
+      display:block;
+    }
+
+    .schema-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:10px 14px;
+      border-radius:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,250,0.95));
+      border:1px solid rgba(220,215,255,0.6);
+      cursor:pointer;
+    }
+    .schema-header h3 {
+      margin:0; font-size:15px; letter-spacing:0.2px; color:#2d1b4e;
+    }
+    .schema-header .meta { font-size:13px; color:#6b6690; }
+
+    .tables {
+      padding:12px 16px 14px 16px;
+      background: rgba(250,250,255,0.9);
+      border-radius:10px;
+      border:1px solid rgba(230,230,240,0.6);
+      margin-top:8px;
+      display:none;
+    }
+    .table-item {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:8px 6px;
+      border-bottom:1px dashed rgba(220,220,235,0.6);
+    }
+    .table-item:last-child { border-bottom:none; }
+    .table-item .left { display:flex; gap:12px; align-items:center; }
+    .table-name { font-weight:600; color:#2a2540; }
+    .row-count {
+      font-size:13px;
+      padding:6px 10px;
+      border-radius:8px;
+      color:white; font-weight:700;
+    }
+    .rc-low { background:#22c55e; }    /* small */
+    .rc-mid { background:#f59e0b; }    /* medium */
+    .rc-high{ background:#ef4444; }    /* large */
+
+    .table-actions { display:flex; gap:8px; }
+    .preview-btn {
+      padding:6px 10px; border-radius:8px; border:none;
+      background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+      color:white; cursor:pointer; font-weight:600; font-size:13px;
+    }
+
+    /* modal */
+    .modal {
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background: rgba(6,6,8,0.45); z-index:9999;
+    }
+    .modal-card {
+      width: min(1100px, 92%);
+      max-height: 86vh;
+      overflow:auto;
+      background:white; border-radius:12px; padding:18px;
+    }
+    .modal-card h4{ margin:0 0 14px 0; }
+    .close { float:right; cursor:pointer; padding:6px 10px; color:#333; font-weight:700; }
+
+    table.preview {
+      width:100%; border-collapse:collapse; font-size:14px; margin-top:10px;
+    }
+    table.preview th, table.preview td {
+      border:1px solid #e7e7ef; padding:8px; text-align:left;
+    }
+
+    /* footer */
+    footer {
+      text-align:center; padding:18px; color:#6b6b80; font-size:13px; margin-top:26px;
+    }
+
+    @media(max-width:860px){
+      .card{ padding:18px; margin:18px; }
+      .container { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="top">
+    <a href="index.html" title="Home" class="logo" id="logo">LD</a>
+    <div class="brand">
+      <div class="title">Livision DataHub</div>
+      <div class="sub">Empowering smarter data</div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Main sidebar">
+    <div class="brand">
+      <div class="logo">
+        <!-- Use uploaded logo path -->
+        <img src="ld.png" alt="Livision logo"
+             style="width:100%;height:100%;object-fit:cover;border-radius:12px" />
+      </div>
+      <div>
+        <h4>Livision DataHub</h4>
+        <small>Empowering smarter data</small>
+      </div>
+    </div>
+
+    <nav class="nav-section" aria-label="Main navigation">
+      <a class="nav-item active" href="#" id="navDashboard"><i class="fa-solid fa-house"></i> Dashboard</a>
+      <div class="nav-item" id="navRdbms"><i class="fa-solid fa-database"></i> RDBMS</div>
+      <div class="nav-sub" aria-label="RDBMS subnav">
+        <div class="nav-leaf" id="navSchemaLink"><i class="fa-solid fa-layer-group"></i> Schema Explorer</div>
+      </div>
+
+      <div class="nav-item" id="navFileTransfer"><i class="fa-solid fa-file-arrow-up"></i> File Transfer</div>
+
+      <div class="nav-item" id="navCloud"><i class="fa-solid fa-cloud"></i> Cloud Platforms</div>
+      <div class="nav-sub" aria-label="Cloud subnav">
+        <div class="nav-leaf" id="navAws"><i class="fa-brands fa-aws"></i> AWS</div>
+        <div class="nav-leaf" id="navGcp"><i class="fa-brands fa-google"></i> GCP</div>
+        <div class="nav-leaf" id="navAzure"><i class="fa-brands fa-microsoft"></i> Azure</div>
+      </div>
+
+      <div style="height:8px"></div>
+      
+      <a class="nav-item" href="#" id="navMigrations"><i class="fa-solid fa-rocket"></i> Migrations</a>
+      <a class="nav-item" href="#" id="navSettings"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="nav-item" href="#" id="logout"><i class="fa-solid fa-sign-out"></i> Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main Card -->
+  <div class="card">
+    <h1>Schema Explorer</h1>
+
+    <div class="controls">
+      <div class="search">
+        <input type="search" id="searchInput" placeholder="Search schemas or tables (type & press Enter)"></input>
+      </div>
+
+      <button class="btn" id="expandAll">Expand All</button>
+      <button class="btn ghost" id="collapseAll">Collapse All</button>
+      <button class="btn ghost" id="exportCSV">Export CSV</button>
+    </div>
+
+    <!-- schema chips filter -->
+    <div class="schema-buttons" id="schemaChips"></div>
+
+    <!-- list -->
+    <div class="schema-list" id="schemaList"></div>
+  </div>
+
+  <footer>© 2025 Livision DataHub — Empowering smarter decisions</footer>
+
+  <!-- Modal for preview -->
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <span class="close" id="modalClose">✖</span>
+      <h4 id="modalTitle">Table preview</h4>
+      <div id="modalBody">Loading...</div>
+    </div>
+  </div>
+
+  <!-- jQuery (for convenience) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="js/logout.js"></script>
+
+  <script>
+  /****************************************************************
+   * Final single-file Schema Explorer
+   * - dataset: from your API row-count list (embedded below)
+   * - groups by schema
+   * - creates UI with small schema chips and collapsible schema sections
+   * - preview button shows dummy sample rows (replace fetchTableData to call real API)
+   ****************************************************************/
+
+  const dataset = [
+    ["public.personphone", 0], ["ecommerce.returns", 0], ["production.workorder", 72591],
+    ["sales.creditcard", 19118], ["sales.specialofferproduct", 538], ["purchasing.vendor", 104],
+    ["public.phonenumbertype", 0], ["production.productlistpricehistory", 395],
+    ["production.productcategory", 4], ["ecommerce.customers", 0], ["production.product", 504],
+    ["sales.salesterritory", 10], ["ecommerce.promotions", 0], ["advworks.address", 19614],
+    ["ecommerce.staff", 0], ["person.businessentitycontact", 909], ["public.emailaddress", 0],
+    ["public.employee", 0], ["purchasing.productvendor", 460], ["public.department", 0],
+    ["ecommerce.products", 0], ["public.addresstype", 0], ["production.unitmeasure", 38],
+    ["ecommerce.gift_cards", 0], ["ecommerce.inventory_warehouse", 0], ["public.employeepayhistory", 0],
+    ["purchasing.shipmethod", 5], ["ecommerce.warehouses_2", 0], ["public.person", 0],
+    ["public.employeedepartmenthistory", 0], ["person.emailaddress", 19972], ["person.my_table", 2],
+    ["public.businessentity", 41554], ["production.productinventory", 1069], ["ecommerce.payments", 0],
+    ["person.businessentity", 20777], ["public.countryregion", 0], ["sales.shoppingcartitem", 3],
+    ["sales.salespersonquotahistory", 163], ["sales.salesorderheader", 31465], ["public.jobcandidate", 0],
+    ["person.countryregion", 238], ["ecommerce.warehouses", 0], ["ecommerce.inventory", 0],
+    ["production.productmodel", 128], ["humanresources.jobcandidate", 13], ["person.personphone_2", 0],
+    ["sales.customer", 19820], ["production.location", 14], ["person.stateprovince", 181],
+    ["production.productdocument", 32], ["sales.currencyrate", 13532], ["ecommerce.order_items", 0],
+    ["person.person", 19972], ["production.productphoto", 101], ["production.productproductphoto", 504],
+    ["humanresources.department", 16], ["production.productmodelillustration", 7], ["person.addresstype", 8],
+    ["public.stateprovince", 0], ["sales.salesterritoryhistory", 17], ["production.document", 13],
+    ["ecommerce.customer_support", 0], ["sales.salesperson", 17], ["sales.countryregioncurrency", 109],
+    ["sales.specialoffer", 16], ["ecommerce.product_reviews", 0],
+    ["sales.salesorderheadersalesreason", 27647], ["purchasing.purchaseorderdetail", 8845],
+    ["production.workorderrouting", 67131], ["public.address", 19614], ["public.shift", 0],
+    ["sales.store", 701], ["ecommerce.discounts", 0], ["ecommerce.order_gift_cards", 0],
+    ["production.transactionhistory", 113443], ["person.password", 19972],
+    ["humanresources.employeedepartmenthistory", 296], ["public.marketing_data", 32950],
+    ["person.phonenumbertype", 3], ["public.businessentitycontact", 0], ["ecommerce.users", 0],
+    ["sales.salesreason", 10], ["production.productdescription", 762],
+    ["production.scrapreason", 16], ["production.productmodelproductdescriptionculture", 762],
+    ["public.new_train", 0], ["production.productreview", 4], ["ecommerce.orders", 0],
+    ["production.billofmaterials", 2679], ["public.password", 0], ["sales.salesorderdetail", 121317],
+    ["production.transactionhistoryarchive", 89253], ["production.productsubcategory", 37],
+    ["humanresources.employeepayhistory", 316], ["production.culture", 8], ["sales.salestaxrate", 29],
+    ["humanresources.employee", 290], ["ecommerce.staff_permissions", 0], ["production.illustration", 5],
+    ["person.contacttype", 20], ["person.businessentityaddress", 19614], ["person.personphone", 19972],
+    ["public.contacttype", 0], ["production.productcosthistory", 395],
+    ["purchasing.purchaseorderheader", 4012], ["humanresources.shift", 3], ["ecommerce.transactions", 0],
+    ["sales.currency", 105], ["sales.personcreditcard", 19118], ["person.address", 19614],
+    ["public.businessentityaddress", 0]
+  ];
+
+  // Group into schema => [tables]
+  const schemas = {};
+  dataset.forEach(([full, count])=>{
+    const [schema, table] = full.split(".");
+    if(!schemas[schema]) schemas[schema] = [];
+    schemas[schema].push({ table, count });
+  });
+
+  // render chips and list
+  const schemaChips = $("#schemaChips");
+  const schemaList = $("#schemaList");
+
+  const schemaKeys = Object.keys(schemas).sort();
+
+  // Build chips
+  schemaKeys.forEach(s=>{
+    const chip = $(`<button class="schema-chip" data-schema="${s}">${s}</button>`);
+    chip.on("click", function(){
+      $(".schema-chip").removeClass("active");
+      $(this).addClass("active");
+      // scroll to schema header and open it
+      const hdr = $(`#schema-${s}`);
+      if(hdr.length){
+        $("html,body").animate({ scrollTop: hdr.offset().top - 100 }, 200);
+        hdr.next(".tables").slideDown(200);
+      }
+    });
+    schemaChips.append(chip);
+  });
+
+  // Build schema sections
+  schemaKeys.forEach(s=>{
+    const tables = schemas[s];
+    const totalTables = tables.length;
+    const totalRows = tables.reduce((acc,t)=>acc + (Number(t.count)||0),0);
+
+    const header = $(`
+      <div class="schema-row">
+        <div class="schema-header" id="schema-${s}">
+          <div>
+            <h3>${s}</h3>
+            <div class="meta">${totalTables} tables • ${totalRows.toLocaleString()} total rows</div>
+          </div>
+          <div class="meta">click to expand</div>
+        </div>
+      </div>
+    `);
+
+    const tableBox = $(`<div class="tables" id="tables-${s}"></div>`);
+
+    tables.sort((a,b)=> a.table.localeCompare(b.table)).forEach(t=>{
+      // color by count
+      let cls = "rc-low";
+      const c = Number(t.count) || 0;
+      if(c >= 50000) cls = "rc-high";
+      else if(c >= 500) cls = "rc-mid";
+
+      const item = $(`
+        <div class="table-item">
+          <div class="left">
+            <div class="table-name">${t.table}</div>
+          </div>
+          <div class="table-actions">
+            <div class="row-count ${cls}">${c.toLocaleString()}</div>
+            <button class="preview-btn" data-schema="${s}" data-table="${t.table}">Preview</button>
+          </div>
+        </div>
+      `);
+      tableBox.append(item);
+    });
+
+    schemaList.append(header);
+    schemaList.append(tableBox);
+
+    // toggle on header click
+    header.find(".schema-header").on("click", function(){
+      tableBox.slideToggle(180);
+    });
+  });
+
+  // Search (enter or clear)
+  $("#searchInput").on("keyup", function(e){
+    if(e.key === "Enter") doSearch();
+    if(this.value === "") doSearch(); // show all
+  });
+
+  function doSearch(){
+    const q = $("#searchInput").val().trim().toLowerCase();
+    if(!q){
+      $(".schema-row").show(); $(".tables").hide();
+      return;
+    }
+    // show any schema that matches schema name or has a table contains match
+    Object.keys(schemas).forEach(s=>{
+      const matchSchema = s.toLowerCase().includes(q);
+      const foundTables = schemas[s].filter(t=> t.table.toLowerCase().includes(q));
+      if(matchSchema || foundTables.length>0){
+        $(`#schema-${s}`).closest(".schema-row").show();
+        // show tables and only highlight/have visible matched rows
+        const box = $(`#tables-${s}`);
+        box.show();
+        box.find(".table-item").each(function(){
+          const name = $(this).find(".table-name").text().toLowerCase();
+          $(this).toggle(name.includes(q) || matchSchema);
+        });
+      } else {
+        $(`#schema-${s}`).closest(".schema-row").hide();
+      }
+    });
+  }
+
+  // Expand / Collapse all
+  $("#expandAll").on("click", ()=> $(".tables").slideDown(180));
+  $("#collapseAll").on("click", ()=> $(".tables").slideUp(180));
+
+  // Export visible CSV (schema,table,rowcount)
+  $("#exportCSV").on("click", ()=>{
+    const rows = [];
+    $(".schema-row").each(function(){
+      const hdr = $(this).find(".schema-header h3").text();
+      const box = $(this).next(".tables");
+      if(!box.length) return;
+      box.find(".table-item").each(function(){
+        if($(this).is(":visible")){
+          const table = $(this).find(".table-name").text();
+          const count = $(this).find(".row-count").text().replace(/,/g,'');
+          rows.push([hdr, table, count]);
+        }
+      });
+    });
+    if(rows.length===0){ alert("No visible rows to export."); return; }
+    let csv = "schema,table,row_count\n";
+    rows.forEach(r=> csv += `${r[0]},${r[1]},${r[2]}\n`);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'schemas_export.csv'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Modal logic for preview
+  $("#modalClose").on("click", ()=> $("#modal").hide());
+
+  // Dummy fetch: replace this with real API call
+  function fetchTableData(schema, table){
+    // Simulate async and return promise of object { columns:[], rows:[] }
+    return new Promise((resolve)=>{
+      setTimeout(()=>{
+        // If row count is zero -> return empty
+        const entry = dataset.find(d => d[0] === `${schema}.${table}`);
+        const count = entry ? Number(entry[1]) : 0;
+        if(!count){
+          resolve({ columns: [], rows: [] });
+          return;
+        }
+        // Generate small mock rows (3) with columns
+        const columns = ["id","sample_col","value"];
+        const rows = [];
+        for(let i=1;i<=Math.min(10, count);i++){
+          rows.push([i, `${table}_row_${i}`, Math.floor(Math.random()*1000)]);
+          if(i>=5) break;
+        }
+        resolve({ columns, rows });
+      }, 300);
+    });
+  }
+
+  // Wire preview buttons
+  $(document).on("click", ".preview-btn", function(e){
+    e.stopPropagation();
+    const schema = $(this).data("schema");
+    const table = $(this).data("table");
+    $("#modalTitle").text(`Preview — ${schema}.${table}`);
+    $("#modalBody").html("<div>Loading preview…</div>");
+    $("#modal").css("display","flex");
+
+    fetchTableData(schema, table).then(data=>{
+      if(!data || !data.rows || data.rows.length===0){
+        $("#modalBody").html("<div style='padding:18px;color:#666'>No data available for this table (row count is zero or no sample rows).</div>");
+        return;
+      }
+      // Build HTML table
+      let html = "<div style='overflow:auto'><table class='preview'><thead><tr>";
+      data.columns.forEach(c=> html += `<th>${escapeHtml(c)}</th>`);
+      html += "</tr></thead><tbody>";
+      data.rows.forEach(r=>{
+        html += "<tr>";
+        r.forEach(cell => html += `<td>${escapeHtml(String(cell))}</td>`);
+        html += "</tr>";
+      });
+      html += "</tbody></table></div>";
+      $("#modalBody").html(html);
+    }).catch(err=>{
+      $("#modalBody").html("<div style='color:#b00'>Error loading data (see console)</div>");
+      console.error(err);
+    });
+  });
+
+  // small helpers
+  function escapeHtml(str){
+    return str.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+  }
+
+  // initial state: collapse all
+  $(".tables").hide();
+
+  </script>
+</body>
+</html>

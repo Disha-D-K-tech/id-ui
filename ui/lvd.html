@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Livision DataHub - Signup</title>
+  <link href="./css/bootstrap.min.css" rel="stylesheet">
+  <link href="./css/jquery.modal.min.css" rel="stylesheet">
+  <link href="./css/overlay.css" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="ld.png">
+
+  <style>
+    :root {
+      --accent-1: #7c3aed;
+      --accent-2: #fca5a5;
+      --accent-3: #86efac;
+      --text-dark: #ffffff;
+      --card-bg: rgba(255,255,255,0.75);
+      --border: rgba(255,255,255,0.5);
+      --success: #16a34a;
+      --danger: #ef4444;
+    }
+
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    /* MAIN PAGE BACKGROUND — Elegant Lavender Steel */
+    html, body {
+      height:100%;
+      margin:0;
+      font-family:"Inter", system-ui, sans-serif;
+      background: linear-gradient(120deg, #d8d9f0, #ecebfa);
+      overflow-x:hidden;
+    }
+
+    .signup-wrap {
+      max-width:1100px;
+      margin: 60px auto 0;
+      position:relative;
+    }
+
+    .card-saas {
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.1);
+      overflow:hidden;
+      backdrop-filter:blur(10px);
+      margin-bottom: 120px;
+    }
+
+    /* LEFT SECTION — DARKER, RICHER PURPLE */
+    .saas-left {
+      padding:48px;
+      background: linear-gradient(
+        135deg,
+        #c2b2ff,
+        #b19aff,
+        #9c85ff,
+        #8870ff
+      );
+      color: #4a4570;
+      position:relative;
+    }
+
+    .brand-top {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:28px;
+    }
+
+    .brand-logo {
+      width:54px; height:54px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:12px;
+      background:linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color:white;
+      font-weight:700;
+      font-size:22px;
+      box-shadow:0 6px 20px rgba(124,58,237,0.3);
+      cursor:pointer;
+      transition: transform .2s ease;
+      text-decoration:none;
+    }
+
+    .brand-logo:hover { transform:scale(1.05); }
+
+    .brand-name { font-weight:700; font-size:20px; color:#ffffff; }
+
+    .hero-title {
+      font-size:36px;
+      font-weight:700;
+      color:#3d3860;
+      line-height:1.15;
+      margin-bottom:12px;
+    }
+
+    .hero-sub {
+      font-size:16px;
+      color:#6b6690;
+      margin-bottom:20px;
+    }
+
+    .feature-list .item {
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    .item .icon {
+      width:8px;
+      height:8px;
+      border-radius:3px;
+      background:var(--accent-1);
+    }
+
+    .item .text { font-size:14px; color:#4a4570; }
+
+    /* RIGHT FORM PANEL */
+    .saas-right {
+      background:rgba(255,255,255,0.7);
+      padding:40px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      backdrop-filter:blur(10px);
+    }
+
+    .form-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+
+    label { font-size:13px; color:#50545d; }
+
+    input.form-control {
+      background:rgba(255,255,255,0.9);
+      border:1px solid rgba(180,180,200,0.4);
+      border-radius:10px;
+      color:#1b1b2f;
+      padding:10px 12px;
+      transition:all .15s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent-1);
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.1);
+      outline:none;
+    }
+
+    .btn-primary {
+      background:linear-gradient(90deg, var(--accent-1), var(--accent-2));
+      border:none;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      font-weight:600;
+      box-shadow:0 6px 14px rgba(124,58,237,0.25);
+    }
+
+    .btn-primary:disabled { opacity:0.5; }
+
+    .status {
+      display:none;
+      margin-top:10px;
+      padding:10px;
+      border-radius:8px;
+      font-size:14px;
+    }
+
+    .status.success {
+      background:rgba(22,163,74,0.1);
+      color:var(--success);
+      border:1px solid rgba(22,163,74,0.2);
+    }
+
+    .status.error {
+      background:rgba(239,68,68,0.1);
+      color:var(--danger);
+      border:1px solid rgba(239,68,68,0.2);
+    }
+
+    footer {
+      text-align:center;
+      padding:18px;
+      color:#808080;
+      font-size:13px;
+      background:white;
+      margin-top:40px;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
+
+    @media(max-width:980px) {
+      .card-saas { grid-template-columns:1fr; }
+      .saas-left { padding:32px; }
+      .saas-right { padding:28px; }
+
+      .brand-logo {
+        width:44px;
+        height:44px;
+        font-size:18px;
+      }
+    }
+  </style>
+</head>
+
+  <body>
+    <div id="overlay" class="overlay"></div>
+    <div id="messageBox" class="message-box">
+      <p id="messageContent">This is your message!</p> 
+
+      <div class="spinner-grow text-secondary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+
+      <div class="spinner-grow text-info" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div> 
+
+      <div class="spinner-grow text-warning" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+
+      <div class="spinner-grow text-success" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div> 
+
+      <div class="spinner-grow text-dark" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+  
+    </div>
+  <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+    <symbol id="check" viewBox="0 0 16 16">
+      <title>Check</title>
+      <path
+        d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"
+      ></path>
+    </symbol>
+  </svg>
+<div class="signup-wrap">
+    <div class="card-saas">
+
+      <!-- LEFT PANEL -->
+      <div class="saas-left">
+        <div class="brand-top">
+          <a href="lvd.html" class="brand-logo">L D</a>
+          <a href="lvd.html" style="text-decoration:none; color:inherit;">
+            <div class="brand-name">Livision DataHub</div>
+            <div style="font-size:13px;color:#6b6690;">Empowering smarter data</div>
+          </a>
+        </div>
+
+        <h2 class="hero-title">Your next-level data experience</h2>
+        <p class="hero-sub">Analyze, collaborate, and scale — built for modern teams and enterprises.</p>
+
+        <div class="feature-list">
+          <div class="item"><div class="icon"></div><div class="text">Instant setup in multiple regions</div></div>
+          <div class="item"><div class="icon"></div><div class="text">Smart scaling & cost optimization</div></div>
+          <div class="item"><div class="icon"></div><div class="text">Enterprise-grade security</div></div>
+        </div>
+      </div>
+
+      <!-- Modal -->
+      <div class="modal" id="exampleModal" style="max-width: 60%;"> 
+        <div class="row row-cols-4 row-cols-lg-3 mb-3 text-center">
+          <div class="col">
+            <div class="card mb-4 rounded-3 shadow-sm">
+              <div class="card-header text-bg-light py-3">
+                <h4 class="my-0 fw-normal">Standard</h4>
+              </div>
+              <div class="card-body ">
+                <h1 class="card-title pricing-card-title">
+                  One RDBMS (~ 10 Tables)
+                </h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                  <li>1 user included</li>
+                  <li>< 10 GB of Data</li> 
+                  <li>1 week Data Retention</li>
+                  <li>Help center access</li>
+                </ul>
+                <button
+                  type="button"
+                  class="w-100 btn btn-lg btn-outline-primary"
+                >
+                  Sign up for free
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card mb-4 rounded-3 shadow-sm">
+              <div class="card-header text-bg-info py-3">
+                <h4 class="my-0 fw-normal">Premium</h4>
+              </div>
+              <div class="card-body">
+                <h1 class="card-title pricing-card-title">
+                 RDBMS + SFTP
+                 
+                </h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                  <li>10 users included</li>
+                  <li>~1 TB of Data </li>
+                  <li>Priority email support</li>
+                  <li>Help center access</li>
+                </ul>
+                <button type="button" class="w-100 btn btn-lg btn-primary">
+                  Get started
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card mb-4 rounded-3 shadow-sm border-success">
+              <div class="card-header text-bg-success py-3  border-success">
+                <h4 class="my-0 fw-normal">Enterprise</h4>
+              </div>
+              <div class="card-body">
+                <h1 class="card-title pricing-card-title">
+                   Premium + All Cloud
+                </h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                  <li>Unlimited users </li>
+                  <li>~ PB of Data</li>
+                  <li>Phone and email support</li>
+                  <li>Help center access</li>
+                </ul>
+                <button type="button" class="w-100 btn btn-lg btn-primary">
+                  Contact us
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <h2 class="display-6 text-center mb-4">Compare plans</h2>
+        <div class="table-responsive">
+          <table class="table text-center">
+            <thead>
+              <tr>
+                <th style="width: 34%"></th>
+                <th style="width: 22%">Standard</th>
+                <th style="width: 22%">Premium</th>
+                <th style="width: 22%">Enterprise</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row" class="text-start">Public (No VPC)</th>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-start">Private (VPC)</th>
+                <td></td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+              </tr>
+            </tbody>
+            <tbody>
+              <tr>
+                <th scope="row" class="text-start">Permissions</th>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-start">Sharing</th>
+                <td></td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-start">Unlimited members</th>
+                <td></td>
+                <td> </td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-start">Addl. Security [Custom Encryption]</th>
+                <td></td>
+                <td></td>
+                <td>
+                  <svg
+                    class="bi"
+                    width="24"
+                    height="24"
+                    role="img"
+                    aria-label="Included"
+                  >
+                    <use xlink:href="#check"></use>
+                  </svg>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+              <a href="#" rel="modal:close" >Close</a> 
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="saas-right">
+        <h5 id="sh" class="mb-3 fw-bold">Create your account</h5>
+
+        <div class="form-card" style="height: 530px;overflow-y: auto;">
+          <div id="message" class="message"></div>
+          <div id="d1">
+            <form id="signupForm" novalidate>
+              <div class="row g-2 mb-4">
+                <div class="form-floating col">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="firstname" name="firstname"
+                    placeholder="First name" required
+                  />
+                  <label for="firstName"> First name</label> 
+                </div>
+                <div class="form-floating col"> 
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="lastname" name="lastname"
+                    placeholder="Last name" required
+                  />
+                  <label for="lastName">Last name</label>   
+                </div>
+              </div>
+
+              <div class="form-floating mb-4">
+                <input
+                  type="email"
+                  class="form-control"
+                  id="email" name="email"
+                  placeholder="name@example.com" required
+                />
+                <label for="email">Email address</label>
+              </div>  
+
+              <div class="mb-4">
+                <label class="form-label">Subscription plan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label> 
+                <a  href="#exampleModal" rel="modal:open" class="link text-size-small" > View Plans </a>
+
+                <select id="subscriptionPlan" name="subscriptionPlan"
+                      class="form-select "
+                      aria-label=".form-select-lg example"
+                    >
+                  <option value="" disabled selected>Select a plan</option>
+                  <option value="1">Standard</option>
+                  <option value="2">Premium</option>
+                  <option value="3">Enterprise</option>
+                </select>
+              </div>
+              <div class="form-group mb-2">
+                <label>
+                    <input type="checkbox" id="agree" name="agree"> I agree to the <a target="new" href="http://datahub.livisionit.com/privacy-policy.html">Terms & Privacy</a>.
+                </label>
+              </div>
+              <div class="d-grid">
+                <button id="submitBtn" type="submit" class="btn btn-primary" >
+                  <span id="btnText">Verify Email</span>
+                </button>
+              </div>
+              <div id="otpSuccess" class="status success mt-3">OTP sent! Check your email.</div>
+              <div id="otpError" class="status error mt-3">Something went wrong. Try again.</div>
+            
+              <div class="text-center mt-3">
+                <p class="mb-1">Already have an account?</p>
+                <a id="loginBtn" class="btn btn-outline-primary">
+                  Log In
+                </a>
+              </div>
+            </form>
+
+            <!-- Login (Email → Send OTP → Enter OTP → Verify) - Bootstrap compatible -->
+            <div id="loginForm" class="container py-4" style="display: none;">
+              <div class="row justify-content-center">
+                <div class="card-body">
+                  <!-- Step 1: Floating Email Input -->
+                  <div id="login-email-section" class="mb-3">
+
+                    <div class="form-floating mb-3">
+                      <input type="email" class="form-control" id="loginEmail" placeholder="name@company.com" required>
+                      <label for="loginEmail">Email address</label>
+                    </div>
+
+                    <div class="d-grid">
+                      <button id="sendOtpBtn" class="btn btn-primary" type="button">Send OTP</button>
+                    </div>
+                  </div>
+
+                  <div class="text-center mt-3">
+                    <p class="mb-1">Don't have an account?</p>
+                    <a id="signupBtn" class="btn btn-outline-primary">
+                      Create Account
+                    </a>
+                  </div>
+
+                  <!-- Step: OTP (hidden until Send OTP clicked) -->
+                  <div id="otp-section" class="d-none">
+                    <label for="otpInput" class="form-label">Enter 6-digit OTP</label>
+                    <input type="text" id="otpInput" class="form-control mb-2" maxlength="6" inputmode="numeric" placeholder="123456" aria-describedby="otpHelp">
+                    <div id="otpHelp" class="form-text mb-3">Check your email for the one-time code.</div>
+
+                    <div class="d-flex gap-2">
+                      <button id="verifyLoginBtn" class="btn btn-success flex-grow-1" type="button"  onclick="handleClick()">Verify &amp; Login</button>
+                      <button id="resendOtpBtn" class="btn btn-outline-secondary" type="button" disabled>Resend OTP (30s)</button>
+                    </div>
+                  </div>
+
+                  <!-- Messages -->
+                  <div id="loginMessages" class="mt-3" aria-live="polite">
+                    <div id="loginSuccess" class="alert alert-success d-none mb-2" role="alert">Login successful.</div>
+                    <div id="loginError" class="alert alert-danger d-none mb-2" role="alert">Login failed. Please try again.</div>
+                    <div id="loginInfo" class="alert alert-info d-none mb-2" role="status"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div> 
+          <div id="v2" style="display: none;">
+              <div class="mb-3 mt-3">
+                <label id="maskedEmail">... </label> 
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Enter 6-digit OTP</label>
+                <input id="otp" maxlength="6" class="form-control otp-input" required>
+              </div>
+          
+              <button id="verifyOtpBtn" class="btn btn-primary w-100" disabled>Verify OTP</button>
+          
+              <div class="text-center mt-3">
+                <button id="resendBtn" class="btn btn-secondary " disabled>Resend OTP (30s)</button>
+              </div>
+          </div>
+          <div id="d2" style="display: none;">
+            <form id="signupFormFinal" novalidate>
+
+              <div class="row g-2 mb-4">
+                <div class="form-floating col">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="company" name="company"
+                    placeholder="Company name" required
+                  />
+                  <label for="company">Company name</label> 
+                </div>
+                <div class="form-floating col"> 
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="jobTitle" name="jobTitle"
+                    placeholder="Job title" required
+                  />
+                  <label for="jobTitle">Job title</label>   
+                </div>
+              </div>
+
+              <div class="form-control mb-4">
+                <label>Phone Number</label>
+                <!-- country codes (ISO 3166) and Dial codes. -->
+                <select class="form-select " 
+                      name="countryCode" 
+                      id="countryCode"
+                      aria-label=".form-select-lg example"
+                      style="margin-bottom: 10px;">
+                    <option data-countryCode="GB" value="44">UK (+44)</option>
+                    <option data-countryCode="US" value="1" Selected>USA (+1)</option>
+                        <option data-countryCode="AU" value="61">Australia (+61)</option>
+                        <option data-countryCode="FR" value="33">France (+33)</option>
+                        <option data-countryCode="IN" value="91">India (+91)</option>
+                        <option data-countryCode="JP" value="81">Japan (+81)</option>
+                    <optgroup label=" Countries">
+                        <option data-countryCode="DZ" value="213">Algeria (+213)</option>
+                        <option data-countryCode="AD" value="376">Andorra (+376)</option>
+                        <option data-countryCode="AO" value="244">Angola (+244)</option>
+                        <option data-countryCode="AI" value="1264">Anguilla (+1264)</option>
+                        <option data-countryCode="AG" value="1268">Antigua &amp; Barbuda (+1268)</option>
+                        <option data-countryCode="AR" value="54">Argentina (+54)</option>
+                        <option data-countryCode="AM" value="374">Armenia (+374)</option>
+                        <option data-countryCode="AW" value="297">Aruba (+297)</option>
+                        <option data-countryCode="AT" value="43">Austria (+43)</option>
+                        <option data-countryCode="AZ" value="994">Azerbaijan (+994)</option>
+                        <option data-countryCode="BS" value="1242">Bahamas (+1242)</option>
+                        <option data-countryCode="BH" value="973">Bahrain (+973)</option>
+                        <option data-countryCode="BD" value="880">Bangladesh (+880)</option>
+                        <option data-countryCode="BB" value="1246">Barbados (+1246)</option>
+                        <option data-countryCode="BY" value="375">Belarus (+375)</option>
+                        <option data-countryCode="BE" value="32">Belgium (+32)</option>
+                        <option data-countryCode="BZ" value="501">Belize (+501)</option>
+                        <option data-countryCode="BJ" value="229">Benin (+229)</option>
+                        <option data-countryCode="BM" value="1441">Bermuda (+1441)</option>
+                        <option data-countryCode="BT" value="975">Bhutan (+975)</option>
+                        <option data-countryCode="BO" value="591">Bolivia (+591)</option>
+                        <option data-countryCode="BA" value="387">Bosnia Herzegovina (+387)</option>
+                        <option data-countryCode="BW" value="267">Botswana (+267)</option>
+                        <option data-countryCode="BR" value="55">Brazil (+55)</option>
+                        <option data-countryCode="BN" value="673">Brunei (+673)</option>
+                        <option data-countryCode="BG" value="359">Bulgaria (+359)</option>
+                        <option data-countryCode="BF" value="226">Burkina Faso (+226)</option>
+                        <option data-countryCode="BI" value="257">Burundi (+257)</option>
+                        <option data-countryCode="KH" value="855">Cambodia (+855)</option>
+                        <option data-countryCode="CM" value="237">Cameroon (+237)</option>
+                        <option data-countryCode="CA" value="1">Canada (+1)</option>
+                        <option data-countryCode="CV" value="238">Cape Verde Islands (+238)</option>
+                        <option data-countryCode="KY" value="1345">Cayman Islands (+1345)</option>
+                        <option data-countryCode="CF" value="236">Central African Republic (+236)</option>
+                        <option data-countryCode="CL" value="56">Chile (+56)</option>
+                        <option data-countryCode="CN" value="86">China (+86)</option>
+                        <option data-countryCode="CO" value="57">Colombia (+57)</option>
+                        <option data-countryCode="KM" value="269">Comoros (+269)</option>
+                        <option data-countryCode="CG" value="242">Congo (+242)</option>
+                        <option data-countryCode="CK" value="682">Cook Islands (+682)</option>
+                        <option data-countryCode="CR" value="506">Costa Rica (+506)</option>
+                        <option data-countryCode="HR" value="385">Croatia (+385)</option>
+                        <option data-countryCode="CU" value="53">Cuba (+53)</option>
+                        <option data-countryCode="CY" value="90392">Cyprus North (+90392)</option>
+                        <option data-countryCode="CY" value="357">Cyprus South (+357)</option>
+                        <option data-countryCode="CZ" value="42">Czech Republic (+42)</option>
+                        <option data-countryCode="DK" value="45">Denmark (+45)</option>
+                        <option data-countryCode="DJ" value="253">Djibouti (+253)</option>
+                        <option data-countryCode="DM" value="1809">Dominica (+1809)</option>
+                        <option data-countryCode="DO" value="1809">Dominican Republic (+1809)</option>
+                        <option data-countryCode="EC" value="593">Ecuador (+593)</option>
+                        <option data-countryCode="EG" value="20">Egypt (+20)</option>
+                        <option data-countryCode="SV" value="503">El Salvador (+503)</option>
+                        <option data-countryCode="GQ" value="240">Equatorial Guinea (+240)</option>
+                        <option data-countryCode="ER" value="291">Eritrea (+291)</option>
+                        <option data-countryCode="EE" value="372">Estonia (+372)</option>
+                        <option data-countryCode="ET" value="251">Ethiopia (+251)</option>
+                        <option data-countryCode="FK" value="500">Falkland Islands (+500)</option>
+                        <option data-countryCode="FO" value="298">Faroe Islands (+298)</option>
+                        <option data-countryCode="FJ" value="679">Fiji (+679)</option>
+                        <option data-countryCode="FI" value="358">Finland (+358)</option>
+                        <option data-countryCode="GF" value="594">French Guiana (+594)</option>
+                        <option data-countryCode="PF" value="689">French Polynesia (+689)</option>
+                        <option data-countryCode="GA" value="241">Gabon (+241)</option>
+                        <option data-countryCode="GM" value="220">Gambia (+220)</option>
+                        <option data-countryCode="GE" value="7880">Georgia (+7880)</option>
+                        <option data-countryCode="DE" value="49">Germany (+49)</option>
+                        <option data-countryCode="GH" value="233">Ghana (+233)</option>
+                        <option data-countryCode="GI" value="350">Gibraltar (+350)</option>
+                        <option data-countryCode="GR" value="30">Greece (+30)</option>
+                        <option data-countryCode="GL" value="299">Greenland (+299)</option>
+                        <option data-countryCode="GD" value="1473">Grenada (+1473)</option>
+                        <option data-countryCode="GP" value="590">Guadeloupe (+590)</option>
+                        <option data-countryCode="GU" value="671">Guam (+671)</option>
+                        <option data-countryCode="GT" value="502">Guatemala (+502)</option>
+                        <option data-countryCode="GN" value="224">Guinea (+224)</option>
+                        <option data-countryCode="GW" value="245">Guinea - Bissau (+245)</option>
+                        <option data-countryCode="GY" value="592">Guyana (+592)</option>
+                        <option data-countryCode="HT" value="509">Haiti (+509)</option>
+                        <option data-countryCode="HN" value="504">Honduras (+504)</option>
+                        <option data-countryCode="HK" value="852">Hong Kong (+852)</option>
+                        <option data-countryCode="HU" value="36">Hungary (+36)</option>
+                        <option data-countryCode="IS" value="354">Iceland (+354)</option>
+                        <option data-countryCode="ID" value="62">Indonesia (+62)</option>
+                        <option data-countryCode="IR" value="98">Iran (+98)</option>
+                        <option data-countryCode="IQ" value="964">Iraq (+964)</option>
+                        <option data-countryCode="IE" value="353">Ireland (+353)</option>
+                        <option data-countryCode="IL" value="972">Israel (+972)</option>
+                        <option data-countryCode="IT" value="39">Italy (+39)</option>
+                        <option data-countryCode="JM" value="1876">Jamaica (+1876)</option>
+                        <option data-countryCode="JO" value="962">Jordan (+962)</option>
+                        <option data-countryCode="KZ" value="7">Kazakhstan (+7)</option>
+                        <option data-countryCode="KE" value="254">Kenya (+254)</option>
+                        <option data-countryCode="KI" value="686">Kiribati (+686)</option>
+                        <option data-countryCode="KP" value="850">Korea North (+850)</option>
+                        <option data-countryCode="KR" value="82">Korea South (+82)</option>
+                        <option data-countryCode="KW" value="965">Kuwait (+965)</option>
+                        <option data-countryCode="KG" value="996">Kyrgyzstan (+996)</option>
+                        <option data-countryCode="LA" value="856">Laos (+856)</option>
+                        <option data-countryCode="LV" value="371">Latvia (+371)</option>
+                        <option data-countryCode="LB" value="961">Lebanon (+961)</option>
+                        <option data-countryCode="LS" value="266">Lesotho (+266)</option>
+                        <option data-countryCode="LR" value="231">Liberia (+231)</option>
+                        <option data-countryCode="LY" value="218">Libya (+218)</option>
+                        <option data-countryCode="LI" value="417">Liechtenstein (+417)</option>
+                        <option data-countryCode="LT" value="370">Lithuania (+370)</option>
+                        <option data-countryCode="LU" value="352">Luxembourg (+352)</option>
+                        <option data-countryCode="MO" value="853">Macao (+853)</option>
+                        <option data-countryCode="MK" value="389">Macedonia (+389)</option>
+                        <option data-countryCode="MG" value="261">Madagascar (+261)</option>
+                        <option data-countryCode="MW" value="265">Malawi (+265)</option>
+                        <option data-countryCode="MY" value="60">Malaysia (+60)</option>
+                        <option data-countryCode="MV" value="960">Maldives (+960)</option>
+                        <option data-countryCode="ML" value="223">Mali (+223)</option>
+                        <option data-countryCode="MT" value="356">Malta (+356)</option>
+                        <option data-countryCode="MH" value="692">Marshall Islands (+692)</option>
+                        <option data-countryCode="MQ" value="596">Martinique (+596)</option>
+                        <option data-countryCode="MR" value="222">Mauritania (+222)</option>
+                        <option data-countryCode="YT" value="269">Mayotte (+269)</option>
+                        <option data-countryCode="MX" value="52">Mexico (+52)</option>
+                        <option data-countryCode="FM" value="691">Micronesia (+691)</option>
+                        <option data-countryCode="MD" value="373">Moldova (+373)</option>
+                        <option data-countryCode="MC" value="377">Monaco (+377)</option>
+                        <option data-countryCode="MN" value="976">Mongolia (+976)</option>
+                        <option data-countryCode="MS" value="1664">Montserrat (+1664)</option>
+                        <option data-countryCode="MA" value="212">Morocco (+212)</option>
+                        <option data-countryCode="MZ" value="258">Mozambique (+258)</option>
+                        <option data-countryCode="MN" value="95">Myanmar (+95)</option>
+                        <option data-countryCode="NA" value="264">Namibia (+264)</option>
+                        <option data-countryCode="NR" value="674">Nauru (+674)</option>
+                        <option data-countryCode="NP" value="977">Nepal (+977)</option>
+                        <option data-countryCode="NL" value="31">Netherlands (+31)</option>
+                        <option data-countryCode="NC" value="687">New Caledonia (+687)</option>
+                        <option data-countryCode="NZ" value="64">New Zealand (+64)</option>
+                        <option data-countryCode="NI" value="505">Nicaragua (+505)</option>
+                        <option data-countryCode="NE" value="227">Niger (+227)</option>
+                        <option data-countryCode="NG" value="234">Nigeria (+234)</option>
+                        <option data-countryCode="NU" value="683">Niue (+683)</option>
+                        <option data-countryCode="NF" value="672">Norfolk Islands (+672)</option>
+                        <option data-countryCode="NP" value="670">Northern Marianas (+670)</option>
+                        <option data-countryCode="NO" value="47">Norway (+47)</option>
+                        <option data-countryCode="OM" value="968">Oman (+968)</option>
+                        <option data-countryCode="PW" value="680">Palau (+680)</option>
+                        <option data-countryCode="PA" value="507">Panama (+507)</option>
+                        <option data-countryCode="PG" value="675">Papua New Guinea (+675)</option>
+                        <option data-countryCode="PY" value="595">Paraguay (+595)</option>
+                        <option data-countryCode="PE" value="51">Peru (+51)</option>
+                        <option data-countryCode="PH" value="63">Philippines (+63)</option>
+                        <option data-countryCode="PL" value="48">Poland (+48)</option>
+                        <option data-countryCode="PT" value="351">Portugal (+351)</option>
+                        <option data-countryCode="PR" value="1787">Puerto Rico (+1787)</option>
+                        <option data-countryCode="QA" value="974">Qatar (+974)</option>
+                        <option data-countryCode="RE" value="262">Reunion (+262)</option>
+                        <option data-countryCode="RO" value="40">Romania (+40)</option>
+                        <option data-countryCode="RU" value="7">Russia (+7)</option>
+                        <option data-countryCode="RW" value="250">Rwanda (+250)</option>
+                        <option data-countryCode="SM" value="378">San Marino (+378)</option>
+                        <option data-countryCode="ST" value="239">Sao Tome &amp; Principe (+239)</option>
+                        <option data-countryCode="SA" value="966">Saudi Arabia (+966)</option>
+                        <option data-countryCode="SN" value="221">Senegal (+221)</option>
+                        <option data-countryCode="CS" value="381">Serbia (+381)</option>
+                        <option data-countryCode="SC" value="248">Seychelles (+248)</option>
+                        <option data-countryCode="SL" value="232">Sierra Leone (+232)</option>
+                        <option data-countryCode="SG" value="65">Singapore (+65)</option>
+                        <option data-countryCode="SK" value="421">Slovak Republic (+421)</option>
+                        <option data-countryCode="SI" value="386">Slovenia (+386)</option>
+                        <option data-countryCode="SB" value="677">Solomon Islands (+677)</option>
+                        <option data-countryCode="SO" value="252">Somalia (+252)</option>
+                        <option data-countryCode="ZA" value="27">South Africa (+27)</option>
+                        <option data-countryCode="ES" value="34">Spain (+34)</option>
+                        <option data-countryCode="LK" value="94">Sri Lanka (+94)</option>
+                        <option data-countryCode="SH" value="290">St. Helena (+290)</option>
+                        <option data-countryCode="KN" value="1869">St. Kitts (+1869)</option>
+                        <option data-countryCode="SC" value="1758">St. Lucia (+1758)</option>
+                        <option data-countryCode="SD" value="249">Sudan (+249)</option>
+                        <option data-countryCode="SR" value="597">Suriname (+597)</option>
+                        <option data-countryCode="SZ" value="268">Swaziland (+268)</option>
+                        <option data-countryCode="SE" value="46">Sweden (+46)</option>
+                        <option data-countryCode="CH" value="41">Switzerland (+41)</option>
+                        <option data-countryCode="SI" value="963">Syria (+963)</option>
+                        <option data-countryCode="TW" value="886">Taiwan (+886)</option>
+                        <option data-countryCode="TJ" value="7">Tajikstan (+7)</option>
+                        <option data-countryCode="TH" value="66">Thailand (+66)</option>
+                        <option data-countryCode="TG" value="228">Togo (+228)</option>
+                        <option data-countryCode="TO" value="676">Tonga (+676)</option>
+                        <option data-countryCode="TT" value="1868">Trinidad &amp; Tobago (+1868)</option>
+                        <option data-countryCode="TN" value="216">Tunisia (+216)</option>
+                        <option data-countryCode="TR" value="90">Turkey (+90)</option>
+                        <option data-countryCode="TM" value="7">Turkmenistan (+7)</option>
+                        <option data-countryCode="TM" value="993">Turkmenistan (+993)</option>
+                        <option data-countryCode="TC" value="1649">Turks &amp; Caicos Islands (+1649)</option>
+                        <option data-countryCode="TV" value="688">Tuvalu (+688)</option>
+                        <option data-countryCode="UG" value="256">Uganda (+256)</option>
+                        <!-- <option data-countryCode="GB" value="44">UK (+44)</option> -->
+                        <option data-countryCode="UA" value="380">Ukraine (+380)</option>
+                        <option data-countryCode="AE" value="971">United Arab Emirates (+971)</option>
+                        <option data-countryCode="UY" value="598">Uruguay (+598)</option>
+                        <!-- <option data-countryCode="US" value="1">USA (+1)</option> -->
+                        <option data-countryCode="UZ" value="7">Uzbekistan (+7)</option>
+                        <option data-countryCode="VU" value="678">Vanuatu (+678)</option>
+                        <option data-countryCode="VA" value="379">Vatican City (+379)</option>
+                        <option data-countryCode="VE" value="58">Venezuela (+58)</option>
+                        <option data-countryCode="VN" value="84">Vietnam (+84)</option>
+                        <option data-countryCode="VG" value="84">Virgin Islands - British (+1284)</option>
+                        <option data-countryCode="VI" value="84">Virgin Islands - US (+1340)</option>
+                        <option data-countryCode="WF" value="681">Wallis &amp; Futuna (+681)</option>
+                        <option data-countryCode="YE" value="969">Yemen (North)(+969)</option>
+                        <option data-countryCode="YE" value="967">Yemen (South)(+967)</option>
+                        <option data-countryCode="ZM" value="260">Zambia (+260)</option>
+                        <option data-countryCode="ZW" value="263">Zimbabwe (+263)</option>
+                    </optgroup>
+                </select>
+                <input class="form-control" type="number" id="phone" name="phone" required>
+            </div>  
+
+              <div class="form-floating mb-4">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="businessUnit" name="businessUnit"
+                    placeholder="Business Unit" required
+                  />
+                  <label for="businessUnit">Business Unit</label> 
+              </div>
+              <div class="form-floating form-group mb-4">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="groupEmail" name="groupEmail"
+                    placeholder="Group Email"
+                  />
+                  <label for="groupEmail">Group Email / DL </label> 
+            </div>
+              <div class="d-grid">
+                <button id="submitBtn1" type="submit" class="btn btn-primary" >
+                  <span id="btnText">Sign-Up</span>
+                </button>
+              </div>
+              <div id="statusSuccess" class="status success mt-3">Signup Successfull!</div>
+              <div id="statusError" class="status error mt-3">Something went wrong. Try again.</div>
+
+            </form>
+          </div>
+          <div id="d3" style="display: none;">
+              <form>
+                  <div class="mb-3">
+                      <label class="form-label">First Name</label>
+                      <input type="text" class="form-control" id="fnStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Last Name</label>
+                      <input type="text" class="form-control" id="lnStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="text" class="form-control" id="emailStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Phone Number</label>
+                      <input type="text" class="form-control" id="phoneStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Subscription Plan</label>
+                      <input type="text" class="form-control" id="planStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Company</label>
+                      <input type="text" class="form-control" id="companyStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Job Title</label>
+                      <input type="text" class="form-control" id="titleStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Business Unit</label>
+                      <input type="text" class="form-control" id="buStored" readonly>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Group Email</label>
+                      <input type="text" class="form-control" id="gemailStored" readonly>
+                  </div>
+              </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2026 Livision DataHub — Empowering smarter decisions</footer>
+  <script src="js/jquery-3.7.1.min.js" ></script>
+  <script src="js/jquery.modal.min.js" ></script>
+  <script src="js/session-expiry.js"></script>
+  <script src="js/signup.js" ></script>
+  <script>
+    if (sessionStorage.getItem('isLoggedIn') === '1') {
+        location.replace('dashboard.html');
+    }
+  </script>
+  
+</body>
+</html>
+
+
+<!-- "{'code': 'FFVD5JTDKUKPXOJIPPECVMPURHF22MT4S7PQ', 'userid': 'None', 'company': 'None', 'subscription': 'None'}" -->
