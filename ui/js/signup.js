@@ -539,26 +539,46 @@ $(document).ready(function() {
             async: false,
             success: function(response) { 
                 console.log('Success:', response);
-                // alert(response.text);
                 messageDiv.addClass('success').text('Account created successfully!'); 
                 hideOverlay();
+                const parsedResponse = (typeof response === 'string')
+                    ? (function() {
+                        try {
+                            return JSON.parse(response.replace(/'/g, '"'));
+                        } catch (e) {
+                            return {};
+                        }
+                    })()
+                    : (response || {});
 
-                $('#v2').hide();
-                $('#d1').hide();
-                $('#d2').hide();
+                const userPayload = Object.assign({}, parsedResponse, {
+                    name: firstname + ' ' + lastname,
+                    firstname: firstname,
+                    lastname: lastname,
+                    email: email,
+                    phone: fullNumber,
+                    subscription: plan,
+                    company: company,
+                    company_name: company,
+                    jobTitle: jobTitle,
+                    businessUnit: businessUnit,
+                    groupEmail: groupEmail,
+                    userid: parsedResponse.userid || parsedResponse.user_id || sessionStorage.getItem("userid") || '',
+                    secret: parsedResponse.secret || parsedResponse.code || secret
+                });
 
-                $('#fnStored').val(firstname);
-                $('#lnStored').val(lastname);
-                $('#emailStored').val(email);
-                $('#phoneStored').val(fullNumber);
-                $('#planStored').val(planName);
-                $('#companyStored').val(company);
-                $('#titleStored').val(jobTitle);
-                $('#buStored').val(businessUnit);
-                $('#gemailStored').val(groupEmail);
+                sessionStorage.setItem('isLoggedIn', '1');
+                sessionStorage.setItem('email', email);
+                sessionStorage.setItem('userid', userPayload.userid);
+                sessionStorage.setItem('subscription', plan);
+                sessionStorage.setItem('company', company);
+                sessionStorage.setItem('secret', userPayload.secret);
+                sessionStorage.setItem('token', userPayload.secret);
+                sessionStorage.setItem('userJson', JSON.stringify(userPayload));
 
-                $('#d3').show();
-                $('#sh').html('Account Details');
+                setTimeout(function() {
+                    window.location.href = 'dashboard.html';
+                }, 300);
             },
             error: function(xhr, status, error) { 
                 console.error('Error:', error);

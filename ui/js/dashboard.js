@@ -34,17 +34,19 @@
 $(document).ready(async function () {
 
     const user = sessionStorage.getItem("userJson");
-    // const userJson= await JSON.parse(user.replace(/'/g, '"'))
-    const userJson= parseUserJson(user)
+    const userJson = parseUserJson(user) || {};
     
-    const username=userJson.name;
-    const company=userJson.company;
+    const username = userJson.name ||
+      [userJson.firstname, userJson.lastname].filter(Boolean).join(' ') ||
+      userJson.email ||
+      "Welcome";
+    const company = userJson.company || userJson.company_name || sessionStorage.getItem("company") || "Welcome";
 
     const displayText = company ? company : "Welcome";
     const displayText2 = username ? username : "Welcome";
 
     $('#userName').text(displayText2);
-    if (username.length > 0) {
+    if (displayText2.length > 0) {
         $('.profile-icon').html(`
           <div style="
             width:100%;
@@ -60,7 +62,7 @@ $(document).ready(async function () {
             text-transform:uppercase;
             font-family:Arial,sans-serif;
           ">
-            ${username[0]}
+            ${displayText2[0]}
           </div>
         `);
 }

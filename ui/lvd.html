@@ -226,6 +226,66 @@
         font-size:18px;
       }
     }
+
+ 
+    /* Small floating queries button */
+    .query-pill {
+      position: fixed;
+      right: 18px;
+      bottom: 76px;
+      background: linear-gradient(90deg, #7c3aed, #fca5a5);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      z-index: 9999;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .query-pill:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(0,0,0,0.18); }
+    /* Modal form styling to match Contact page labels/inputs */
+    #queriesModal .contact-form-card { background:#ffffff; padding:20px; border-radius:14px; box-shadow:0 10px 25px rgba(0,0,0,0.08); }
+    #queriesModal .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    #queriesModal .form-group{ margin-bottom:10px; }
+    #queriesModal .form-group label{ font-size:14px; font-weight:500; margin-bottom:6px; display:block; color:inherit; }
+    #queriesModal .form-group input,
+    #queriesModal .form-group textarea{  width:100%;
+    padding:8px 12px;
+    border-radius:8px;
+    border:1px solid #e3e3e3;
+    font-size:14px;
+    background:#fafafa; }
+    #queriesModal .form-group input:focus,
+    #queriesModal .form-group textarea:focus{ outline:none; border-color:#5b4ce6; background:#fff; }
+    .query-success-popup{
+      position:fixed;
+      top:24px;
+      right:24px;
+      z-index:10050;
+      background: linear-gradient(180deg, #ffffff, #fbfbff);
+      color: #1b1b2f;
+      border:1px solid rgba(124,58,237,0.08);
+      border-radius:12px;
+      padding:12px 16px;
+      box-shadow:0 10px 30px rgba(124,58,237,0.08);
+      font-size:14px;
+      max-width:360px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s ease, transform .2s ease;
+      transform: translateY(-6px);
+    }
+    .query-success-popup.show{
+      opacity:1;
+      pointer-events:auto;
+      transform: translateY(0);
+    }
+    @media(max-width:576px){
+      #queriesModal .form-grid{ grid-template-columns:1fr; gap:0; }
+      .query-success-popup{ left:16px; right:16px; top:16px; max-width:none; }
+    }
   </style>
 </head>
 
@@ -999,10 +1059,122 @@
   </div>
 
   <footer>© 2026 Livision DataHub — Empowering smarter decisions</footer>
+  <!-- Floating quick-query link (opens modal) -->
+  <a class="query-pill" href="#queriesModal" rel="modal:open" title="Any queries? Send us a query">Any queries? Contact us</a>
+
+  <!-- Queries modal -->
+  <div class="modal" id="queriesModal" style="max-width:680px;">
+    <div class="contact-form-card" style="padding:20px;">
+      <h4 style="margin-top:0;margin-bottom:12px;color:#4c4cd6">Contact Us</h4>
+      <form id="queriesModalForm">
+        <div class="form-grid">
+          <div>
+            <div class="form-group mb-2">
+              <label for="queryFirstName">First Name</label>
+              <input type="text" id="queryFirstName" name="firstName" placeholder="First Name" class="form-control" required>
+            </div>
+            <div class="form-group mb-2">
+              <label for="queryEmail">Email</label>
+              <input type="email" id="queryEmail" name="email" placeholder="Email" class="form-control" required>
+            </div>
+          </div>
+          <div>
+            <div class="form-group mb-2">
+              <label for="queryLastName">Last Name</label>
+              <input type="text" id="queryLastName" name="lastName" placeholder="Last Name" class="form-control" required>
+            </div>
+            <div class="form-group mb-2">
+              <label for="queryPhone">Phone</label>
+              <input type="tel" id="queryPhone" name="phone" placeholder="Phone (Optional)" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="form-group mb-2">
+          <label for="querySubject">Subject</label>
+          <input type="text" id="querySubject" name="subject" placeholder="Subject"  class="form-control" required>
+        </div>
+        <div class="form-group mb-3">
+          <label for="queryMessage">Message</label>
+          <textarea id="queryMessage" name="message" placeholder="Enter your message here..." rows="4" class="form-control" required></textarea>
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="querySuccessPopup" class="query-success-popup" role="alert" aria-live="polite">
+    Message sent successfully. Our team will contact you shortly.
+  </div>
   <script src="js/jquery-3.7.1.min.js" ></script>
   <script src="js/jquery.modal.min.js" ></script>
   <script src="js/session-expiry.js"></script>
   <script src="js/signup.js" ></script>
+  <script>
+    // Handle queries modal form submit
+    $(function() {
+      const queryForm = $('#queriesModalForm');
+      const queryPopup = $('#querySuccessPopup');
+
+      function showQuerySuccess() {
+        queryPopup.addClass('show');
+        setTimeout(function() {
+          queryPopup.removeClass('show');
+        }, 4000);
+      }
+
+      queryForm.on('submit', function(event) {
+        event.preventDefault();
+
+        const firstName = $('#queryFirstName').val().trim();
+        const lastName = $('#queryLastName').val().trim();
+        const fullName = [firstName, lastName].filter(Boolean).join(' ');
+        const email = $('#queryEmail').val().trim();
+        const phone = $('#queryPhone').val().trim();
+        const subject = $('#querySubject').val().trim();
+        const message = $('#queryMessage').val().trim();
+        const formattedMessage =
+          'Subject: ' + $('<div>').text(subject).html() + '<br><br>' +
+          'Message: ' + $('<div>').text(message).html() + '<br><br>' +
+          'Phone: ' + $('<div>').text(phone || 'N/A').html();
+
+        const payload = {
+          name: fullName,
+          email: email,
+          phone: phone,
+          subject: subject,
+          message: formattedMessage,
+          msg:
+            '<h3>Name: ' + $('<div>').text(fullName).html() + '</h3>' +
+            '<h4>Subject: ' + $('<div>').text(subject).html() + '</h4>' +
+            '<p><strong>Phone:</strong> ' + $('<div>').text(phone || 'N/A').html() + '</p>' +
+            '<p><strong>Message:</strong><br>' + $('<div>').text(message).html() + '</p>'
+        };
+
+        showOverlay('Submitting your message...');
+
+        $.ajax({
+          url: 'https://dsmswg6acqfs4tbacgleljmv7a0xubiy.lambda-url.ap-south-1.on.aws/',
+          type: 'POST',
+          data: payload,
+          dataType: 'json',
+          success: function(response) {
+            console.log('Query submitted:', response);
+            hideOverlay();
+            showQuerySuccess();
+            queryForm[0].reset();
+            $.modal.close();
+          },
+          error: function(xhr, status, error) {
+            console.log('Query submit error:', status, error);
+            console.log('XHR Error:', xhr.responseText);
+            hideOverlay();
+            alert('Unable to submit your message right now. Please try again.');
+          }
+        });
+      });
+    });
+  </script>
   <script>
     if (sessionStorage.getItem('isLoggedIn') === '1') {
         location.replace('dashboard.html');
