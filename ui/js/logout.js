@@ -12,6 +12,14 @@ function hideOverlay() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('messageBox').style.display = 'none';
   }
+function parseUserJson(str) {
+    if (!str || typeof str !== 'string') return null;
+    try {
+      return JSON.parse(str.replace(/'/g, '"'));
+    } catch (e) {
+      return null;
+    }
+  }
 $(document).on('click', '.logout-btn', function(e) {
   
 
@@ -19,16 +27,25 @@ $(document).on('click', '.logout-btn', function(e) {
     showOverlay("loging out...")
     console.log("Logout button clicked!");
 
-    var token = sessionStorage.getItem("token");
+    const userJson = parseUserJson(sessionStorage.getItem("userJson")) || {};
+    const fullName =
+     userJson.name ||
+    [userJson.firstname, userJson.lastname].filter(Boolean).join(" ") ||
+    userJson.email ||
+      "Welcome";
+   // const logoutMessage = "<h3>User Logout</h3><p>User logged out successfully</p>";
+    var payload = {
+        token: sessionStorage.getItem("token") || sessionStorage.getItem("secret"),
+        
+    };
 
-    console.log(token);
+    console.log(payload.token);
+    console.log("Logout payload:", payload);
     
     $.ajax({
         url: 'https://zzb3uv2hditbigv3rs54rsgvaq0uwvst.lambda-url.ap-south-1.on.aws',
         type: 'POST',
-        data: {
-            token: token
-        },
+        data: payload,
         dataType: 'json',
         success: function(response) {
 
@@ -37,8 +54,8 @@ $(document).on('click', '.logout-btn', function(e) {
             sessionStorage.clear();
             localStorage.clear();
 
-            // window.location.replace("lvd.html");
             hideOverlay();
+            window.location.replace("lvd.html");
         },
         error: function(xhr, status, error) {
 
@@ -47,8 +64,8 @@ $(document).on('click', '.logout-btn', function(e) {
             sessionStorage.clear();
             localStorage.clear();
 
-            // window.location.replace("lvd.html");
             hideOverlay();
+            window.location.replace("lvd.html");
         }
     });
 

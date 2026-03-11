@@ -71,8 +71,6 @@ $(document).ready(function() {
 
     let isLoginFlow = false;
 
-$(document).ready(function() {
-
     // 🔹 Show Login page by default
     $('#signupForm').hide();
     $('#loginForm').show();
@@ -96,8 +94,6 @@ $(document).ready(function() {
         isLoginFlow = false;
         $('#message').removeClass('success error').text('');
     });
-
-});
     $('#sendOtpBtn').on('click', function() {
         console.log("Send OTP button clicked!");
         messageDiv = $('#message');
@@ -138,6 +134,9 @@ $(document).ready(function() {
                     sessionStorage.setItem("userid", userid);
                     sessionStorage.setItem("email", loginEmail);
                     sessionStorage.setItem("subscription", subscription);
+                    if (parsed.phone) {
+                        sessionStorage.setItem("phone", parsed.phone);
+                    }
                     hideOverlay();
                     $('#v2').show();
                     $('#sh').html('You are logged in!');
@@ -385,12 +384,16 @@ $(document).ready(function() {
     }
     // sessionStorage.setItem("userJson", typeof response === 'string' ? response : JSON.stringify(resp));
     sessionStorage.setItem('isLoggedIn', '1');
-    sessionStorage.setItem("token", resp.code);
-    sessionStorage.setItem("secret", resp.code);
+    const authToken = resp.code || secret || '';
+    sessionStorage.setItem("token", authToken);
+    sessionStorage.setItem("secret", authToken);
     sessionStorage.setItem("userid", resp.userid);
     sessionStorage.setItem("subscription", resp.subscription);
     hideOverlay();
     setTimeout(function () {
+        console.log("Stored token:", sessionStorage.getItem("token"));
+        console.log("Stored secret:", sessionStorage.getItem("secret"));
+        console.log("Session storage:", sessionStorage);
         window.location.href = 'dashboard.html';
     }, 200);
 } else {
@@ -572,11 +575,17 @@ $(document).ready(function() {
                 sessionStorage.setItem('userid', userPayload.userid);
                 sessionStorage.setItem('subscription', plan);
                 sessionStorage.setItem('company', company);
-                sessionStorage.setItem('secret', userPayload.secret);
-                sessionStorage.setItem('token', userPayload.secret);
+                const authToken = userPayload.secret || parsedResponse.code || secret || '';
+                sessionStorage.setItem('secret', authToken);
+                sessionStorage.setItem('token', authToken);
+                //sessionStorage.setItem('secret', userPayload.secret);
+                //sessionStorage.setItem('token', userPayload.secret);
                 sessionStorage.setItem('userJson', JSON.stringify(userPayload));
 
                 setTimeout(function() {
+                    console.log("Stored token:", sessionStorage.getItem("token"));
+                    console.log("Stored secret:", sessionStorage.getItem("secret"));
+                    console.log("Session storage:", sessionStorage);
                     window.location.href = 'dashboard.html';
                 }, 300);
             },
