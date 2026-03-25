@@ -1,5 +1,5 @@
 const nameRegex = /^[a-zA-Z\s'-]+$/;
-// const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 const emailRegex =
 /^[a-zA-Z0-9._%+-]+@(?!gmail\.com$)(?!googlemail\.com$)(?!yahoo\.com$)(?!yahoo\.co\.in$)(?!hotmail\.com$)(?!outlook\.com$)(?!live\.com$)(?!icloud\.com$)(?!aol\.com$)(?!protonmail\.com$)(?!proton\.me$)(?!gmx\.com$)(?!zoho\.com$)(?!yandex\.com$)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -51,21 +51,11 @@ var groupEmail = '';
 var otp = '';
 var messageDiv = '';
 
-// let isLoginFlow = false;
+
   
 $(document).ready(function() {
     // // Initialize intl-tel-input for phone number field
-    // var input = document.querySelector("#phone");
-    // window.intlTelInput(input, {
-    //     initialCountry: "auto", // Automatically detect user's country
-    //     geoIpLookup: function(callback) {
-    //         $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
-    //             var countryCode = (resp && resp.country) ? resp.country : "us";
-    //             callback(countryCode);
-    //         });
-    //     },
-    //     utilsScript: "utils.js" // Path to utils.js
-    // });
+    
 
     // LOGIN Flow Below
 
@@ -87,19 +77,20 @@ $(document).ready(function() {
         $('#message').removeClass('success error').text('');
     });
 
-    $('#signupBtn').on('click', function() {
+   $('#signupBtn').on('click', function() {
         $('#loginForm').hide();
         $('#signupForm').show();
         $('#sh').html('Create your account');
         isLoginFlow = false;
         $('#message').removeClass('success error').text('');
     });
+ 
     $('#sendOtpBtn').on('click', function() {
         console.log("Send OTP button clicked!");
         messageDiv = $('#message');
-
+ 
         loginEmail = $('#loginEmail').val().trim();  
-
+ 
         if ( !emailRegex.test(loginEmail) ) {
             messageDiv.addClass('error').text('Please enter a valid email address.');
             return;
@@ -219,12 +210,12 @@ $(document).ready(function() {
 
         // Basic validation (you would add more robust validation for production)
         if (firstname.length < 3 || !nameRegex.test(firstname)) {
-            messageDiv.addClass('error').text('Please enter a valid Frst name ');
+            messageDiv.addClass('error').text('Please enter a valid First name ');
             return;
         }
 
         if (lastname.length < 2 || !nameRegex.test(lastname)) {
-            messageDiv.addClass('error').text('Please enter a valid last name ');
+            messageDiv.addClass('error').text('Please enter a valid Last name ');
             return;
         }
 
@@ -257,6 +248,7 @@ $(document).ready(function() {
                 success: function(response) { 
                     // console.log('Success:', response);
                     // alert(response.text);
+                   
                     $('#d1').hide();
                     // If all validation passes (simulate successful signup)
                     messageDiv.addClass('success').text('OTP Sent successfully!'); 
@@ -359,6 +351,7 @@ $(document).ready(function() {
                     dataType: 'json',
                     async: false,
                     success: function(response, textStatus, xhr) { 
+                        console.log("FULL RESPONSE:", JSON.stringify(response)); // ← ADD THIS
                         console.log("Status Code:", xhr.status); // e.g. 200
                         console.log("Text Status:", textStatus); // "success"
                         console.log("response: ", response)
@@ -382,7 +375,7 @@ $(document).ready(function() {
     if (companyVal && String(companyVal).toLowerCase() !== 'none') {
         sessionStorage.setItem("company", String(companyVal));
     }
-    // sessionStorage.setItem("userJson", typeof response === 'string' ? response : JSON.stringify(resp));
+   
     sessionStorage.setItem('isLoggedIn', '1');
     const authToken = resp.code || secret || '';
     sessionStorage.setItem("token", authToken);
@@ -390,6 +383,7 @@ $(document).ready(function() {
     sessionStorage.setItem("userid", resp.userid);
     sessionStorage.setItem("subscription", resp.subscription);
     hideOverlay();
+    
     setTimeout(function () {
         console.log("Stored token:", sessionStorage.getItem("token"));
         console.log("Stored secret:", sessionStorage.getItem("secret"));
@@ -445,8 +439,7 @@ $(document).ready(function() {
                         hideOverlay();
                     }
                 });
-                // Clear the form fields after successful submission
-                // $('#signupForm')[0].reset();
+              
             }, 1700);
 
         } catch (err) {
@@ -459,19 +452,15 @@ $(document).ready(function() {
     });
 
     // On click: resend OTP logic
+  
     resendBtn.on("click", function() {
         if (resendCount >= maxResends) {
             resendBtn.prop("disabled", true).text("Resend limit reached");
             return;
         }
-
+ 
         resendCount++;
-
-        $("#signupForm").submit();
-
-        $("#maskedEmail").html("OTP sent to: " + maskEmail(email));
-        // Cooldown
-        startCooldown();
+        sendSignupOtp(); // ✅ no form validation triggered
     });
   
   
@@ -572,14 +561,12 @@ $(document).ready(function() {
 
                 sessionStorage.setItem('isLoggedIn', '1');
                 sessionStorage.setItem('email', email);
-                sessionStorage.setItem('userid', userPayload.userid);
-                sessionStorage.setItem('subscription', plan);
+                //sessionStorage.setItem('userid', userPayload.userid);
+                //sessionStorage.setItem('subscription', plan);
                 sessionStorage.setItem('company', company);
                 const authToken = userPayload.secret || parsedResponse.code || secret || '';
                 sessionStorage.setItem('secret', authToken);
                 sessionStorage.setItem('token', authToken);
-                //sessionStorage.setItem('secret', userPayload.secret);
-                //sessionStorage.setItem('token', userPayload.secret);
                 sessionStorage.setItem('userJson', JSON.stringify(userPayload));
 
                 setTimeout(function() {
@@ -595,7 +582,6 @@ $(document).ready(function() {
                 hideOverlay();
             }
         });
-        // Clear the form fields after successful submission
-        // $('#signupFormFinal')[0].reset();
+        
     });
 });

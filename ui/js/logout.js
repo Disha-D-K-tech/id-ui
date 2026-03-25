@@ -39,7 +39,7 @@ $(document).on('click', '.logout-btn', function(e) {
         
     };
 
-    console.log(payload.token);
+    //console.log(payload.token);
     console.log("Logout payload:", payload);
     
     $.ajax({

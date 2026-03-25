@@ -66,7 +66,7 @@
     .nav-leaf:hover { background:rgba(120,110,220,0.04); color:var(--lv-indigo); }
 
     /* Main */
-    .main { margin-left:320px; padding:22px 34px 140px 34px; } /* leave room for footer */
+    .main { margin-left:320px; padding:20px 20px 120px 20px; } /* leave room for footer */
     .profile-dropdown {
   position: relative;
 }
@@ -266,7 +266,7 @@
 
     /*Contact Us page styles */
     .contact-container{
-    padding:40px 50px;
+    padding:20px 10px;
   
     display: flex;
     flex-direction: column;
@@ -317,8 +317,9 @@
     padding:30px;
     border-radius:14px;
     box-shadow:0 10px 25px rgba(0,0,0,0.08);
-    width: 500px;
+    width: 650px;
     justify-content: center;
+    
 }
 
 /* Inputs */
@@ -446,6 +447,7 @@
     
 
   </style>
+  <link href="./css/sidebar.css" rel="stylesheet">
 </head>
 <body>
   <!-- loader -->
@@ -479,42 +481,90 @@
   <!-- Sidebar -->
    
   <aside class="sidebar" role="navigation" aria-label="Main sidebar">
+    <div class="sidebar-top">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">☰</button>
+    </div>
     <div class="brand">
       <div class="logo">
         <!-- Use uploaded logo path -->
         <img src="ld.png" alt="Livision logo"
              style="width:100%;height:100%;object-fit:cover;border-radius:12px" />
       </div>
-      <div>
+      <div class="brand-text">
         <div class="title"><h5 id="companyName1">Welcome</h5></div>
         <small>Empowering smarter data</small>
       </div>
     </div>
 
     <nav class="nav-section" aria-label="Main navigation">
-      <a class="nav-item " href="./dashboard.html" id="navDashboard"><i class="fa-solid fa-house"></i> Dashboard</a>
-      <div class="nav-item" id="navRdbms"><i class="fa-solid fa-database"></i> RDBMS</div>
-      <div class="nav-sub" aria-label="RDBMS subnav">
-        <div class="nav-leaf" id="navSchemaLink"><i class="fa-solid fa-layer-group"></i> Schema Explorer</div>
+      <a class="nav-item" href="./dashboard.html" id="navDashboard">
+        <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+
+      <div class="nav-item has-sub" id="navRdbms">
+        <span class="nav-icon"><i class="fa-solid fa-database"></i></span>
+        <span class="nav-text">Database</span>
+        <button class="nav-arrow" type="button" aria-label="Toggle RDBMS submenu" aria-expanded="true" aria-controls="submenu-rdbms">▼</button>
+      </div>
+      <div class="nav-sub is-open" id="submenu-rdbms" aria-label="Database subnav">
+        <div class="nav-leaf has-sub" id="navSchemaLink">
+          <span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span>
+          <span class="nav-text">Schema Explorer</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle Schema Explorer submenu" aria-expanded="false" aria-controls="submenu-schema">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-schema" aria-label="Schema Explorer subnav"></div>
       </div>
 
-      <div class="nav-item" id="navFileTransfer"><i class="fa-solid fa-file-arrow-up"></i> File Transfer</div>
+      <div class="nav-item" id="navFileTransfer">
+        <span class="nav-icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+        <span class="nav-text">File Transfer</span>
+      </div>
 
-      <div class="nav-item" id="navCloud"><i class="fa-solid fa-cloud"></i> Cloud Platforms</div>
-      <div class="nav-sub" aria-label="Cloud subnav">
-        <div class="nav-leaf" id="navAws"><i class="fa-brands fa-aws"></i> AWS</div>
-        <div class="nav-leaf" id="navGcp"><i class="fa-brands fa-google"></i> GCP</div>
-        <div class="nav-leaf" id="navAzure"><i class="fa-brands fa-microsoft"></i> Azure</div>
+      <div class="nav-item has-sub" id="navCloud">
+        <span class="nav-icon"><i class="fa-solid fa-cloud"></i></span>
+        <span class="nav-text">Cloud Platforms</span>
+        <button class="nav-arrow" type="button" aria-label="Toggle Cloud Platforms submenu" aria-expanded="true" aria-controls="submenu-cloud">▼</button>
+      </div>
+      <div class="nav-sub is-open" id="submenu-cloud" aria-label="Cloud subnav">
+        <div class="nav-leaf has-sub" id="navAws">
+          <span class="nav-icon"><i class="fa-brands fa-aws"></i></span>
+          <span class="nav-text">AWS</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle AWS submenu" aria-expanded="false" aria-controls="submenu-aws">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-aws" aria-label="AWS subnav"></div>
+        <div class="nav-leaf has-sub" id="navGcp">
+          <span class="nav-icon"><i class="fa-brands fa-google"></i></span>
+          <span class="nav-text">GCP</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle GCP submenu" aria-expanded="false" aria-controls="submenu-gcp">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-gcp" aria-label="GCP subnav"></div>
+        <div class="nav-leaf has-sub" id="navAzure">
+          <span class="nav-icon"><i class="fa-brands fa-microsoft"></i></span>
+          <span class="nav-text">Azure</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle Azure submenu" aria-expanded="false" aria-controls="submenu-azure">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-azure" aria-label="Azure subnav"></div>
       </div>
 
       <div style="height:8px"></div>
-      
-      <a class="nav-item" href="#" id="navMigrations"><i class="fa-solid fa-rocket"></i> Migrations</a>
-      <a class="nav-item" href="#" id="navSettings"><i class="fa-solid fa-gear"></i> Settings</a>
-      <a class="nav-item active" href="#" id="navContactUs"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+
+      <div class="nav-item" id="navMigrations">
+        <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
+        <span class="nav-text">Migrations</span>
+      </div>
+      <div class="nav-item" id="navSettings">
+        <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+        <span class="nav-text">Settings</span>
+      </div>
+      <a class="nav-item active" href="#" id="navContactUs">
+        <span class="nav-icon"><i class="fa-solid fa-envelope"></i></span>
+        <span class="nav-text">Help/FAQ</span>
+      </a>
       <a class="nav-item logout-btn" href="#">
-  <i class="fa-solid fa-sign-out"></i> Logout
-</a>
+        <span class="nav-icon"><i class="fa-solid fa-sign-out"></i></span>
+        <span class="nav-text">Logout</span>
+      </a>
 
     </nav>
   </aside>
@@ -525,7 +575,7 @@
     <div class="contact-container">
 
     <div class="contact-header">
-        <h2>Contact Us</h2>
+        <h2>Help/FAQ</h2>
         <p>Have questions, feedback, or need support? Reach out and we'll respond soon.</p>
     </div>
 
@@ -557,13 +607,13 @@
         <div class="info-card">
             <i class="fa-solid fa-envelope"></i>
             <h4>Email</h4>
-            <p>support@livisionit.com</p>
+            <p>lokesha@livisionit.com<br>girish.s@livisionit.com</p>
         </div>
 
         <div class="info-card">
             <i class="fa-solid fa-phone"></i>
             <h4>Phone</h4>
-            <p>+1 (800) 123-4567</p>
+            <p>+91 70382 95213</p>
         </div>
 
         
@@ -595,7 +645,7 @@
   <div class="nav nav-tabs" id="nav-tab" role="tablist">
     <div class="nav-tabs-btns">
 
-      <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Migration</button>
+      <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Source Database</button>
       <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false" disabled>Target</button>
     </div>
     
@@ -769,6 +819,7 @@
   <script src="js/bootstrap.bundle.min.js"></script>
   <script src="js/jquery-3.7.1.min.js" ></script>
   <script src="js/jquery.modal.min.js" ></script>
+  <script src="js/sidebar.js"></script>
   <!-- <script src="js/session-expiry.js"></script> -->
   <!-- <script src="js/authentication.js"></script> -->
   <script src="js/dashboard.js"></script>

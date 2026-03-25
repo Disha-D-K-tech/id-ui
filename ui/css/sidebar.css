@@ -1,0 +1,186 @@
+
+
+/* ---------- Toggle button ---------- */
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.sidebar-toggle {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(74, 76, 255, 0.12);
+  color: #4a4cff;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(74, 76, 255, 0.22);
+}
+
+/* ---------- Sidebar base ---------- */
+.sidebar {
+  width: 280px;
+  transition: width 0.28s ease, padding 0.28s ease;
+  overflow: hidden;
+}
+
+/* ---------- Brand ---------- */
+.brand-text {
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+/* ---------- Nav items ---------- */
+.sidebar .nav-icon {
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--lv-indigo);
+}
+
+.sidebar .nav-text {
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+
+.nav-arrow {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: #6b6b80;
+  padding: 0 2px;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.25s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.nav-arrow.is-open {
+  transform: rotate(180deg);
+}
+
+/* Hide arrows inside sub-leaves*/
+.nav-sub .nav-arrow {
+  display: none;
+}
+
+/*Hover */
+.sidebar .nav-item:hover,
+.sidebar .nav-item.active {
+  background: #4a4cff !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(74, 76, 255, 0.18);
+}
+
+.sidebar .nav-item:hover .nav-icon,
+.sidebar .nav-item.active .nav-icon,
+.sidebar .nav-item:hover i,
+.sidebar .nav-item.active i {
+  color: #fff !important;
+}
+
+.sidebar .nav-item:hover .nav-arrow,
+.sidebar .nav-item.active .nav-arrow {
+  color: #fff !important;
+}
+
+.sidebar .nav-leaf:hover,
+.sidebar .nav-leaf.active {
+  background: #4a4cff !important;
+  color: #fff !important;
+}
+
+.sidebar .nav-leaf:hover .nav-icon,
+.sidebar .nav-leaf.active .nav-icon,
+.sidebar .nav-leaf:hover i,
+.sidebar .nav-leaf.active i {
+  color: #fff !important;
+}
+
+/* ---------- Submenus ---------- */
+.nav-sub {
+  margin-left: 28px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.28s ease, opacity 0.22s ease, margin 0.2s ease;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.nav-sub.is-open {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 2px;
+  margin-bottom: 8px;
+}
+
+.nav-sub--nested {
+  margin-left: 22px;
+}
+
+/* ---------- COLLAPSED STATE ---------- */
+body.sidebar-collapsed .sidebar {
+  width: 68px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+body.sidebar-collapsed .sidebar .brand {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar .nav-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body.sidebar-collapsed .sidebar .nav-arrow {
+  display: none !important;
+}
+
+body.sidebar-collapsed .sidebar .nav-sub {
+  display: none !important;
+}
+
+body.sidebar-collapsed .sidebar .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+
+.main {
+  transition: margin-left 0.28s ease;
+}
+
+footer {
+  transition: left 0.28s ease;
+}
+
+body.sidebar-collapsed .main {
+  margin-left: 100px;
+}
+
+body.sidebar-collapsed footer {
+  left: 100px;
+}

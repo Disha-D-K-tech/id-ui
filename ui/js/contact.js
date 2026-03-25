@@ -66,20 +66,28 @@ $(function () {
     };
 
     console.log("Contact payload:", payload);
-    $.ajax({
-      url: "https://dsmswg6acqfs4tbacgleljmv7a0xubiy.lambda-url.ap-south-1.on.aws/",
-      type: "POST",
-      data: payload,
-      dataType: "json",
-      success: function (response) {
-        console.log("Contact message sent:", response);
-        contactForm[0].reset();
-        showQuerySuccess();
-      },
-      error: function (xhr, status, error) {
-        console.log("Contact error:", status, error);
-        alert("Unable to send message. Please try again later.");
-      }
+    showOverlay('Submitting your message...');
+
+        $.ajax({
+          url: 'https://dsmswg6acqfs4tbacgleljmv7a0xubiy.lambda-url.ap-south-1.on.aws/',
+          type: 'POST',
+          data: payload,
+          dataType: 'json',
+          success: function(response) {
+            console.log('Query submitted:', response);
+            hideOverlay();
+            showQuerySuccess();
+            queryForm[0].reset();
+            $.modal.close();
+          },
+          error: function(xhr, status, error) {
+            console.log('Query submit error:', status, error);
+            console.log('XHR Error:', xhr.responseText);
+            hideOverlay();
+            alert('Unable to submit your message right now. Please try again.');
+          }
+        });
+      });
     });
-  });
-});
+   
+

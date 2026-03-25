@@ -12,11 +12,179 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <!-- loader -->
   <link href="./css/overlay.css" rel="stylesheet">
+  <!-- Sidebar CSS from prev -->
+  <link href="./css/sidebar.css" rel="stylesheet">
   <!-- Chart.js -->
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+    /* ── PREVIOUS DATABASES SECTION ── */
+#previousDbSection { margin-top: 24px; }
+#previousDbSection .section-title { color: var(--lv-indigo); font-weight: 800; margin-bottom: 4px; }
+
+.prev-db-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.95));
+  border-radius: 16px;
+  border: 1px solid rgba(120,110,220,0.08);
+  box-shadow: 0 10px 32px rgba(91,62,214,0.05);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.prev-db-toggle {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  text-align: left;
+}
+.prev-db-toggle:focus {
+  outline: none;
+}
+.prev-db-toggle-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+.prev-db-toggle-title {
+  margin: 0;
+  color: var(--lv-indigo);
+  font-size: 18px;
+  font-weight: 800;
+}
+.prev-db-toggle-meta {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.prev-db-toggle-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.prev-db-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.prev-db-toggle-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgba(120,110,220,0.12);
+  background: #fff;
+  color: var(--lv-indigo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .18s ease;
+  flex-shrink: 0;
+}
+.prev-db-card.is-open .prev-db-toggle-icon {
+  transform: rotate(180deg);
+}
+.prev-db-content {
+  display: none;
+  border-top: 1px solid rgba(120,110,220,0.08);
+}
+.prev-db-card.is-open .prev-db-content {
+  display: block;
+}
+.prev-db-inner {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  min-height: 180px;
+}
+.prev-db-side { padding: 20px 24px; }
+.prev-db-side-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+}
+.prev-db-badge {
+  padding: 5px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.src-badge { background: #ede9fe; color: #6d28d9; }
+.tgt-badge { background: #d1fae5; color: #065f46; }
+.prev-db-type-pill {
+  background: #f3f0ff; color: var(--lv-indigo);
+  padding: 4px 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 700;
+}
+.prev-db-row {
+  display: flex; gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(120,110,220,0.05);
+  font-size: 13px;
+}
+.prev-db-row:last-child { border-bottom: none; }
+.prev-db-label {
+  color: var(--muted); font-weight: 600;
+  min-width: 90px; flex-shrink: 0;
+}
+.prev-db-value { color: #2b2448; font-weight: 500; word-break: break-all; }
+.prev-db-divider {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #f5f2ff, #ede9fe);
+  border-left: 1px solid rgba(120,110,220,0.08);
+  border-right: 1px solid rgba(120,110,220,0.08);
+}
+.prev-db-arrow,
+.prev-db-toggle-icon-round {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--lv-purple-1), var(--lv-indigo));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 13px;
+  box-shadow: 0 6px 16px rgba(91,62,214,0.2);
+}
+.prev-db-toggle-icon-round { flex-shrink: 0; }
+.prev-db-flow-arrows {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.prev-db-flow-arrows i {
+  color: #98a2b3;
+  font-size: 14px;
+}
+.prev-db-target-empty {
+  display: flex; align-items: center; justify-content: center;
+  background: repeating-linear-gradient(
+    45deg, transparent, transparent 8px,
+    rgba(120,110,220,0.03) 8px, rgba(120,110,220,0.03) 16px
+  );
+}
+.prev-db-no-target { text-align: center; }
+.prev-db-actions {
+  display: flex;
+  justify-content: center;
+  padding: 0 24px 22px;
+}
+.prev-db-action-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 24px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, var(--lv-purple-1), var(--lv-indigo));
+  box-shadow: 0 12px 28px rgba(91,62,214,0.12);
+}
     :root{
       --lv-purple-1: #6a5acd;
       --lv-purple-2: #7c63ff;
@@ -31,11 +199,11 @@
       background: radial-gradient(1000px 400px at 10% 10%, rgba(123,97,255,0.06), transparent),
                   linear-gradient(120deg,#eef0ff,#fbf8ff);
       color:#172033;
-      padding-bottom:80px; /* space for footer */
+      padding-bottom:80px;
       -webkit-font-smoothing:antialiased;
     }
 
-    /* Sidebar */
+    /* ── SIDEBAR — exactly from file 9 (prev) ── */
     .sidebar {
       position:fixed; left:0; top:0; bottom:0;
       width:280px; padding:22px 20px;
@@ -56,171 +224,165 @@
     .brand small{ display:block; color:var(--muted); margin-top:3px; font-size:12px; }
 
     .nav-section{ margin-top:12px; display:block; font-weight:600; }
-    .nav-item{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:#333; text-decoration:none; margin-bottom:6px; transition:all .12s ease; cursor: pointer; }
+    .nav-item{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:#333; text-decoration:none; margin-bottom:6px; transition:all .12s ease; cursor:pointer; }
     .nav-item i{ width:20px; text-align:center; color:var(--lv-indigo); }
     .nav-item:hover, .nav-item.active { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); color:white; transform:translateY(-2px); box-shadow: 0 8px 26px rgba(91,62,214,0.08); }
 
-     /* Nested menu */
-    .nav-sub { margin-left:28px; margin-top:6px; margin-bottom:10px; display:block; cursor: pointer;}
+    /* Nested menu — exactly from file 9 */
+    .nav-sub { margin-left:28px; margin-top:6px; margin-bottom:10px; display:block; cursor:pointer; }
     .nav-sub .nav-leaf { padding:6px 10px; border-radius:6px; display:flex; align-items:center; gap:8px; color:#444; text-decoration:none; font-weight:600; margin-bottom:6px; cursor:pointer; }
     .nav-leaf:hover { background:rgba(120,110,220,0.04); color:var(--lv-indigo); }
 
     /* Main */
-    .main { margin-left:320px; padding:22px 34px 140px 34px; } /* leave room for footer */
-    .profile-dropdown {
-  position: relative;
-}
+    .main { margin-left:320px; padding:22px 34px 140px 34px; }
 
-.profile-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #f3f4ff;
-  padding: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
+    /* Profile dropdown */
+    .profile-dropdown { position:relative; }
+    .profile-icon { width:40px; height:40px; border-radius:50%; background:#f3f4ff; padding:6px; cursor:pointer; transition:0.2s; }
+    .profile-icon:hover { background:#e6e8ff; }
+    .profile-menu {
+      position:absolute; top:50px; right:0; background:white;
+      border-radius:10px; padding:0; width:150px;
+      opacity:0; visibility:hidden;
+      box-shadow:0 10px 28px rgba(23,26,38,0.04);
+    }
+    .profile-menu .nav-item { margin:0; }
+    .profile-dropdown:hover .profile-menu { opacity:1; visibility:visible; }
+    .menu-item { padding:8px 12px; border-radius:6px; color:#ccc; cursor:pointer; }
+    .menu-item:hover { background:linear-gradient(90deg,#6a5acd,#7c63ff); color:white; }
+    .text-danger { color:#ff6b6b; }
 
-.profile-icon:hover {
-  background: #e6e8ff;
-}
-
-/* Dropdown */
-.profile-menu {
-  position: absolute;
-  top: 50px;
-  right: 0;
-  background: white;
-  border-radius: 10px;
-  padding: 0px;
-  width: 150px;
-  opacity: 0;
-  visibility: hidden;
-  /* transform: translateY(-10px); */
-  /* transition: 0.2s; */
-  box-shadow:0 10px 28px rgba(23,26,38,0.04);
-}
-
-.profile-menu .nav-item{
-  margin: 0;
-}
-/* Show on hover */
-.profile-dropdown:hover .profile-menu {
-  opacity: 1;
-  visibility: visible;
-  /* transform: translateY(0); */
-}
-
-/* Menu items */
-.menu-item {
-  padding: 8px 12px;
-  border-radius: 6px;
-  color: #ccc;
-  cursor: pointer;
-}
-
-.menu-item:hover {
-  background: linear-gradient(90deg,#6a5acd,#7c63ff);
-  color: white;
-}
-
-.text-danger {
-  color: #ff6b6b;
-}
-
+    /* Topbar */
     .topbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--glass); padding:12px 18px; border-radius:12px; border:1px solid rgba(120,110,220,0.06); }
     .topbar .title { font-size:18px; font-weight:700; color:var(--lv-indigo); }
     .topbar .sub { font-size:13px; color:var(--muted); }
 
     /* Start migration */
     .start-wrap { margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    /* .start-btn { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); border:none; padding:10px 16px; color:white; border-radius:10px; font-weight:700; box-shadow:0 12px 32px rgba(91,62,214,0.08); transition: transform .12s ease, box-shadow .12s ease;} */
-    .start {
-  display: flex;
-  justify-content: center;   /* centers horizontally */
-  align-items: center;
-  margin-top: 22px;
-  margin-bottom: 8px;
-}
-
-     .start-btn { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); border:none; padding:12px 64px; color:white; border-radius:10px; font-weight:700; box-shadow:0 12px 32px rgba(91,62,214,0.08); transition: transform .12s ease, box-shadow .12s ease;}
-    .start-btn:hover { transform: translateY(-4px); box-shadow:0 18px 44px rgba(91,62,214,0.12); }
-
-    .user-initials {
-      width: 40px;
-      height: 40px;
-      background: #4a4cff;     /* adjust to your theme */
-      color: white;
-      font-weight: 600;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      text-transform: uppercase;
-    }
- 
-    /* Cards row */
-    .cards-row { 
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 18px;
-  margin-top: 18px;
-  width: 100%;
-}
-
-    .card-compact {
+    .start { display:flex; justify-content:center; align-items:center; margin-top:22px; margin-bottom:8px; }
+    .start-btn { background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); border:none; padding:12px 64px; color:white; border-radius:10px; font-weight:700; box-shadow:0 12px 32px rgba(91,62,214,0.08); transition:transform .12s ease, box-shadow .12s ease; }
+    .start-btn:hover { transform:translateY(-4px); box-shadow:0 18px 44px rgba(91,62,214,0.12); }
+    .summary-action-slot { display:flex; align-items:center; justify-content:flex-end; }
+    .summary-action-slot .start-btn { padding:12px 28px; }
+    .history-empty {
+      text-align: center;
+      padding: 26px 18px;
+      border-radius: 14px;
       background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.95));
-      border-radius:14px; padding:18px; box-shadow: 0 10px 28px rgba(23,26,38,0.04);
-      transition: transform .18s ease, box-shadow .18s ease;
-      border:1px solid rgba(120,110,220,0.05);
+      border: 1px dashed rgba(120,110,220,0.18);
+      color: var(--muted);
+      box-shadow: 0 10px 28px rgba(91,62,214,0.04);
     }
-    .card-compact:hover { transform: translateY(-6px); box-shadow: 0 18px 46px rgba(91,62,214,0.08); }
+    .history-empty strong {
+      display: block;
+      color: var(--lv-indigo);
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
 
+    .user-initials { width:40px; height:40px; background:#4a4cff; color:white; font-weight:600; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; text-transform:uppercase; }
+
+    /* Cards row */
+    .cards-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-top:18px; width:100%; }
+    .card-compact { background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.95)); border-radius:14px; padding:18px; box-shadow:0 10px 28px rgba(23,26,38,0.04); transition:transform .18s ease, box-shadow .18s ease; border:1px solid rgba(120,110,220,0.05); }
+    .card-compact:hover { transform:translateY(-6px); box-shadow:0 18px 46px rgba(91,62,214,0.08); }
     .card-compact h6 { margin:0; color:var(--muted); font-weight:700; font-size:13px; }
     .card-compact h3 { margin:8px 0 0 0; color:var(--lv-indigo); font-weight:800; }
-
     .card-compact .mini { font-size:12px; color:var(--muted); margin-top:6px; }
 
-    /* DB count chart container */
+    /* DB overview */
     .db-overview { margin-top:18px; padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.96)); border:1px solid rgba(120,110,220,0.06); box-shadow:0 14px 40px rgba(91,62,214,0.03); }
-
     .db-overview .controls { display:flex; gap:8px; align-items:center; }
-
     .badge-pill { padding:8px 12px; border-radius:999px; font-weight:700; }
 
+    /* Schema Explorer */
+    .schema-shell { margin-top:18px; padding:18px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,246,255,0.98)); border:1px solid rgba(120,110,220,0.04); box-shadow:0 10px 28px rgba(91,62,214,0.03); }
+    .chip { padding:7px 14px; border-radius:999px; background:#fff; border:1px solid rgba(160,140,240,0.22); cursor:pointer; font-weight:700; transition:all .12s; font-size:13px; }
+    .chip.active { background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; box-shadow:0 8px 16px rgba(124,58,237,0.12); }
+    .badge-low { background:#22c55e; color:#fff; padding:6px 8px; border-radius:8px; font-weight:700; }
+    .badge-mid { background:#f59e0b; color:#fff; padding:6px 8px; border-radius:8px; font-weight:700; }
+    .badge-high { background:#ef4444; color:#fff; padding:6px 8px; border-radius:8px; font-weight:700; }
 
-    /* Schema Explorer panel (full-width inside main) */
-    .schema-shell {
-      margin-top:18px;
-      padding:18px;
-      border-radius:12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,246,255,0.98));
-      border:1px solid rgba(120,110,220,0.04);
-      box-shadow: 0 10px 28px rgba(91,62,214,0.03);
+    /* Footer */
+    footer { position:fixed; left:320px; right:0; bottom:0; height:72px; background:linear-gradient(180deg,#fff,#fbfbff); border-top:1px solid rgba(120,110,220,0.05); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; box-shadow:0 -6px 20px rgba(91,62,214,0.02); }
+
+    /* ── MODAL — improved styles from file 10 ── */
+    .modal-content {
+      border-radius:20px;
+      border:1px solid rgba(120,110,220,0.10);
+      background:linear-gradient(180deg, #fcfbff, #f5f2ff);
+      box-shadow:0 24px 60px rgba(91,62,214,0.14);
+      overflow:hidden;
     }
-    .chip {
-      padding:7px 14px;
-      border-radius:999px;
-      background:#fff;
-      border:1px solid rgba(160,140,240,0.22);
-      cursor:pointer;
-      font-weight:700;
-      transition:all .12s;
-      font-size:13px;
-    }
-    .chip.active { background: linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; box-shadow:0 8px 16px rgba(124,58,237,0.12); }
-
-    .badge-low { background:#22c55e;color:#fff;padding:6px 8px;border-radius:8px;font-weight:700; }
-    .badge-mid { background:#f59e0b;color:#fff;padding:6px 8px;border-radius:8px;font-weight:700; }
-    .badge-high { background:#ef4444;color:#fff;padding:6px 8px;border-radius:8px;font-weight:700; }
-
-    /* footer fixed */
-    footer { position:fixed; left:320px; right:0; bottom:0; height:72px; background: linear-gradient(180deg,#fff, #fbfbff); border-top:1px solid rgba(120,110,220,0.05); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; box-shadow: 0 -6px 20px rgba(91,62,214,0.02); }
-
-    /* Modal tweaks */
-    .modal-content { border-radius:12px; }
     .form-required::after { content:" *"; color:#d33; font-weight:700; margin-left:4px; }
+    .migration-tabs {
+      padding:14px 16px 0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(246,242,255,0.92));
+      border-bottom:1px solid rgba(120,110,220,0.08);
+    }
+    .migration-tabs .nav-tabs { border-bottom:none; }
+    .migration-tabs .nav-link { border:none; border-radius:12px 12px 0 0; color:var(--muted); font-weight:700; padding:12px 20px; }
+    .migration-tabs .nav-link.active { color:#fff; background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); box-shadow:0 12px 28px rgba(91,62,214,0.16); }
+    .migration-pane { padding:22px; }
+    .migration-form-card { background:#ffffff; padding:28px; border-radius:18px; box-shadow:0 14px 32px rgba(91,62,214,0.08); border:1px solid rgba(120,110,220,0.08); }
+    .migration-form-head { margin-bottom:22px; }
+    .migration-form-head h5 { margin:0 0 6px; color:var(--lv-indigo); font-weight:800; }
+    .migration-form-head p { margin:0; color:var(--muted); font-size:14px; }
+    .migration-field { margin-bottom:18px; }
+    .migration-field label { font-size:14px; font-weight:600; margin-bottom:6px; display:block; color:#2b2448; }
+    .migration-field input,
+    .migration-field select,
+    .migration-field textarea { width:100%; padding:12px 14px; border-radius:10px; border:1px solid #e5defa; font-size:14px; background:#faf8ff; transition:border-color .2s ease, box-shadow .2s ease, background-color .2s ease; }
+    .migration-field input:focus,
+    .migration-field select:focus,
+    .migration-field textarea:focus { outline:none; border-color:#6a5acd; background:#fff; box-shadow:0 0 0 4px rgba(106,90,205,0.10); }
+    .migration-field textarea { min-height:110px; resize:vertical; }
+    .migration-field input[readonly] { background:#f3f0ff; color:#5b3ed6; border-color:#d9cffd; cursor:default; user-select:none; pointer-events:none; }
+    .migration-field input[readonly]:hover,
+    .migration-field input[readonly]:focus { background:#f3f0ff; color:#5b3ed6; border-color:#d9cffd; box-shadow:none; }
+    .status-static-field {
+      background: #fff !important;
+      border: 1px solid #e5defa !important;
+      color: #2b2448 !important;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      text-align: left;
+      font-family: inherit;
+    }
+    .status-static-field::placeholder {
+      color: #2b2448;
+      opacity: 1;
+    }
+    .status-static-field[readonly],
+    .status-static-field[readonly]:hover,
+    .status-static-field[readonly]:focus {
+      background: #e5defa !important;
+      border-color: #e5defa !important;
+      color: #2b2448 !important;
+      box-shadow: none;
+      cursor: default;
+      pointer-events: none;
+    }
+    .migration-actions { padding:0 22px 22px; border-top:none; gap:12px; }
+    .migration-actions .btn { border-radius:10px; padding:11px 18px; font-weight:700; }
+    .migration-shell .modal-dialog { max-width:min(1180px, 94vw); }
+
+    /* Tab disabled wrap */
+    .tab-disabled-wrap { display:inline-flex; cursor:not-allowed; }
+    .tab-disabled-wrap .nav-link[disabled] { pointer-events:none; opacity:0.55; }
+
+    /* Nav tabs layout */
+    .nav-tabs { display:flex; justify-content:space-between; align-items:center; }
+    .nav-tabs-btns { display:flex; justify-content:center; align-items:center; }
+
+    /* Messages */
+    .message { margin:10px 0; padding:10px; border-radius:4px; font-weight:bold; }
+    .message.success { background-color:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+    .message.error { background-color:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+
+    /* Helpers */
+    .muted { color:var(--muted); font-size:13px; }
 
     /* Responsive */
     @media(max-width:1000px){
@@ -229,174 +391,150 @@
       footer { left:0; }
       .sidebar{ display:none; }
     }
-
-    /* small helpers */
-    .muted { color:var(--muted); font-size:13px; }
-
-    .message {
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 4px;
-      font-weight: bold;
-    }
-
-    .message.success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .message.error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    .nav-tabs{
-      display: flex;
-      justify-content : space-between;
-      align-items: center;
-    }
-    .nav-tabs-btns{
-      display: flex;
-      justify-content : center;
-      align-items: center;
-    }
   </style>
 </head>
 <body>
-  <!-- loader -->
-      <div id="overlay" class="overlay"></div>
-    <div id="messageBox" class="message-box">
-      <p id="messageContent">This is your message!</p> 
 
-      <div class="spinner-grow text-secondary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
+  <!-- Overlay / Loader -->
+  <div id="overlay" class="overlay"></div>
+  <div id="messageBox" class="message-box">
+    <p id="messageContent">This is your message!</p>
+    <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden">Loading...</span></div>
+    <div class="spinner-grow text-info"      role="status"><span class="visually-hidden">Loading...</span></div>
+    <div class="spinner-grow text-warning"   role="status"><span class="visually-hidden">Loading...</span></div>
+    <div class="spinner-grow text-success"   role="status"><span class="visually-hidden">Loading...</span></div>
+    <div class="spinner-grow text-dark"      role="status"><span class="visually-hidden">Loading...</span></div>
+  </div>
 
-      <div class="spinner-grow text-info" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div> 
-
-      <div class="spinner-grow text-warning" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-
-      <div class="spinner-grow text-success" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div> 
-
-      <div class="spinner-grow text-dark" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-  
-    </div>
-
-
-  <!-- Sidebar -->
-   
+  <!-- ── SIDEBAR — exactly as file 9 (prev), structure unchanged ── -->
   <aside class="sidebar" role="navigation" aria-label="Main sidebar">
+    <div class="sidebar-top">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">☰</button>
+    </div>
     <div class="brand">
       <div class="logo">
-        <!-- Use uploaded logo path -->
         <img src="ld.png" alt="Livision logo"
              style="width:100%;height:100%;object-fit:cover;border-radius:12px" />
       </div>
-      <div>
+      <div class="brand-text">
         <div class="title"><h5 id="companyName1">Welcome</h5></div>
         <small>Empowering smarter data</small>
       </div>
     </div>
 
     <nav class="nav-section" aria-label="Main navigation">
-      <a class="nav-item active" href="#" id="navDashboard"><i class="fa-solid fa-house"></i> Dashboard</a>
-      <div class="nav-item" id="navRdbms"><i class="fa-solid fa-database"></i> RDBMS</div>
-      <div class="nav-sub" aria-label="RDBMS subnav">
-        <div class="nav-leaf" id="navSchemaLink"><i class="fa-solid fa-layer-group"></i> Schema Explorer</div>
+      <a class="nav-item active" href="#" id="navDashboard">
+        <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+
+      <div class="nav-item has-sub" id="navRdbms">
+        <span class="nav-icon"><i class="fa-solid fa-database"></i></span>
+        <span class="nav-text">Database</span>
+        <button class="nav-arrow" type="button" aria-label="Toggle RDBMS submenu" aria-expanded="true" aria-controls="submenu-rdbms">▼</button>
+      </div>
+      <div class="nav-sub is-open" id="submenu-rdbms" aria-label="Database subnav">
+        <div class="nav-leaf has-sub" id="navSchemaLink">
+          <span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span>
+          <span class="nav-text">Schema Explorer</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle Schema Explorer submenu" aria-expanded="false" aria-controls="submenu-schema">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-schema" aria-label="Schema Explorer subnav"></div>
       </div>
 
-      <div class="nav-item" id="navFileTransfer"><i class="fa-solid fa-file-arrow-up"></i> File Transfer</div>
+      <div class="nav-item" id="navFileTransfer">
+        <span class="nav-icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+        <span class="nav-text">File Transfer</span>
+      </div>
 
-      <div class="nav-item" id="navCloud"><i class="fa-solid fa-cloud"></i> Cloud Platforms</div>
-      <div class="nav-sub" aria-label="Cloud subnav">
-        <div class="nav-leaf" id="navAws"><i class="fa-brands fa-aws"></i> AWS</div>
-        <div class="nav-leaf" id="navGcp"><i class="fa-brands fa-google"></i> GCP</div>
-        <div class="nav-leaf" id="navAzure"><i class="fa-brands fa-microsoft"></i> Azure</div>
+      <div class="nav-item has-sub" id="navCloud">
+        <span class="nav-icon"><i class="fa-solid fa-cloud"></i></span>
+        <span class="nav-text">Cloud Platforms</span>
+        <button class="nav-arrow" type="button" aria-label="Toggle Cloud Platforms submenu" aria-expanded="true" aria-controls="submenu-cloud">▼</button>
+      </div>
+      <div class="nav-sub is-open" id="submenu-cloud" aria-label="Cloud subnav">
+        <div class="nav-leaf has-sub" id="navAws">
+          <span class="nav-icon"><i class="fa-brands fa-aws"></i></span>
+          <span class="nav-text">AWS</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle AWS submenu" aria-expanded="false" aria-controls="submenu-aws">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-aws" aria-label="AWS subnav"></div>
+        <div class="nav-leaf has-sub" id="navGcp">
+          <span class="nav-icon"><i class="fa-brands fa-google"></i></span>
+          <span class="nav-text">GCP</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle GCP submenu" aria-expanded="false" aria-controls="submenu-gcp">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-gcp" aria-label="GCP subnav"></div>
+        <div class="nav-leaf has-sub" id="navAzure">
+          <span class="nav-icon"><i class="fa-brands fa-microsoft"></i></span>
+          <span class="nav-text">Azure</span>
+          <button class="nav-arrow" type="button" aria-label="Toggle Azure submenu" aria-expanded="false" aria-controls="submenu-azure">▼</button>
+        </div>
+        <div class="nav-sub nav-sub--nested" id="submenu-azure" aria-label="Azure subnav"></div>
       </div>
 
       <div style="height:8px"></div>
-      
-      <a class="nav-item" href="#" id="navMigrations"><i class="fa-solid fa-rocket"></i> Migrations</a>
-      <a class="nav-item" href="#" id="navSettings"><i class="fa-solid fa-gear"></i> Settings</a>
-      <a class="nav-item" href="./contact.html" id="navContactUs"><i class="fa-solid fa-envelope"></i> Contact Us</a>
-      <a class="nav-item logout-btn" href="#">
-  <i class="fa-solid fa-sign-out"></i> Logout
-</a>
 
+      <div class="nav-item" id="navMigrations">
+        <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
+        <span class="nav-text">Migrations</span>
+      </div>
+      <div class="nav-item" id="navSettings">
+        <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+        <span class="nav-text">Settings</span>
+      </div>
+      <a class="nav-item" href="./contact.html" id="navContactUs">
+        <span class="nav-icon"><i class="fa-solid fa-envelope"></i></span>
+        <span class="nav-text">Help/FAQ</span>
+      </a>
+      <a class="nav-item logout-btn" href="#">
+        <span class="nav-icon"><i class="fa-solid fa-sign-out"></i></span>
+        <span class="nav-text">Logout</span>
+      </a>
     </nav>
   </aside>
 
   <!-- Main -->
-   
   <main class="main body" role="main">
-    
+
     <div class="topbar" role="banner">
-  <div>
-    <div class="title"><h5 id="companyName">Welcome</h5></div>
-    <div class="sub muted">Admin Dashboard — overview</div>
-  </div>
-  
-  <div style="display:flex;align-items:center;gap:12px">
-    <div class="title"><h5 id="userName">Welcome</h5></div>
-
-    <!-- <input id="globalSearch"
-           type="search"
-           placeholder="Search..."
-           class="form-control form-control-sm"
-           style="width:260px;border-radius:8px;border:1px solid rgba(120,110,220,0.06)"/> -->
-
-    <!-- PROFILE DROPDOWN START -->
-    <div class="profile-dropdown">
-
-      <!-- Profile Icon -->
-      <div class="profile-icon">
-
-        <svg xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 16 16"
-             style="width:100%; height:100%; fill:#a5a6f6;">
-          <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
-        </svg>
-
+      <div>
+        <div class="title"><h5 id="companyName">Welcome</h5></div>
+        <div class="sub muted">Admin Dashboard — overview</div>
       </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="title"><h5 id="userName">Welcome</h5></div>
 
-      <!-- Dropdown Menu -->
-      <div class="profile-menu">
-        <a class="nav-item logout-btn" href="#">
-  <i class="fa-solid fa-sign-out"></i> Logout
-</a>
+        <!-- Profile Dropdown -->
+        <div class="profile-dropdown">
+          <div class="profile-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"
+                 style="width:100%;height:100%;fill:#a5a6f6;">
+              <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+            </svg>
+          </div>
+          <div class="profile-menu">
+            <a class="nav-item logout-btn" href="#">
+              <i class="fa-solid fa-sign-out"></i> Logout
+            </a>
+          </div>
+        </div>
       </div>
-
     </div>
-    <!-- PROFILE DROPDOWN END -->
 
-  </div>
-</div>
-
-
-    <!-- Start migration (moved to top) -->
+    <!-- Database Summary header -->
     <div class="start-wrap" style="margin-top:18px">
       <div>
         <h5 style="margin:0;color:var(--lv-indigo)">Database Summary</h5>
         <small class="muted">Click to open the Add Database form and submit migration request</small>
       </div>
-      <div>
-      </div>
+      <div id="summaryActionSlot" class="summary-action-slot" style="display:none"></div>
     </div>
 
-    <!-- Cards row -->
-    <!-- Dashboard content (default visible) -->
+    <!-- Dashboard Section -->
     <div id="dashboardSection">
       <div class="cards-row" aria-live="polite">
+
         <div class="card-compact" id="card-databases" role="article" tabindex="0">
           <h6>Databases</h6>
           <h3 id="dbCount">12 Active</h3>
@@ -414,24 +552,36 @@
             <canvas id="sftpMiniChart" height="80"></canvas>
           </div>
         </div>
+
         <div class="card-compact" id="card-clouds" role="article" tabindex="0">
-            <h6>Cloud Platforms</h6>
-            <h3 id="cloudCount">3 Enabled</h3>
-            <div class="mini muted">Connected: <strong id="cloudConnected">AWS, GCP, Azure</strong></div>
-            <div style="margin-top:10px">
-              <canvas id="cloudMiniChart" height="80"></canvas>
-            </div>
+          <h6>Cloud Platforms</h6>
+          <h3 id="cloudCount">3 Enabled</h3>
+          <div class="mini muted">Connected: <strong id="cloudConnected">AWS, GCP, Azure</strong></div>
+          <div style="margin-top:10px">
+            <canvas id="cloudMiniChart" height="80"></canvas>
           </div>
+        </div>
+
       </div>
+
       <div class="start">
-
-        <button id="startMigrationBtn" class="start-btn"><i class="fa-solid fa-plus"></i> Start Migration</button>
+        <button id="startMigrationBtn" class="start-btn">
+          <i class="fa-solid fa-plus"></i> Start New Migration
+        </button>
       </div>
-
-      
     </div>
+    <!-- Previous Databases -->
+<div id="previousDbSection" style="display:none">
+  <div class="start-wrap" style="margin-top:10px; margin-bottom:4px">
+    <div>
+      <h5 class="section-title" style="margin:0;color:var(--lv-indigo)">Previous Databases</h5>
+      <small class="muted">Your previously configured source and target databases</small>
+    </div>
+  </div>
+  <div id="previousDbCards"></div>
+</div>
 
-    <!-- Schema explorer section (hidden by default; expands in main area) -->
+    <!-- Schema Explorer Section -->
     <div id="schemaSection" style="display:none">
       <div class="schema-shell">
         <div class="d-flex align-items-center justify-content-between mb-2">
@@ -446,14 +596,12 @@
             </select>
           </div>
         </div>
-
         <div id="chipBar" class="d-flex gap-2 flex-wrap mb-3"></div>
-
         <div id="schemaAccordion"></div>
       </div>
     </div>
 
-    <!-- Placeholder Pages for File Transfer / Cloud / Migrations etc. -->
+    <!-- Placeholder Section -->
     <div id="placeholderSection" style="display:none; margin-top:18px">
       <div class="schema-shell">
         <h5 id="placeholderTitle">Placeholder</h5>
@@ -461,206 +609,211 @@
       </div>
     </div>
 
-   
-
   </main>
 
-
-
-  <div class="contact-us body active">
-    Contact us
-
-  </div>
-  <!-- Footer (fixed) -->
-   
+  <!-- Footer -->
   <footer>© 2025 Livision DataHub — Empowering smarter decisions</footer>
 
-  <!-- Add Database Modal -->
-  <div class="modal fade" id="addDbModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+  <!-- ── ADD DATABASE MODAL — improved from file 10 ── -->
+  <div class="modal fade migration-shell" id="addDbModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content">
-        <nav>
-  <div class="nav nav-tabs" id="nav-tab" role="tablist">
-    <div class="nav-tabs-btns">
 
-      <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Migration</button>
-      <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false" disabled>Target</button>
-    </div>
-    
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="padding-right: 20px; margin-right: 10px;"></button>
-  </div>
-</nav>
-<div class="tab-content" id="nav-tabContent">
-  <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
-    <form id="addDbForm" novalidate>
-          
- 
-          <div class="modal-body">
-            <div id="modalAlert" style="display:none" class="alert" role="alert"></div>
-            <div id="message" class="message"></div>
-
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label form-required">Database Type</label>
-                <select id="dbType" class="form-select" required>
-                  <option value="">Select type</option>
-                  <option>PostgreSQL</option>
-                  <option>MySQL</option>
-                  <option>SQL Server</option>
-                </select>
-              </div>
-              
-
-              <div class="col-md-6">
-                <label class="form-label form-required">Host Name</label>
-                <input id="dbHost" class="form-control" required placeholder="db.example.com">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Port</label>
-                <input id="dbPort" class="form-control" required type="number" placeholder="5432">
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label form-required">Database Name</label>
-                <input id="dbName" class="form-control" required placeholder="db_name">
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label form-required">Username</label>
-                <input id="dbUser" class="form-control" required placeholder="db_user">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Password</label>
-                <input id="dbPass" type="password" class="form-control" required placeholder="••••••">
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label form-required">Approver Email 1</label>
-                <input id="approver1" type="email" class="form-control" required placeholder="approver1@company.com">
-                <div class="form-text muted">Must be company email (not personal)</div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Approver Email 2 (optional)</label>
-                <input id="approver2" type="email" class="form-control" placeholder="approver2@company.com">
-              </div>
-
-              <div class="col-12">
-                <label class="form-label">Description (optional)</label>
-                <textarea id="dbDesc" class="form-control" rows="3" placeholder="Short description (optional)"></textarea>
-              </div>
+        <nav class="migration-tabs">
+          <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <div class="nav-tabs-btns">
+              <button class="nav-link active" id="nav-home-tab"
+                data-bs-toggle="tab" data-bs-target="#nav-home"
+                type="button" role="tab"
+                aria-controls="nav-home" aria-selected="true">
+                Source Database
+              </button>
+              <span class="tab-disabled-wrap" id="targetTabWrap"
+                title="Available only after source database is tested and saved">
+                <button class="nav-link" id="nav-profile-tab"
+                  data-bs-toggle="tab" data-bs-target="#nav-profile"
+                  type="button" role="tab"
+                  aria-controls="nav-profile" aria-selected="false" disabled>
+                  To Database
+                </button>
+              </span>
             </div>
-
+            <button type="button" class="btn-close" data-bs-dismiss="modal"
+              aria-label="Close" style="padding-right:20px;margin-right:10px;"></button>
           </div>
-        </form>
-        <div class="modal-footer">
-          <button id="testConnectionBtn" type="button" class="btn btn-outline-secondary">Test Connection</button>
-          <button id="saveDetailsBtn" type="button" class="btn btn-primary" style="background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo));color:#fff;font-weight:700">Save Details</button>
-        </div>
-  </div>
-  <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
-<div class="modal fade" id="targetDbModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <form id="targetDbForm" novalidate>
-          <div class="modal-header">
-            <h5 class="modal-title">Target Database — Details</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
+        </nav>
 
-          <div class="modal-body">
-            <div id="targetModalAlert" style="display:none" class="alert" role="alert"></div>
-            <div id="targetMessage" class="message"></div>
+        <div class="tab-content" id="nav-tabContent">
 
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label form-required">Entity ID</label>
-                <input id="entity_id" class="form-control" required placeholder="Entity ID">
+          <!-- SOURCE TAB -->
+          <div class="tab-pane fade show active" id="nav-home"
+            role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
+            <form id="addDbForm" novalidate>
+              <div class="modal-body migration-pane">
+                <div class="migration-form-card">
+                  <div class="migration-form-head">
+                    <h5>Source Database</h5>
+                    <p>Enter the source connection details, test them, then save to continue.</p>
+                  </div>
+                  <div id="modalAlert" style="display:none" class="alert" role="alert"></div>
+                  <div id="message" class="message"></div>
+                  <div class="row g-3">
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Entity</label>
+                      <input id="src_entity_id" class="form-control" required placeholder="Entity ID" readonly>
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">BU ID</label>
+                      <select id="src_bu_id" class="form-select" required>
+                       <option value="" selected disabled>Select BU ID</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Database Type</label>
+                      <select id="dbType" class="form-select" required>
+                        <option value="">Select type</option>
+                        <option>PostgreSQL</option>
+                        <option>MySQL</option>
+                        <option>SQL Server</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Host Name</label>
+                      <input id="dbHost" class="form-control" required placeholder="db.example.com">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Port</label>
+                      <input id="dbPort" class="form-control" required type="number" placeholder="5432">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Database Name</label>
+                      <input id="dbName" class="form-control" required placeholder="db_name">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Username</label>
+                      <input id="dbUser" class="form-control" required placeholder="db_user">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Password</label>
+                      <input id="dbPass" type="password" class="form-control" required placeholder="••••••">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Approver Email 1</label>
+                      <input id="approver1" type="email" class="form-control" required placeholder="approver1@company.com">
+                      <div class="form-text muted">Must be company email (not personal)</div>
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label">Approver Email 2 (optional)</label>
+                      <input id="approver2" type="email" class="form-control" placeholder="approver2@company.com">
+                    </div>
+                    <div class="col-12 migration-field">
+                      <label class="form-label">Description (optional)</label>
+                      <textarea id="dbDesc" class="form-control" rows="3" placeholder="Short description (optional)"></textarea>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">BU ID</label>
-                <input id="bu_id" class="form-control" required placeholder="BU ID">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Type</label>
-                <select id="targetType" class="form-select" required>
-                  <option value="">Select type</option>
-                  <option>PostgreSQL</option>
-                  <option>MySQL</option>
-                  <option>SQL Server</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Host URL</label>
-                <input id="host_url" class="form-control" required placeholder="host.example.com">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Port</label>
-                <input id="t_dbPort" class="form-control" required type="number" placeholder="5432">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Username</label>
-                <input id="t_dbUser" class="form-control" required placeholder="username">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Password</label>
-                <input id="t_dbPass" type="password" class="form-control" required placeholder="••••••">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Role</label>
-                <input id="role" class="form-control" placeholder="Role">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Warehouse</label>
-                <input id="warehouse" class="form-control" placeholder="Warehouse">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label form-required">Database Name</label>
-                <input id="t_dbName" class="form-control" required placeholder="db_name">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Status</label>
-                <input id="status" class="form-control" placeholder="Status">
-              </div>
-              <div class="col-12">
-                <label class="form-label">Description (optional)</label>
-                <textarea id="targetDesc" class="form-control" rows="3" placeholder="Short description (optional)"></textarea>
-              </div>
+            </form>
+            <div class="modal-footer migration-actions">
+              <button id="testConnectionBtn" type="button" class="btn btn-outline-secondary">Test Connection</button>
+              <button id="saveDetailsBtn" type="button" class="btn btn-primary"
+                style="background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo));color:#fff;font-weight:700">
+                Save Details
+              </button>
             </div>
-
           </div>
-        </form>
-        <div class="modal-footer">
-          <button id="testTargetBtn" type="button" class="btn btn-outline-secondary">Test Connection</button>
-          <button id="saveTargetBtn" type="button" class="btn btn-primary" style="background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo));color:#fff;font-weight:700">Save Details</button>
+
+          <!-- TARGET TAB -->
+          <div class="tab-pane fade" id="nav-profile"
+            role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
+            <form id="targetDbForm" novalidate>
+              <div class="modal-body migration-pane">
+                <div class="migration-form-card">
+                  <div class="migration-form-head">
+                    <h5>Target Database</h5>
+                    <p>Enter the destination details. Entity is pre-filled from your session.</p>
+                  </div>
+                  <div id="targetModalAlert" style="display:none" class="alert" role="alert"></div>
+                  <div id="targetMessage" class="message"></div>
+                  <div class="row g-3">
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Entity</label>
+                      <input id="entity_id" class="form-control" required placeholder="Entity ID" readonly>
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">BU ID</label>
+                      <input id="bu_id" class="form-control" required placeholder="BU ID" readonly>
+                      <input id="bu_id_value" type="hidden">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Type</label>
+                      <select id="targetType" class="form-select" required>
+                        <option value="">Select type</option>
+                        <option>SnowFlake</option>
+                        <option>Fabric OneLake</option>
+                        <option>DataBricks</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Host URL</label>
+                      <input id="host_url" class="form-control" required placeholder="host.example.com">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Port</label>
+                      <input id="t_dbPort" class="form-control" required type="number" placeholder="5432">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Username</label>
+                      <input id="t_dbUser" class="form-control" required placeholder="username">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Password</label>
+                      <input id="t_dbPass" type="password" class="form-control" required placeholder="••••••">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Role</label>
+                      <input id="role" class="form-control" required placeholder="Role">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Warehouse</label>
+                      <input id="warehouse" class="form-control" required placeholder="Warehouse">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label form-required">Database Name</label>
+                      <input id="t_dbName" class="form-control" required placeholder="db_name">
+                    </div>
+                    <div class="col-md-6 migration-field">
+                      <label class="form-label">Status</label>
+                      <input id="status" class="form-control status-static-field" value="NEW" placeholder="NEW" readonly tabindex="-1" aria-readonly="true">
+                    </div>
+                    <div class="col-12 migration-field">
+                      <label class="form-label form-required">Description</label>
+                      <textarea id="targetDesc" class="form-control" rows="3" required placeholder="Short description"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+            <div class="modal-footer migration-actions">
+              <button id="saveTargetBtn" type="button" class="btn btn-primary"
+                style="background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo));color:#fff;font-weight:700">
+                Save Details
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
-    
-  </div>  
-  </div>
-</div>
-        
-      </div>
-    </div>
   </div>
 
- 
-  <!-- Target Database Modal -->
-  
-
-  
-
-
-
-  <!-- Libraries -->
+  <!-- Libraries — correct load order -->
   <script src="js/bootstrap.bundle.min.js"></script>
-  <script src="js/jquery-3.7.1.min.js" ></script>
-  <script src="js/jquery.modal.min.js" ></script>
-  <!-- <script src="js/session-expiry.js"></script> -->
-  <!-- <script src="js/authentication.js"></script> -->
+  <script src="js/jquery-3.7.1.min.js"></script>
+  <script src="js/jquery.modal.min.js"></script>
+  <script src="js/sidebar.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/logout.js"></script>
+
 </body>
 </html>
- 
