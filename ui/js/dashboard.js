@@ -119,6 +119,602 @@ function getBuApiHeaders() {
     '';
   return apiKey ? { 'x-api-key': apiKey } : {};
 }
+// PIPELINE
+const PIPELINE_STEPS = [
+  { id: 'run-assessment',  label: 'Run Assessment' },
+  { id: 'start-migration', label: 'Start Migration' },
+  { id: 'ddl-extraction',  label: 'DDL Extraction' },
+  { id: 'data-loading',    label: 'Data Loading' },
+  { id: 'validation',      label: 'Validation' },
+  { id: 'success',         label: 'Success' },
+];
+
+const SCHEMA_EXPLORER_API_URL = 'https://dpm44skvaxno5gkzadi3kpodyu0vfzct.lambda-url.ap-south-1.on.aws';
+const SCHEMA_EXPLORER_STORAGE_KEY = 'schemaExplorerResults';
+const schemaExplorerPage = 'schema_explorer.html';
+
+function getPipelineStepStateClass(stepId, phase) {
+  return `state-${stepId}-${phase}`;
+}
+
+function cloneTemplateElement(templateId) {
+  const template = document.getElementById(templateId);
+  if (!template || !template.content.firstElementChild) return null;
+  return template.content.firstElementChild.cloneNode(true);
+}
+
+function buildPipelineElement(cardIdx) {
+  const pipeline = cloneTemplateElement('previousDbPipelineTemplate');
+  if (!pipeline) return document.createElement('div');
+
+  pipeline.id = `pipeline-${cardIdx}`;
+  pipeline.dataset.cardIdx = String(cardIdx);
+
+  PIPELINE_STEPS.forEach(function(step, i) {
+    const stepNode = cloneTemplateElement('previousDbPipelineStepTemplate');
+    const button = stepNode.querySelector('.pipeline-btn');
+    const icon = stepNode.querySelector('i');
+    const label = stepNode.querySelector('[data-step-label]');
+    const isFirst = i === 0;
+
+    button.classList.add(getPipelineStepStateClass(step.id, 'pending'));
+    button.dataset.step = step.id;
+    button.dataset.stepIdx = String(i);
+    button.dataset.card = String(cardIdx);
+    button.title = step.label;
+    if (!isFirst) button.setAttribute('aria-disabled', 'true');
+
+    icon.className = step.icon;
+    label.textContent = step.label;
+    pipeline.appendChild(stepNode);
+
+    if (i < PIPELINE_STEPS.length - 1) {
+      const arrow = cloneTemplateElement('previousDbPipelineArrowTemplate');
+      arrow.id = `arrow-${cardIdx}-${i}`;
+      pipeline.appendChild(arrow);
+    }
+  });
+
+  return pipeline;
+}
+const pipelineStates = {};
+
+function initPipelineState(cardIdx) {
+  pipelineStates[cardIdx] = { currentStep: 0, running: false, timer: null };
+}
+
+function setPipelineStepState(cardIdx, stepIdx, state) {
+  const container = document.getElementById('pipeline-' + cardIdx);
+  if (!container) return;
+  const btns = container.querySelectorAll('.pipeline-btn');
+  if (btns[stepIdx]) btns[stepIdx].className = 'pipeline-btn ' + state;
+}
+
+function setArrowState(cardIdx, arrowIdx, state) {
+  const arrow = document.getElementById('arrow-' + cardIdx + '-' + arrowIdx);
+  if (arrow) arrow.className = 'pipeline-arrow ' + state;
+}
+
+function setCardTransferState(cardIdx, transferState) {
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (!card) return;
+
+  card.classList.toggle('is-transferring', transferState === 'running');
+  card.classList.toggle('is-transfer-complete', transferState === 'complete');
+}
+
+function getCardDbId(cardIdx) {
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (!card) return '';
+  return String(card.dataset.dbId || '').trim();
+}
+
+function showSchemaExplorerButton(cardIdx) {
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (!card) return;
+  const button = card.querySelector('[data-schema-explorer-btn]');
+  if (!button) return;
+  button.hidden = false;
+  button.textContent = 'Schema Explorer';
+  button.removeAttribute('aria-busy');
+  button.removeAttribute('aria-disabled');
+}
+
+function showBinaryExplorerButton(cardIdx) {
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (!card) return;
+  const button = card.querySelector('[data-binary-explorer-btn]');
+  if (!button) return;
+  button.hidden = false;
+}
+
+function readSchemaExplorerStore() {
+  try {
+    return JSON.parse(sessionStorage.getItem(SCHEMA_EXPLORER_STORAGE_KEY) || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeSchemaExplorerStore(store) {
+  sessionStorage.setItem(SCHEMA_EXPLORER_STORAGE_KEY, JSON.stringify(store));
+}
+
+function storeSchemaExplorerResult(dbId, payload) {
+  if (!dbId) return;
+  const store = readSchemaExplorerStore();
+  store[String(dbId)] = payload;
+  writeSchemaExplorerStore(store);
+}
+
+function fetchSchemaExplorerAssessment(dbId) {
+  return new Promise(function(resolve) {
+    if (!dbId) {
+      resolve(null);
+      return;
+    }
+
+    const requestPayload = { db_id: dbId };
+    console.log('Schema Explorer request payload:', requestPayload);
+
+    $.ajax({
+      url: SCHEMA_EXPLORER_API_URL,
+      type: 'POST',
+      data: requestPayload,
+      dataType: 'json',
+      success: function(response) {
+        console.log('Schema Explorer API response:', response);
+        const payload = {
+          db_id: dbId,
+          fetched_at: new Date().toISOString(),
+          ok: true,
+          request: requestPayload,
+          response: response
+        };
+        storeSchemaExplorerResult(dbId, payload);
+        resolve(payload);
+      },
+      error: function(xhr) {
+        let responsePayload = xhr.responseText || '';
+        try {
+          responsePayload = responsePayload ? JSON.parse(responsePayload) : responsePayload;
+        } catch (error) {
+          // Keep raw response text when it is not JSON.
+        }
+
+        console.error('Schema Explorer API error:', responsePayload || xhr.statusText || 'Unknown error');
+        const payload = {
+          db_id: dbId,
+          fetched_at: new Date().toISOString(),
+          ok: false,
+          request: requestPayload,
+          response: responsePayload || xhr.statusText || 'Unknown error'
+        };
+        storeSchemaExplorerResult(dbId, payload);
+        resolve(payload);
+      }
+    });
+  });
+}
+
+function openSchemaExplorerPage(dbId) {
+  if (!dbId) return;
+
+  showOverlay('Loading Schema Explorer...');
+
+  $.ajax({
+    url: SCHEMA_EXPLORER_API_URL,
+    type: 'POST',
+    data: { db_id: String(dbId) },
+    success: function(htmlResponse) {
+  console.log('Schema Explorer success:', htmlResponse);
+  hideOverlay();
+  const store = readSchemaExplorerStore();
+  store[String(dbId)] = { db_id: dbId, fetched_at: new Date().toISOString(), ok: true, html: htmlResponse };
+  writeSchemaExplorerStore(store);
+  console.log('Schema Explorer stored payload:', store[String(dbId)]);
+  window.location.href = `${schemaExplorerPage}?db_id=${encodeURIComponent(dbId)}`;
+},
+error: function(xhr) {
+  console.log('Schema Explorer error status:', xhr.status);
+  console.log('Schema Explorer error responseText:', xhr.responseText);
+  hideOverlay();
+  const store = readSchemaExplorerStore();
+  store[String(dbId)] = { db_id: dbId, fetched_at: new Date().toISOString(), ok: true, html: xhr.responseText || null };
+  writeSchemaExplorerStore(store);
+  console.log('Schema Explorer stored payload:', store[String(dbId)]);
+  window.location.href = `${schemaExplorerPage}?db_id=${encodeURIComponent(dbId)}`;
+}
+  });
+}
+
+function simulateStep(cardIdx, stepIdx) {
+  const state = pipelineStates[cardIdx];
+  if (!state || !state.running) return;
+  setArrowState(cardIdx, stepIdx, 'arrow-moving');
+  state.timer = setTimeout(function() {
+    if (!pipelineStates[cardIdx]?.running) return;
+    setArrowState(cardIdx, stepIdx, 'arrow-done');
+    const nextIdx = stepIdx + 1;
+    if (nextIdx >= PIPELINE_STEPS.length) {
+      setPipelineStepState(cardIdx, PIPELINE_STEPS.length - 1, getPipelineStepStateClass(PIPELINE_STEPS[PIPELINE_STEPS.length - 1].id, 'complete'));
+      setCardTransferState(cardIdx, 'complete');
+      pipelineStates[cardIdx].running = false;
+      return;
+    }
+    setPipelineStepState(cardIdx, stepIdx, getPipelineStepStateClass(PIPELINE_STEPS[stepIdx].id, 'complete'));
+    setPipelineStepState(cardIdx, nextIdx, getPipelineStepStateClass(PIPELINE_STEPS[nextIdx].id, 'active'));
+    pipelineStates[cardIdx].currentStep = nextIdx;
+    if (nextIdx < PIPELINE_STEPS.length - 1) {
+      simulateStep(cardIdx, nextIdx);
+    } else {
+      state.timer = setTimeout(function() {
+        setPipelineStepState(cardIdx, nextIdx, getPipelineStepStateClass(PIPELINE_STEPS[nextIdx].id, 'complete'));
+        setCardTransferState(cardIdx, 'complete');
+        pipelineStates[cardIdx].running = false;
+      }, 1200);
+    }
+  }, 1800);
+}
+function handleRunAssessment(cardIdx) {
+  const state = pipelineStates[cardIdx];
+  if (!state || state.running) return;
+
+  const dbId = getCardDbId(cardIdx);
+  state.running = true;
+
+  setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'active'));
+  setArrowState(cardIdx, 0, 'arrow-moving');
+  //showOverlay('Collecting your databases...');
+  setCardTransferState(cardIdx, 'running');
+  // Update status pill from NEW → In Progress
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (card) {
+  const newPill = card.querySelector('[data-new-pill]');
+  if (newPill) {
+    newPill.textContent = 'In Progress';
+    newPill.hidden = false;
+    newPill.style.background = '#fff7ed';
+    newPill.style.color = '#c2410c';
+    newPill.style.borderColor = '#fed7aa';
+  }
+}
+
+  const srcRecord = (dbHistoryRecords[cardIdx] && dbHistoryRecords[cardIdx].source) || {};
+  console.log('full srcRecord:', JSON.stringify(srcRecord));
+
+  let host = srcRecord.host || '';
+  let port = srcRecord.port || '';
+
+  if (!port && typeof host === 'string' && host.includes(':') && !host.startsWith('http')) {
+    const parts = host.split(':');
+    const possiblePort = parts[parts.length - 1];
+    if (!isNaN(possiblePort)) {
+      port = possiblePort;
+      host = parts.slice(0, parts.length - 1).join(':');
+    }
+  }
+
+  if (!port) {
+    const t = String(srcRecord.type || '').toLowerCase();
+    if (t.includes('postgres')) port = 5432;
+    else if (t.includes('mysql')) port = 3306;
+    else if (t.includes('sql server') || t.includes('mssql')) port = 1433;
+    else if (t.includes('oracle')) port = 1521;
+    else if (t.includes('snowflake') || t.includes('databricks')) port = 443;
+  }
+
+  $.ajax({
+    url: 'https://tkwmf35jnmecgphf7axr5gkqaq0qwauy.lambda-url.ap-south-1.on.aws',
+    type: 'POST',
+    data: {
+    action: 'start_migration',
+    user_id: parseUserJson(sessionStorage.getItem('userJson')).userid,
+    entity_id: getCurrentCompanyName(),
+    bu_id: srcRecord.bu_id || '',
+    db_type: srcRecord.type || '',
+    //db_version: '',
+    db_name: srcRecord.name || '',
+    db_host: srcRecord.host || '',
+    db_port: '23043',
+  //db_username: '',
+  //db_password: '',
+  //approver_email1: srcRecord.approver1 || '',
+  //approver_email2: srcRecord.approver2 || '',
+  //description: srcRecord.desc || '',
+    db_id: dbId
+},
+    dataType: 'json',
+    complete: function(xhr) {
+  console.log('Run Assessment — save API response:', xhr.responseJSON || xhr.responseText);
+
+  // Show extraction started overlay for 2s then begin polling status_reader
+  showOverlay('Assessment Started...');
+
+  setTimeout(function() {
+    showOverlay('Starting Migration...');
+
+    setTimeout(function() {
+      showOverlay('Getting Status...');
+
+      setCardTransferState(cardIdx, '');
+      setArrowState(cardIdx, 0, 'arrow-done');
+      setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
+      setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'active'));
+
+      // Poll status_reader every 4 seconds
+      const pollInterval = setTimeout(function() {
+        $.ajax({
+        url: 'https://f3pt5mhs4renqnqqcf24q4hudy0mkdpx.lambda-url.ap-south-1.on.aws',
+        type: 'POST',
+        data: {
+          db_id:   dbId,
+          user_id: getSafeUserId(),
+          db_type: srcRecord.type || '',
+          db_name: srcRecord.name || '',
+          entity:  getCurrentCompanyName()
+        },
+        dataType: 'json',
+        complete: function(xhr2) {
+          console.log('status_reader response:', xhr2.responseJSON || xhr2.responseText);
+          hideOverlay();
+          const res2 = xhr2.responseJSON;
+          
+          // Parse table counts
+          if (res2 && res2['table-counts']) {
+            let tableCountsRaw = res2['table-counts'];
+            let tableCounts = [];
+            try {
+              // Convert Python tuples (...) to JSON arrays [...]
+              const cleaned = tableCountsRaw
+                .replace(/'/g, '"')
+                .replace(/\(/g, '[')
+                .replace(/\)/g, ']')
+                .replace(/\bNone\b/g, 'null')
+                .replace(/\bTrue\b/g, 'true')
+                .replace(/\bFalse\b/g, 'false');
+              const parsed = JSON.parse(cleaned);
+              tableCounts = parsed.table_counts || [];
+            } catch(e) {
+              console.warn('Failed to parse table-counts:', e);
+            }
+
+            if (tableCounts.length > 0) {
+              // Build a Map of schema.table -> count
+              const countMap = new Map();
+              let grandTotal = 0;
+              tableCounts.forEach(function(entry) {
+                const key = entry[0]; // e.g. "ecommerce.returns"
+                const count = entry[1] || 0;
+                countMap.set(key, count);
+                grandTotal += count;
+              });
+
+              //sessionStorage.setItem('tableCountMap_' + dbId, JSON.stringify(Array.from(countMap.entries())));
+              //count logic
+              // // Show total next to Source heading
+              // const pipeline3 = document.getElementById('pipeline-' + cardIdx);
+              // const card3 = pipeline3 ? pipeline3.closest('[data-prev-db-card]') : null;
+              // if (card3) {
+              //   const srcHeading = card3.querySelector('.prev-db-source .prev-db-heading-label');
+              //   if (srcHeading && !srcHeading.querySelector('.table-count-badge')) {
+              //     const badge = document.createElement('span');
+              //     badge.className = 'table-count-badge';
+              //     badge.style.cssText = 'margin-left:auto;font-size:11px;font-weight:700;color:#6b7280;border:1px solid #d1d5db;border-radius:999px;padding:2px 8px;background:#f9fafb;';
+              //     badge.textContent = grandTotal.toLocaleString() + ' rows';
+              //     srcHeading.parentElement.style.display = 'flex';
+              //     srcHeading.parentElement.style.justifyContent = 'space-between';
+              //     srcHeading.parentElement.style.alignItems = 'center';
+              //     srcHeading.parentElement.appendChild(badge);
+              //   }
+
+              //   // Show 0 next to Target heading
+              //   const tgtHeading = card3.querySelector('.prev-db-target .prev-db-heading-label');
+              //   if (tgtHeading && !tgtHeading.querySelector('.table-count-badge')) {
+              //     const badge2 = document.createElement('span');
+              //     badge2.className = 'table-count-badge';
+              //     badge2.style.cssText = 'margin-left:auto;font-size:11px;font-weight:700;color:#6b7280;border:1px solid #d1d5db;border-radius:999px;padding:2px 8px;background:#f9fafb;';
+              //     badge2.textContent = '0 rows';
+              //     tgtHeading.parentElement.style.display = 'flex';
+              //     tgtHeading.parentElement.style.justifyContent = 'space-between';
+              //     tgtHeading.parentElement.style.alignItems = 'center';
+              //     tgtHeading.parentElement.appendChild(badge2);
+              //   }
+              // }
+            }
+          }
+          
+          if (res2 && res2.status && Array.isArray(res2.status)) {
+            const items = res2.status;
+            let extractedCount = 0;
+            const typeStats = new Map();
+
+            items.forEach(item => {
+            const type = item.type || 'unknown';
+            if (!typeStats.has(type)) typeStats.set(type, { total: 0, extracted: 0 });
+            typeStats.get(type).total++;
+            if (item.status && item.status.includes('Extracted') && !item.status.includes('in Progress')) {
+            if ((item.type || '').toLowerCase() !== 'sequences') extractedCount++;
+            typeStats.get(type).extracted++;
+          } else if ((item.type || '').toLowerCase() === 'sequences') {
+            typeStats.get(type).extracted++;
+            }
+           }
+        );
+            // const typeStats = {};
+
+            // items.forEach(item => {
+            //   const type = item.type || 'unknown';
+            //   if (!typeStats[type]) typeStats[type] = { total: 0, extracted: 0 };
+              
+            //   typeStats[type].total++;
+              
+            //   if (item.status && item.status.includes('Extracted') && !item.status.includes('in Progress')) {
+            //     extractedCount++;
+            //     typeStats[type].extracted++;
+            //   }
+            // });
+            const nonSeqItems = items.filter(item => (item.type || '').toLowerCase() !== 'sequences');
+            const nonSeqExtracted = nonSeqItems.filter(item => item.status === 'DDL - Extracted').length;
+            if (nonSeqItems.length > 0 && (nonSeqExtracted / nonSeqItems.length) >= 0.9) {
+            setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
+            setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
+            setArrowState(cardIdx, 1, 'arrow-done');
+
+  // Update status pill → DDL Extracted
+            const pipeline2 = document.getElementById('pipeline-' + cardIdx);
+            const card2 = pipeline2 ? pipeline2.closest('[data-prev-db-card]') : null;
+            if (card2) {
+              const newPill = card2.querySelector('[data-new-pill]');
+                if (newPill) {
+                  newPill.textContent = 'DDL Extracted';
+                  newPill.hidden = false;
+                  newPill.style.background = '#f0fdf4';
+                  newPill.style.color = '#15803d';
+                  newPill.style.borderColor = '#bbf7d0';
+    }
+  }
+}
+
+            const pipeline = document.getElementById('pipeline-' + cardIdx);
+            const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+            if (card) {
+              let statsContainer = card.querySelector('.stat-chips-container');
+              if (!statsContainer) {
+                statsContainer = document.createElement('div');
+                statsContainer.className = 'stat-chips-container';
+                statsContainer.style.display = 'flex';
+                statsContainer.style.flexWrap = 'wrap';
+                statsContainer.style.gap = '8px';
+                statsContainer.style.padding = '10px 0 0 0';
+                statsContainer.style.background = 'none';
+                statsContainer.style.justifyContent = 'flex-start';
+                card.querySelector('[data-target-details]').appendChild(statsContainer);
+              }
+              statsContainer.innerHTML = '';
+            
+              const icons = {
+                tables: 'fa-table',
+                views: 'fa-eye',
+                functions: 'fa-code',
+                sequences: 'fa-list-ol',
+                unknown: 'fa-database'
+              };
+
+              typeStats.forEach(function(stats, type) {
+                const iconClass = icons[type.toLowerCase()] || icons.unknown;
+                const chip = document.createElement('div');
+                chip.title = `${type}: ${stats.total}`;
+                chip.style.display = 'inline-flex';
+                chip.style.alignItems = 'center';
+                chip.style.gap = '5px';
+                chip.style.padding = '4px 10px';
+                chip.style.borderRadius = '999px';
+                chip.style.border = '1px solid #d1d5db';
+                chip.style.background = '#fff';
+                chip.style.color = '#374151';
+                chip.style.fontSize = '12px';
+                chip.style.fontWeight = '600';
+                chip.style.cursor = 'default';
+                const displayCount = type.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
+                chip.innerHTML = `
+                  <i class="fa-solid ${iconClass}" style="font-size:11px;color:#6b7280;"></i>
+                  <span>${displayCount}</span>
+                `; 
+                statsContainer.appendChild(chip);
+              });
+
+              if (dbHistoryRecords[cardIdx]) {
+                dbHistoryRecords[cardIdx].typeStats = typeStats;
+                if (window.updateGlobalChart) window.updateGlobalChart();
+              }
+            }
+          }
+
+          if (res2 && res2['binary-cols']) {
+            const store = readSchemaExplorerStore();
+            if (!store[String(dbId)]) store[String(dbId)] = {};
+            store[String(dbId)].binaryCols = res2['binary-cols'];
+            store[String(dbId)].db_id = dbId;
+            writeSchemaExplorerStore(store);
+            showBinaryExplorerButton(cardIdx);
+          }
+        }
+      });
+    });
+
+    // Store interval so it can be cleared later
+    //pipelineStates[cardIdx].pollInterval = pollInterval;
+
+    if (dbId) showSchemaExplorerButton(cardIdx);
+    state.running = false;
+  }, 1000);
+}, 1000);
+}
+  });
+}
+
+// function handleRunAssessment(cardIdx) {
+//   const state = pipelineStates[cardIdx];
+//   if (!state || state.running) return;
+//   const dbId = getCardDbId(cardIdx);
+//   state.running = true;
+//   showOverlay('Collecting your databases...');
+//   setCardTransferState(cardIdx, 'running');
+//   fetchSchemaExplorerAssessment(dbId).finally(function() {
+//     hideOverlay();
+//     setCardTransferState(cardIdx, '');
+//     setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
+//     setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'active'));
+//     setArrowState(cardIdx, 0, 'arrow-done');
+//     if (dbId) showSchemaExplorerButton(cardIdx);
+//     state.running = false;
+//   });
+// }
+
+$(document).on('click', '.pipeline-btn[data-step="run-assessment"]', function() {
+  handleRunAssessment(parseInt($(this).data('card')));
+});
+
+$(document).on('click keydown', '[data-schema-explorer-btn]', function(e) {
+  if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const $card = $(this).closest('[data-prev-db-card]');
+  const dbId = String($card.data('dbId') || '').trim();
+  if (!dbId) return;
+  openSchemaExplorerPage(dbId);
+});
+
+$(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
+  if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const $card = $(this).closest('[data-prev-db-card]');
+  const dbId = String($card.data('dbId') || '').trim();
+  if (!dbId) return;
+
+  const store = readSchemaExplorerStore();
+  const payload = store[String(dbId)];
+  if (payload && payload.binaryCols) {
+  const srcRec = dbHistoryRecords.find(r => r.source && String(r.source.id) === String(dbId))?.source || {};
+  sessionStorage.setItem('binaryExplorerData', JSON.stringify({
+  db_id: dbId,
+  binaryCols: payload.binaryCols,
+  db_name: srcRec.name || '',
+  db_type: srcRec.type || '',
+  entity: getCurrentCompanyName()
+}));
+    window.location.href = 'binary_explorer.html';
+  }
+});
 
 /************* FETCH & DISPLAY PREVIOUS DATABASES *************/
 function fetchPreviousDatabases() {
@@ -149,12 +745,12 @@ function fetchPreviousDatabases() {
         : Array.isArray(response) ? response
         : Array.isArray(response?.data) ? response.data
         : [];
-
+      console.log('raw records:', JSON.stringify(raw[0]));
       const normalized = raw
         .map(normalizePreviousDatabaseRecord)
         .filter(Boolean);
 
-// Pairing logic: iterate over normalized records and match SRC with TGT based on srcName and srcType
+    // Pairing logic: iterate over normalized records and match SRC with TGT based on srcName and srcType
       normalized.forEach(function(item) {
         if (item.recordType === 'SRC') {
           records.push({ source: item, target: null });
@@ -214,37 +810,73 @@ function fetchPreviousDatabases() {
 }
 
 
-function dbDetailRow(label, value) {
-  if (!value || value === '' || value === 'undefined' || value === 'null') return '';
-  return `
-    <div class="prev-db-row">
-      <span class="prev-db-label">${label}</span>
-      <span class="prev-db-value">${value}</span>
-    </div>`;
+function createDbDetailRow(label, value) {
+  if (!value || value === '' || value === 'undefined' || value === 'null') return null;
+  const row = cloneTemplateElement('previousDbDetailRowTemplate');
+  if (!row) return null;
+
+  row.querySelector('[data-detail-label]').textContent = label;
+  row.querySelector('[data-detail-value]').textContent = value;
+  return row;
 }
 
-// Returns an HTML string with the appropriate database type icon 
-function getDbTypeIcon(type) {
+function getDbTypePresentation(type) {
   const t = String(type || '').toLowerCase().trim();
   if (t.includes('postgresql') || t.includes('postgres')) {
-    return '<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" style="width:18px;height:18px;vertical-align:middle;margin-right:5px;">';
+    return {
+      displayName: 'PostgreSQL',
+      iconKind: 'image',
+      iconSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
+      iconAlt: 'PostgreSQL'
+    };
   }
   if (t.includes('mysql')) {
-    return '<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" style="width:18px;height:18px;vertical-align:middle;margin-right:5px;">';
+    return {
+      displayName: 'MySQL',
+      iconKind: 'image',
+      iconSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg',
+      iconAlt: 'MySQL'
+    };
   }
   if (t.includes('sql server') || t.includes('sqlserver') || t.includes('mssql')) {
-    return '<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/microsoftsqlserver/microsoftsqlserver-plain.svg" style="width:18px;height:18px;vertical-align:middle;margin-right:5px;">';
+    return {
+      displayName: 'SQL Server',
+      iconKind: 'image',
+      iconSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/microsoftsqlserver/microsoftsqlserver-plain.svg',
+      iconAlt: 'SQL Server'
+    };
   }
-  if (t.includes('snowflake')) {
-    return '<i class="fa-solid fa-snowflake" style="color:#29B5E8;margin-right:5px;font-size:15px;vertical-align:middle;"></i>';
+ 
+if (t.includes('snowflake')) {
+    return {
+      displayName: 'Snowflake',
+      iconKind: 'image',
+      iconSrc:'snowflake-logo.png',
   }
+}
   if (t.includes('databricks')) {
-    return '<img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/databricks.svg" style="width:18px;height:18px;vertical-align:middle;margin-right:5px;filter:invert(36%) sepia(93%) saturate(1352%) hue-rotate(346deg) brightness(97%) contrast(97%);">';
+    return {
+      displayName: 'Databricks',
+      iconKind: 'image',
+      iconSrc: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/databricks.svg',
+      iconAlt: 'Databricks',
+      iconFilter: 'invert(36%) sepia(93%) saturate(1352%) hue-rotate(346deg) brightness(97%) contrast(97%)'
+    };
   }
-  if (t.includes('fabric') || t.includes('onelake')) {
-    return '<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" style="width:18px;height:18px;vertical-align:middle;margin-right:5px;">';
+if (t.includes('fabric') || t.includes('onelake')) {
+    return {
+      displayName: 'Fabric OneLake',
+      iconKind: 'image',
+      iconSrc:'Fabric-onelake.png',
+      //iconSvg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width:32px;height:32px"><defs><linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00C9A7"/><stop offset="100%" stop-color="#00897B"/></linearGradient></defs><path d="M15 20 Q15 10 25 10 L60 10 Q80 10 85 30 L85 55 Q85 70 70 75 L45 85 Q30 92 20 80 L15 60 Z" fill="url(#fg)"/><path d="M30 35 Q28 50 35 60 L55 75 Q65 80 72 68 L80 50 Q82 35 70 28 L45 22 Q32 20 30 35Z" fill="rgba(255,255,255,0.25)"/></svg>`
+    };
   }
-  return '<i class="fa-solid fa-database" style="margin-right:5px;font-size:15px;vertical-align:middle;color:var(--lv-indigo);"></i>';
+  return {
+    displayName: type || '—',
+    iconKind: 'icon',
+    iconClass: 'fa-solid fa-database',
+    iconColor: 'var(--lv-indigo)'
+  };
 }
 
 //normalizes a single database record from the history 
@@ -294,9 +926,11 @@ function normalizePreviousDatabaseRecord(row) {
     return {
       recordType,
       id: row.id || row.bu_id || row.db_id || '—',
+      bu_id: row.bu_id || '',
       type: row.db_type || row.type || '—',
       name: row.db_name || row.name || '—',
       host: row.db_host || row.host_url || row.host || '—',
+      port: row.db_port || row.port || '',
       status: row.status || (recordType === 'TGT' ? 'NEW' : '—'),
       approver1: row.approver_email1 || '',
       approver2: row.approver_email2 || '',
@@ -308,117 +942,128 @@ function normalizePreviousDatabaseRecord(row) {
 
   return null;
 }
+function createDbTypeBlock(type) {
+  const block = cloneTemplateElement('previousDbTypeBlockTemplate');
+  if (!block) return null;
+
+  const presentation = getDbTypePresentation(type);
+  const iconMount = block.querySelector('[data-db-type-icon]');
+  const nameMount = block.querySelector('[data-db-type-name]');
+  if (presentation.iconKind === 'svg') {
+    const wrapper = document.createElement('span');
+    wrapper.innerHTML = presentation.iconSvg;
+    iconMount.appendChild(wrapper);
+    nameMount.textContent = presentation.displayName;
+    return block;
+  }
+  if (presentation.iconKind === 'image') {
+    const img = document.createElement('img');
+    img.src = presentation.iconSrc;
+    img.alt = presentation.iconAlt || presentation.displayName;
+    img.style.width = '32px';
+    img.style.height = '32px';
+    if (presentation.iconFilter) img.style.filter = presentation.iconFilter;
+    iconMount.appendChild(img);
+  } else {
+    const icon = document.createElement('i');
+    icon.className = presentation.iconClass;
+    icon.style.fontSize = '28px';
+    icon.style.color = presentation.iconColor;
+    iconMount.appendChild(icon);
+  }
+
+  nameMount.textContent = presentation.displayName;
+  return block;
+}
+
+function appendDbDetails(container, details) {
+  details.forEach(function(detail) {
+    const row = createDbDetailRow(detail.label, detail.value);
+    if (row) container.appendChild(row);
+  });
+}
 
 // Renders the previous database cards based on the paired records
 function renderPreviousDbCards(records) {
-  let html = '';
+  const container = document.getElementById('previousDbCards');
+  if (!container) return;
+
+  const fragment = document.createDocumentFragment();
 
   records.forEach(function(record, idx) {
+    const card = cloneTemplateElement('previousDbCardTemplate');
+    if (!card) return;
+
     const src = record.source;
     const tgt = record.target;
     const hasSource = !!src;
     const hasTarget = !!tgt;
-    const s = hasSource ? src : {
-      id: '—',
-      type: '—',
-      name: '—',
-      host: '—',
-      status: '—',
-      approver1: '',
-      approver2: '',
-      desc: ''
-    };
+    const s = hasSource ? src : { id:'—', type:'—', name:'—', host:'—', status:'—', approver1:'', approver2:'', desc:'' };
     const t = hasTarget ? tgt : null;
     const summaryName = hasSource ? s.name : (hasTarget ? t.name : 'Database Pair');
-    const summaryMeta = hasTarget
-      ? `${s.type} to ${t.type}`
-      : `${s.type} source`;
-    const isNewStatus = [s.status, hasTarget ? t.status : '']
-      .some(function(status) { return String(status || '').trim().toUpperCase() === 'NEW'; });
-    
-      // Card HTML
-    html += `
-    <div class="prev-db-card" data-prev-db-card>
-      <button type="button" class="prev-db-toggle" data-prev-db-toggle aria-expanded="false">
-        <div class="prev-db-toggle-main">
-          <div class="prev-db-toggle-icon-round"><i class="fa-solid fa-database"></i></div>
-          <div>
-            <p class="prev-db-toggle-title">${summaryName}</p>
-            <div class="prev-db-toggle-meta">Database ${idx + 1} • ${summaryMeta}</div>
-          </div>
-        </div>
-        <div class="prev-db-toggle-side">
-          ${isNewStatus ? `<span class="prev-db-status-pill">NEW</span>` : ''}
-          <span class="prev-db-toggle-icon" aria-hidden="true">
-            <i class="fa-solid fa-chevron-down"></i>
-          </span>
-        </div>
-      </button>
-      <div class="prev-db-content">
-      <div class="prev-db-inner">
+    const summaryMeta = hasTarget ? `${s.type} to ${t.type}` : `${s.type} source`;
+    const isNewStatus = [s.status, hasTarget ? t.status : ''].some(function(status) {
+      return String(status || '').trim().toUpperCase() === 'NEW';
+    });
+    const dbId = String((hasSource && s.id && s.id !== '—' ? s.id : (hasTarget && t ? t.id : '')) || '').trim();
 
-        <!-- SOURCE SIDE -->
-        <div class="prev-db-side prev-db-source">
-          <div class="prev-db-side-header">
-            <span class="prev-db-badge src-badge"><i class="fa-solid fa-database"></i> Source</span>
-            <span class="prev-db-type-pill">${getDbTypeIcon(s.type)}${s.type}</span>
-          </div>
-        
+    initPipelineState(idx);
+    card.dataset.cardIdx = String(idx);
+    card.dataset.dbId = dbId;
 
+    card.querySelector('[data-summary-name]').textContent = summaryName;
+    card.querySelector('[data-summary-meta]').textContent = `Database ${idx + 1} • ${summaryMeta}`;
 
-          
-        ${dbDetailRow('DB Type',  s.type)}
-        ${dbDetailRow('DB Name',  s.name)}
-        ${dbDetailRow('Host',     s.host)}
-        ${dbDetailRow('Status',   s.status)}
-        ${dbDetailRow('Approver 1', s.approver1)}
-        ${s.approver2 ? dbDetailRow('Approver 2', s.approver2) : ''}
-        ${s.desc      ? dbDetailRow('Description', s.desc)     : ''}
-        </div>
+    const newPill = card.querySelector('[data-new-pill]');
+    newPill.hidden = !isNewStatus;
 
-        <!-- DIVIDER -->
-        <div class="prev-db-divider">
-          <div class="prev-db-flow-arrows" aria-hidden="true">
-            <i class="fa-solid fa-angle-right"></i>
-            <i class="fa-solid fa-angle-right"></i>
-            <i class="fa-solid fa-angle-right"></i>
-          </div>
-        </div>
+    const schemaButton = card.querySelector('[data-schema-explorer-btn]');
+    if (schemaButton) {
+      schemaButton.hidden = true;
+      schemaButton.textContent = 'Schema Explorer';
+    }
 
-        <!-- TARGET SIDE -->
-        <div class="prev-db-side prev-db-target ${!hasTarget ? 'prev-db-target-empty' : ''}">
-          ${hasTarget ? `
-          <div class="prev-db-side-header">
-            <span class="prev-db-badge tgt-badge"><i class="fa-solid fa-cloud-arrow-up"></i> Target</span>
-            <span class="prev-db-type-pill">${getDbTypeIcon(t.type)}${t.type}</span>
-          </div>
-        
-        ${dbDetailRow('DB Type',  t.type)}
-        ${dbDetailRow('DB Name',  t.name)}
-        ${dbDetailRow('Host',     t.host)}
-        ${dbDetailRow('Status',   t.status)}
-        ${t.desc ? dbDetailRow('Description', t.desc) : ''}
-          ` : `
-          <div class="prev-db-no-target">
-            <i class="fa-solid fa-clock-rotate-left fa-2x" style="color:#c4b5fd;margin-bottom:10px"></i>
-            <p style="margin:0;color:var(--muted);font-size:13px;font-weight:600">Target not configured yet</p>
-          </div>
-          `}
-        </div>
+    const sourceTypeMount = card.querySelector('[data-source-type]');
+    const sourceDetailsMount = card.querySelector('[data-source-details]');
+    const sourceTypeBlock = createDbTypeBlock(s.type);
+    if (sourceTypeBlock) sourceTypeMount.appendChild(sourceTypeBlock);
+    appendDbDetails(sourceDetailsMount, [
+      { label: 'DB Name', value: s.name },
+      { label: 'Host', value: s.host },
+      { label: 'Status', value: s.status },
+      { label: 'Approver 1', value: s.approver1 },
+      { label: 'Approver 2', value: s.approver2 },
+      { label: 'Description', value: s.desc }
+    ]);
 
-      </div>
-      ${isNewStatus ? `
-      <div class="prev-db-actions">
-        <button type="button" class="prev-db-action-btn" data-history-start>Start Migration</button>
-      </div>
-      ` : ''}
-      </div>
-    </div>`;
+    const targetSide = card.querySelector('[data-target-side]');
+    const targetContent = card.querySelector('[data-target-content]');
+    const targetEmpty = card.querySelector('[data-target-empty]');
+    if (hasTarget) {
+      const targetTypeBlock = createDbTypeBlock(t.type);
+      if (targetTypeBlock) {
+        card.querySelector('[data-target-type]').appendChild(targetTypeBlock);
+      }
+      appendDbDetails(card.querySelector('[data-target-details]'), [
+        { label: 'DB Name', value: t.name },
+        { label: 'Host', value: t.host },
+        { label: 'Status', value: t.status },
+        { label: 'Description', value: t.desc }
+      ]);
+      targetContent.hidden = false;
+      targetEmpty.hidden = true;
+    } else {
+      targetSide.classList.add('prev-db-target-empty');
+      targetContent.hidden = true;
+      targetEmpty.hidden = false;
+    }
+
+    card.querySelector('[data-pipeline-mount]').appendChild(buildPipelineElement(idx));
+    fragment.appendChild(card);
   });
 
-  $('#previousDbCards').html(html);
+  container.replaceChildren(fragment);
   bindPreviousDbToggles();
-  bindHistoryStartButtons();
 }
 
 function bindPreviousDbToggles() {
@@ -544,28 +1189,8 @@ function loadBuOptions() {
        populateBuDropdown(items);
       $bu.prop('disabled', false);
 
-      
-const srcVal = $('#src_bu_id').val();
-const srcText = $('#src_bu_id option:selected').text().trim();
-if (srcVal) {
-  let matched = false;
-  $bu.find('option').each(function() {
-    if ($(this).val().trim() === srcVal || $(this).text().trim() === srcText) {
-      $bu.val($(this).val());
-      matched = true;
-      return false;
-    }
-  });
-  if (!matched) {
-    if ($bu.find(`option[value="${srcVal}"]`).length === 0) {
-      $bu.append($('<option>', { value: srcVal, text: srcText }));
-    }
-    $bu.val(srcVal);
-  }
-  $bu.prop('disabled', true);
-  $bu.css({ 'background': '#f3f0ff', 'color': '#5b3ed6', 'border-color': '#d9cffd', 'pointer-events': 'none' });
-}
-      },
+
+ },
       error: function (xhr, status, error) {
         hideOverlay();
        
@@ -678,7 +1303,7 @@ function resetSourceForm() {
   $('#saveDetailsBtn').prop('disabled', true).text('Save Details');
   $('#testConnectionBtn').prop('disabled', true).text('Test Connection');
   $('#src_entity_id').val(getCurrentCompanyName());
-  loadSrcBuOptions();
+  loadSrcBuOptions(); 
 }
 
 function resetTargetForm() {
@@ -689,7 +1314,16 @@ function resetTargetForm() {
   $('#entity_id').val(getCurrentCompanyName());
   $('#status').val('NEW');
   $('#bu_id').prop('disabled', false).css({ 'background': '', 'color': '', 'border-color': '', 'pointer-events': '' });
-  loadBuOptions();
+
+  const srcText = $('#src_bu_id option:selected').text().trim();
+  const srcVal  = $('#src_bu_id option:selected').val().trim();
+  if (srcVal) {
+    $('#bu_id').val(srcText);
+    $('#bu_id_value').val(srcVal);
+    $('#bu_id')
+      .prop('disabled', true)
+      .css({ 'background': '#f3f0ff', 'color': '#5b3ed6', 'border-color': '#d9cffd', 'pointer-events': 'none' });
+  }
 }
 
 function resetMigrationFlow() {
@@ -703,31 +1337,17 @@ function resetMigrationFlow() {
 /************* SYNC BU ID FROM SOURCE TO TARGET *************/
 $(document).on('change', '#src_bu_id', function() {
   const selectedText = $('#src_bu_id option:selected').text().trim();
-  const selectedVal = $('#src_bu_id option:selected').val().trim();
+  const selectedVal  = $('#src_bu_id option:selected').val().trim();
 
-  const $targetBu = $('#bu_id');
-  let matched = false;
-
-  $targetBu.find('option').each(function() {
-    if ($(this).text().trim() === selectedText || $(this).val().trim() === selectedVal) {
-      $targetBu.val($(this).val());
-      matched = true;
-      return false;
-    }
-  });
-
-  if (!matched) {
-    if ($targetBu.find(`option[value="${selectedVal}"]`).length === 0) {
-      $targetBu.append($('<option>', { value: selectedVal, text: selectedText }));
-    }
-    $targetBu.val(selectedVal);
-  }
+  // Show the name in the visible input, store the ID in the hidden input
+  $('#bu_id').val(selectedText);
+  $('#bu_id_value').val(selectedVal);
 
   // Lock target BU
-  $targetBu.prop('disabled', true);
-  $targetBu.css({ 'background': '#f3f0ff', 'color': '#5b3ed6', 'border-color': '#d9cffd', 'pointer-events': 'none' });
+  $('#bu_id')
+    .prop('disabled', true)
+    .css({ 'background': '#f3f0ff', 'color': '#5b3ed6', 'border-color': '#d9cffd', 'pointer-events': 'none' });
 });
-
 
 /************* START MIGRATION BUTTON *************/
 $('#startMigrationBtn').on('click', () => {
@@ -754,7 +1374,7 @@ $('#targetDbForm input, #targetDbForm select').on('input change', function () {
 /************* TEST CONNECTION *************/
 $('#testConnectionBtn').on('click', function () {
   
-  showOverlay("Testing..");
+  showOverlay("Testing...");
 
   const messageDiv = $('#message');
   const dbType = $('#dbType option:selected').val();
@@ -799,7 +1419,7 @@ $('#testConnectionBtn').on('click', function () {
 /************* SAVE SOURCE DB DETAILS *************/
 
 $('#saveDetailsBtn').on('click', function () {
-  showOverlay("saving...");
+  showOverlay("Saving...");
 
   const messageDiv = $('#message');
   const dbType = $('#dbType option:selected').val();
@@ -814,7 +1434,7 @@ $('#saveDetailsBtn').on('click', function () {
 
   messageDiv.removeClass('success error').text('');
 
-  // Check for duplicate source database in history
+  //Check for duplicate source database in history
   const dbExists = dbHistoryRecords.some(function(r) {
     return r.source && 
            r.source.name.toLowerCase() === dbName.toLowerCase() && 
@@ -882,7 +1502,7 @@ $('#saveDetailsBtn').on('click', function () {
 
 /************* SAVE TARGET DB DETAILS *************/
 $('#saveTargetBtn').on('click', function () {
-showOverlay("saving target...");
+showOverlay("Saving target...");
 const targetMessageDiv = $('#targetMessage');
 const required = ['#entity_id', '#targetType', '#host_url', '#t_dbPort', '#t_dbUser', '#t_dbPass', '#t_dbName'];
 const buVal = ($('#bu_id').val() || $('#bu_id option:selected').val() || $('#src_bu_id').val() || '').trim();
@@ -912,7 +1532,7 @@ const missingRequired = !buVal || required.some(function (sel) {
     data: {
       user_id: getSafeUserId(),
       entity: $('#entity_id').val().trim() || getCurrentCompanyName(),
-      bu_id: buVal,
+      bu_id: $('#bu_id_value').val() || $('#src_bu_id').val() || '',
       type: $('#targetType option:selected').val(),
       host_url: $('#host_url').val().trim(),
       port: $('#t_dbPort').val().trim(),
@@ -999,6 +1619,37 @@ const dbMiniChart = new Chart(dbMiniCtx, {
     maintainAspectRatio: false
   }
 });
+
+window.updateGlobalChart = function() {
+  const globalStats = new Map();
+
+  dbHistoryRecords.forEach(function(record) {
+    if (record && record.typeStats) {
+      record.typeStats.forEach(function(stats, type) {
+        const typeName = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+        if (!globalStats.has(typeName)) {
+          globalStats.set(typeName, 0);
+        }
+        globalStats.set(typeName, globalStats.get(typeName) + stats.extracted);
+      });
+    }
+  });
+
+  if (globalStats.size === 0) {
+    dbMiniChart.data.labels = ['Users', 'Orders', 'Logs', 'Audit'];
+    dbMiniChart.data.datasets[0].data = [120, 90, 140, 60];
+  } else {
+    const labels = Array.from(globalStats.keys());
+    const data = Array.from(globalStats.values());
+    dbMiniChart.data.labels = labels;
+    dbMiniChart.data.datasets[0].data = data;
+    
+    const bgColors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6610f2', '#fd7e14'];
+    dbMiniChart.data.datasets[0].backgroundColor = labels.map(function(_, i) { return bgColors[i % bgColors.length]; });
+  }
+  
+  dbMiniChart.update();
+};
 
 
 const sftpMiniCtx = document.getElementById('sftpMiniChart').getContext('2d');

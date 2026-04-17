@@ -18,6 +18,46 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+    /* Pipeline */
+.pipeline-flow { display:flex; align-items:center; padding:18px 24px 22px; border-top:1px solid rgba(120,110,220,0.08); background:linear-gradient(180deg,rgba(248,246,255,0.6),rgba(255,255,255,0.9)); width:100%; gap:10px; }
+.pipeline-step { display:flex; align-items:center; flex:1 1 0; min-width:0; }
+.pipeline-btn { border:none; border-radius:999px; padding:11px 18px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.25s ease; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; }
+.pipeline-btn[aria-disabled="true"] { cursor:default; }
+.pipeline-btn.state-run-assessment-pending { background:#fff3b0; color:#000000; border:1.5px solid #ffe066; box-shadow:0 4px 14px rgba(255,210,0,0.18); }
+.pipeline-btn.state-run-assessment-pending:hover { background:#ffe566; color:#5a4000; transform:translateY(-1px); }
+.pipeline-btn.state-run-assessment-active { background:#ffc107; color:#3d2e00; border:1.5px solid #e0b100; box-shadow:0 4px 16px rgba(245,196,0,0.32); }
+.pipeline-btn.state-run-assessment-complete { background:#ffc107; color:#3d2e00; border:1.5px solid #ffe066; box-shadow:0 4px 14px rgba(255,210,0,0.18); }
+.pipeline-btn.state-start-migration-pending { background:#cfe2ff; color:#000000; border:1.5px solid #9ec5fe; }
+.pipeline-btn.state-start-migration-active,
+.pipeline-btn.state-start-migration-complete { background:#397ce0; color:#000000; border:1.5px solid #6ea8fe; box-shadow:0 4px 16px rgba(110,168,254,0.28); }
+.pipeline-btn.state-ddl-extraction-pending { background:#e2d9f3; color:#000000; border:1.5px solid #cbb7ea; }
+.pipeline-btn.state-ddl-extraction-active,
+.pipeline-btn.state-ddl-extraction-complete { background:#9a78cb; color:#1f2937; border:1.5px solid #b197dc; box-shadow:0 4px 16px rgba(177,151,220,0.26); }
+.pipeline-btn.state-data-loading-pending { background:#d1ecf1; color:#000000; border:1.5px solid #9eeaf9; }
+.pipeline-btn.state-data-loading-active,
+.pipeline-btn.state-data-loading-complete { background:#31bdda; color:#0f172a; border:1.5px solid #6edff6; box-shadow:0 4px 16px rgba(110,223,246,0.26); }
+.pipeline-btn.state-validation-pending { background:#f8d7da; color:#000000; border:1.5px solid #f1aeb5; }
+.pipeline-btn.state-validation-active,
+.pipeline-btn.state-validation-complete { background:#ff982a; color:#000000; border:1.5px solid #f0ad4e; box-shadow:0 4px 16px rgba(240,173,78,0.26); }
+.pipeline-btn.state-success-pending { background:#d1e7dd; color:#000000; border:1.5px solid #a3cfbb; }
+.pipeline-btn.state-success-active { background:#22c55e; color:#000000; border:1.5px solid #5c9f80; box-shadow:0 4px 16px rgba(25,135,84,0.22); }
+.pipeline-btn.state-success-complete { background:#22c55e; color:#000000; border:1.5px solid #15803d; }
+.pipeline-arrow { width:52px; height:28px; display:flex; align-items:center; justify-content:center; flex:0 0 52px; margin:0; }
+.pipeline-arrow svg { width:100%; height:100%; }
+.arrow-line { stroke:#d1d5db; stroke-width:2.4; fill:none; stroke-dasharray:7 4; transition:stroke 0.4s ease; }
+.arrow-head { fill:#d1d5db; transition:fill 0.4s ease; }
+.pipeline-arrow.arrow-moving .arrow-line { stroke:#f59e0b; animation:dashMove 0.6s linear infinite; }
+.pipeline-arrow.arrow-moving .arrow-head { fill:#f59e0b; }
+.pipeline-arrow.arrow-done .arrow-line { stroke:#22c55e; stroke-dasharray:none; }
+.pipeline-arrow.arrow-done .arrow-head { fill:#22c55e; }
+@keyframes dashMove { to { stroke-dashoffset:-10; } }
+
+/* Source/Target heading labels */
+.prev-db-side-heading { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.prev-db-heading-label { font-size:13px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; }
+.prev-db-source .prev-db-heading-label { color:#000000; }
+.prev-db-target .prev-db-heading-label { color:#000000; }
+
     /* ── PREVIOUS DATABASES SECTION ── */
 #previousDbSection { margin-top: 24px; }
 #previousDbSection .section-title { color: var(--lv-indigo); font-weight: 800; margin-bottom: 4px; }
@@ -68,6 +108,29 @@
   gap: 10px;
   flex-shrink: 0;
 }
+.prev-db-schema-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid #c7d2fe;
+  outline: none;
+}
+.prev-db-schema-btn:hover {
+  background: #e0e7ff;
+}
+.prev-db-schema-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.22);
+}
 .prev-db-status-pill {
   display: inline-flex;
   align-items: center;
@@ -107,10 +170,10 @@
 }
 .prev-db-inner {
   display: grid;
-  grid-template-columns: 1fr 48px 1fr;
+  grid-template-columns: 1fr 72px 1fr;
   min-height: 180px;
 }
-.prev-db-side { padding: 20px 24px; }
+.prev-db-side { padding: 20px 24px; background:#fff; }
 .prev-db-side-header {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 14px;
@@ -141,9 +204,8 @@
 .prev-db-value { color: #2b2448; font-weight: 500; word-break: break-all; }
 .prev-db-divider {
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #f5f2ff, #ede9fe);
-  border-left: 1px solid rgba(120,110,220,0.08);
-  border-right: 1px solid rgba(120,110,220,0.08);
+  background: #fff;
+  padding: 0 10px;
 }
 .prev-db-arrow,
 .prev-db-toggle-icon-round {
@@ -156,20 +218,41 @@
 .prev-db-toggle-icon-round { flex-shrink: 0; }
 .prev-db-flow-arrows {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+  overflow: visible;
 }
-.prev-db-flow-arrows i {
-  color: #98a2b3;
-  font-size: 14px;
+.prev-db-flow-arrow {
+  width: 34px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+.prev-db-flow-arrow svg {
+  width: 100%;
+  height: 100%;
+}
+.prev-db-card.is-transferring .prev-db-flow-arrow {
+  animation: sourceTargetArrowSlide 0.7s linear infinite;
+  transform-origin: center center;
+}
+.prev-db-card.is-transferring .prev-db-flow-arrow .arrow-line,
+.prev-db-card.is-transferring .prev-db-flow-arrow .arrow-head {
+  stroke: #98a2b3;
+  fill: #98a2b3;
+}
+@keyframes sourceTargetArrowSlide {
+  0% { opacity: 0.45; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(8px); }
+  100% { opacity: 0.45; transform: translateX(0); }
 }
 .prev-db-target-empty {
   display: flex; align-items: center; justify-content: center;
-  background: repeating-linear-gradient(
-    45deg, transparent, transparent 8px,
-    rgba(120,110,220,0.03) 8px, rgba(120,110,220,0.03) 16px
-  );
+  background: #fff;
 }
+
 .prev-db-no-target { text-align: center; }
 .prev-db-actions {
   display: flex;
@@ -340,6 +423,7 @@
     .migration-field input[readonly] { background:#f3f0ff; color:#5b3ed6; border-color:#d9cffd; cursor:default; user-select:none; pointer-events:none; }
     .migration-field input[readonly]:hover,
     .migration-field input[readonly]:focus { background:#f3f0ff; color:#5b3ed6; border-color:#d9cffd; box-shadow:none; }
+    .migration-field select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236a5acd' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
     .status-static-field {
       background: #fff !important;
       border: 1px solid #e5defa !important;
@@ -581,6 +665,112 @@
   <div id="previousDbCards"></div>
 </div>
 
+<template id="previousDbCardTemplate">
+  <div class="prev-db-card" data-prev-db-card>
+    <button type="button" class="prev-db-toggle" data-prev-db-toggle aria-expanded="false">
+      <div class="prev-db-toggle-main">
+        <div class="prev-db-toggle-icon-round"><i class="fa-solid fa-database"></i></div>
+        <div>
+          <p class="prev-db-toggle-title" data-summary-name></p>
+          <div class="prev-db-toggle-meta" data-summary-meta></div>
+        </div>
+      </div>
+      <div class="prev-db-toggle-side">
+        <span class="prev-db-schema-btn" role="button" tabindex="0" data-schema-explorer-btn hidden>Schema Explorer</span>
+        <span class="prev-db-schema-btn" role="button" tabindex="0" data-binary-explorer-btn hidden>Binary Explorer</span>
+        <span class="prev-db-status-pill" data-new-pill hidden>NEW</span>
+        <span class="prev-db-toggle-icon" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+      </div>
+    </button>
+    <div class="prev-db-content">
+      <div class="prev-db-inner">
+        <div class="prev-db-side prev-db-source">
+          <div class="prev-db-side-heading">
+            <span class="prev-db-heading-label">Source</span>
+          </div>
+          <div data-source-type></div>
+          <div data-source-details></div>
+        </div>
+
+        <div class="prev-db-divider">
+          <div class="prev-db-flow-arrows" aria-hidden="true">
+            <div class="prev-db-flow-arrow">
+              <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+                <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
+                <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
+              </svg>
+            </div>
+            <div class="prev-db-flow-arrow">
+              <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+                <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
+                <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
+              </svg>
+            </div>
+            <div class="prev-db-flow-arrow">
+              <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+                <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
+                <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="prev-db-side prev-db-target" data-target-side>
+          <div data-target-content>
+            <div class="prev-db-side-heading">
+              <span class="prev-db-heading-label">Target</span>
+            </div>
+            <div data-target-type></div>
+            <div data-target-details></div>
+          </div>
+          <div class="prev-db-no-target" data-target-empty hidden>
+            <i class="fa-solid fa-clock-rotate-left fa-2x" style="color:#c4b5fd;margin-bottom:10px"></i>
+            <p style="margin:0;color:var(--muted);font-size:13px;font-weight:600">Target not configured yet</p>
+          </div>
+        </div>
+      </div>
+
+      <div data-pipeline-mount></div>
+    </div>
+  </div>
+</template>
+
+<template id="previousDbDetailRowTemplate">
+  <div class="prev-db-row">
+    <span class="prev-db-label" data-detail-label></span>
+    <span class="prev-db-value" data-detail-value></span>
+  </div>
+</template>
+
+<template id="previousDbTypeBlockTemplate">
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:rgba(120,110,220,0.04);border:1px solid rgba(120,110,220,0.08);margin-bottom:14px;">
+    <span data-db-type-icon aria-hidden="true"></span>
+    <span style="font-size:15px;font-weight:700;color:#2b2448;" data-db-type-name></span>
+  </div>
+</template>
+
+<template id="previousDbPipelineTemplate">
+  <div class="pipeline-flow" data-pipeline-flow></div>
+</template>
+
+<template id="previousDbPipelineStepTemplate">
+  <div class="pipeline-step">
+    <button type="button" class="pipeline-btn">
+      <i aria-hidden="true"></i>
+      <span data-step-label></span>
+    </button>
+  </div>
+</template>
+
+<template id="previousDbPipelineArrowTemplate">
+  <div class="pipeline-arrow">
+    <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+      <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
+      <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
+    </svg>
+  </div>
+</template>
+
     <!-- Schema Explorer Section -->
     <div id="schemaSection" style="display:none">
       <div class="schema-shell">
@@ -665,7 +855,7 @@
                     <div class="col-md-6 migration-field">
                       <label class="form-label form-required">BU ID</label>
                       <select id="src_bu_id" class="form-select" required>
-                       <option value="" selected disabled>Select BU ID</option>
+                       <option value="" selected disabled>Select BU ID </option>
                       </select>
                     </div>
                     <div class="col-md-6 migration-field">
