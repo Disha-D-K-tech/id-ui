@@ -1742,6 +1742,14 @@ $(document).ready(function () {
   const sessionEmail = sessionStorage.getItem('email');
   const sessionToken = sessionStorage.getItem('token');
   const sessionUserJson = parseUserJson(sessionStorage.getItem('userJson')) || {};
+  console.log('=== SESSION DEBUG ===');
+console.log('userid:', sessionUserId);
+console.log('email:', sessionEmail);
+console.log('secret:', sessionSecret);
+console.log('token:', sessionToken);
+console.log('userJson:', sessionUserJson);
+console.log('getSafeUserId():', getSafeUserId());
+console.log('====================');
   fetchPreviousDatabases();
 });
 
