@@ -45,6 +45,25 @@
         document.body.appendChild(newScript);
         document.body.removeChild(newScript);
       });
+setTimeout(() => {
+
+  const schemas = mountNode.querySelectorAll('.node.schema-node');
+
+  schemas.forEach(schema => {
+    const panel = schema.nextElementSibling;
+
+    if (!panel || !panel.classList.contains('panel')) return;
+
+    const tables = panel.querySelectorAll('.node.table-node');
+    const count = tables.length;
+
+    // clean previous count
+    const clean = schema.textContent.replace(/\(\d+\)$/, '').trim();
+
+    schema.textContent = `${clean} (${count})`;
+  });
+
+}, 300);
     }
     return;
   }

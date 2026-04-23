@@ -415,7 +415,7 @@ function handleRunAssessment(cardIdx) {
     data: {
     action: 'start_migration',
     user_id: parseUserJson(sessionStorage.getItem('userJson')).userid,
-    entity_id: getCurrentCompanyName(),
+    entity: getCurrentCompanyName(),
     bu_id: srcRecord.bu_id || '',
     db_type: srcRecord.type || '',
     //db_version: '',
@@ -1235,7 +1235,7 @@ function loadSrcBuOptions() {
     $.ajax({
       url: 'https://czohdy4obk2puhnl3hopinvxne0tuobz.lambda-url.ap-south-1.on.aws',
       type: 'POST',
-      data: { entity: entity },
+      data: { entity:  entity },
       dataType: 'json',
       async: false,
       success: function (response) {
@@ -1464,7 +1464,7 @@ $('#saveDetailsBtn').on('click', function () {
     data: {
       action: "save",
       user_id: parseUserJson(sessionStorage.getItem("userJson")).userid,
-      entity_id: $('#src_entity_id').val().trim(),  
+      entity: $('#src_entity_id').val().trim(),  
       bu_id: $('#src_bu_id').val().trim(),            
       db_type: dbType,
       db_version: '',
