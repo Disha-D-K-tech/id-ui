@@ -268,16 +268,22 @@ document.addEventListener('DOMContentLoaded', () => {
   approvalUrl;
 
   const payload = {
-    name:    'Livision DataHub',
-    email:   approverEmail,
-    subject: subject,
-    message: message,
-  //   msg:
-  // '<h3>Migration Approval Required</h3>' +
-  // '<p><strong>DB ID:</strong> ' + dbId + '</p>' +
-  // '<p>Click below:</p>' +
-  // '<p>' + approvalUrl + '</p>'
-  };
+  name:    'Livision DataHub',
+  email:   approverEmail,
+  subject: subject,
+  message: message,
+  msg:
+    '<h3>Migration Approval Required</h3>' +
+    '<p><strong>DB ID:</strong> ' + dbId + '</p>' +
+    '<p>Please review and approve the schema and binary column mappings for this database.</p>' +
+    '<p>Click the link below to open the Approval Review page:</p>' +
+    '<p><a href="' + approvalUrl + '">' + approvalUrl + '</a></p>' +
+    '<p style="margin-top:16px;">' +
+      '<a href="' + approvalUrl + '" style="display:inline-block;padding:12px 28px;background:#5b3ed6;color:white;text-decoration:none;border-radius:8px;font-weight:700;">' +
+        'Review &amp; Approve' +
+      '</a>' +
+    '</p>'
+};
 
   const btn = document.getElementById('sendApprovalBtn');
   btn.textContent = 'Sending...';

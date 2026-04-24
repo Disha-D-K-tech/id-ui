@@ -164,6 +164,18 @@ function buildPipelineElement(cardIdx) {
     button.title = step.label;
     if (!isFirst) button.setAttribute('aria-disabled', 'true');
 
+    //STATUS CHECK — enable only for 'New' status
+    if (isFirst) {
+      const record = dbHistoryRecords[cardIdx];
+      const status = record?.source?.status || '';
+      if (status.trim().toUpperCase() !== 'NEW') {
+        button.setAttribute('aria-disabled', 'true');
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+        button.title = 'Assessment already initiated — status: ' + status;
+      }
+    }
+
     icon.className = step.icon;
     label.textContent = step.label;
     pipeline.appendChild(stepNode);
@@ -335,6 +347,7 @@ error: function(xhr) {
 function simulateStep(cardIdx, stepIdx) {
   const state = pipelineStates[cardIdx];
   if (!state || !state.running) return;
+  
   setArrowState(cardIdx, stepIdx, 'arrow-moving');
   state.timer = setTimeout(function() {
     if (!pipelineStates[cardIdx]?.running) return;
@@ -361,11 +374,28 @@ function simulateStep(cardIdx, stepIdx) {
   }, 1800);
 }
 function handleRunAssessment(cardIdx) {
-  const state = pipelineStates[cardIdx];
-  if (!state || state.running) return;
+ const state = pipelineStates[cardIdx];
+if (!state || state.running) return;
 
-  const dbId = getCardDbId(cardIdx);
+const dbId = getCardDbId(cardIdx);
+
+// Block re-run if DDL already reached
+if (localStorage.getItem('assessment_stage_' + dbId) === 'ddl') {
+  console.log('Assessment already at DDL for db_id:', dbId, '— blocking re-run');
+  return;
+}
+
+  // Now the guard can safely reference dbId
+  if (localStorage.getItem('assessment_started_' + dbId) === 'true' &&
+      localStorage.getItem('assessment_stage_' + dbId) === 'ddl') {
+    console.log('Assessment already completed for db_id:', dbId);
+    return;
+  }
+
   state.running = true;
+  // Lock session — save to localStorage so it persists across login/logout
+  localStorage.setItem('assessment_started_' + dbId, 'true');
+  localStorage.setItem('assessment_stage_' + dbId, 'running');
 
   setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'active'));
   setArrowState(cardIdx, 0, 'arrow-moving');
@@ -565,6 +595,8 @@ function handleRunAssessment(cardIdx) {
             setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
             setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
             setArrowState(cardIdx, 1, 'arrow-done');
+            // Persist DDL stage reached
+            localStorage.setItem('assessment_stage_' + dbId, 'ddl');
 
   // Update status pill → DDL Extracted
             const pipeline2 = document.getElementById('pipeline-' + cardIdx);
@@ -636,14 +668,16 @@ function handleRunAssessment(cardIdx) {
             }
           }
 
-          if (res2 && res2['binary-cols']) {
-            const store = readSchemaExplorerStore();
-            if (!store[String(dbId)]) store[String(dbId)] = {};
-            store[String(dbId)].binaryCols = res2['binary-cols'];
-            store[String(dbId)].db_id = dbId;
-            writeSchemaExplorerStore(store);
-            showBinaryExplorerButton(cardIdx);
-          }
+          console.log('binary-cols raw:', res2['binary-cols'], res2['binary_cols'], res2['binaryCols']);
+const binaryColsData = res2['binary-cols'] || res2['binary_cols'] || res2['binaryCols'] || null;
+if (binaryColsData) {
+  const store = readSchemaExplorerStore();
+  if (!store[String(dbId)]) store[String(dbId)] = {};
+  store[String(dbId)].binaryCols = binaryColsData;
+  store[String(dbId)].db_id = dbId;
+  writeSchemaExplorerStore(store);
+  showBinaryExplorerButton(cardIdx);
+}
         }
       });
     });
@@ -692,6 +726,29 @@ $(document).on('click keydown', '[data-schema-explorer-btn]', function(e) {
   openSchemaExplorerPage(dbId);
 });
 
+// $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
+//   if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+//   e.preventDefault();
+//   e.stopPropagation();
+
+//   const $card = $(this).closest('[data-prev-db-card]');
+//   const dbId = String($card.data('dbId') || '').trim();
+//   if (!dbId) return;
+
+//   const store = readSchemaExplorerStore();
+//   const payload = store[String(dbId)];
+//   if (payload && payload.binaryCols) {
+//   const srcRec = dbHistoryRecords.find(r => r.source && String(r.source.id) === String(dbId))?.source || {};
+//   sessionStorage.setItem('binaryExplorerData', JSON.stringify({
+//   db_id: dbId,
+//   binaryCols: payload.binaryCols,
+//   db_name: srcRec.name || '',
+//   db_type: srcRec.type || '',
+//   entity: getCurrentCompanyName()
+// }));
+//     window.location.href = 'binary_explorer.html';
+//   }
+// });
 $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
   if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
   e.preventDefault();
@@ -701,19 +758,64 @@ $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
   const dbId = String($card.data('dbId') || '').trim();
   if (!dbId) return;
 
+  const srcRec = dbHistoryRecords.find(r => r.source && String(r.source.id) === String(dbId))?.source || {};
+
   const store = readSchemaExplorerStore();
   const payload = store[String(dbId)];
+
+  // If binaryCols already in store, go directly
   if (payload && payload.binaryCols) {
-  const srcRec = dbHistoryRecords.find(r => r.source && String(r.source.id) === String(dbId))?.source || {};
-  sessionStorage.setItem('binaryExplorerData', JSON.stringify({
-  db_id: dbId,
-  binaryCols: payload.binaryCols,
-  db_name: srcRec.name || '',
-  db_type: srcRec.type || '',
-  entity: getCurrentCompanyName()
-}));
+    sessionStorage.setItem('binaryExplorerData', JSON.stringify({
+      db_id: dbId,
+      binaryCols: payload.binaryCols,
+      db_name: srcRec.name || '',
+      db_type: srcRec.type || '',
+      entity: getCurrentCompanyName()
+    }));
     window.location.href = 'binary_explorer.html';
+    return;
   }
+
+  // Otherwise fetch from status_reader API
+  showOverlay('Loading Binary Explorer...');
+  $.ajax({
+    url: 'https://f3pt5mhs4renqnqqcf24q4hudy0mkdpx.lambda-url.ap-south-1.on.aws',
+    type: 'POST',
+    data: {
+      db_id:   dbId,
+      user_id: getSafeUserId(),
+      db_type: srcRec.type || '',
+      db_name: srcRec.name || '',
+      entity:  getCurrentCompanyName()
+    },
+    dataType: 'json',
+    complete: function(xhr) {
+      hideOverlay();
+      const res = xhr.responseJSON;
+      const binaryColsData = res?.['binary-cols'] || res?.['binary_cols'] || res?.['binaryCols'] || null;
+
+      if (!binaryColsData) {
+        alert('No binary column data found for this database.');
+        return;
+      }
+
+      // Store and navigate
+      const updatedStore = readSchemaExplorerStore();
+      if (!updatedStore[String(dbId)]) updatedStore[String(dbId)] = {};
+      updatedStore[String(dbId)].binaryCols = binaryColsData;
+      updatedStore[String(dbId)].db_id = dbId;
+      writeSchemaExplorerStore(updatedStore);
+
+      sessionStorage.setItem('binaryExplorerData', JSON.stringify({
+        db_id: dbId,
+        binaryCols: binaryColsData,
+        db_name: srcRec.name || '',
+        db_type: srcRec.type || '',
+        entity: getCurrentCompanyName()
+      }));
+      window.location.href = 'binary_explorer.html';
+    }
+  });
 });
 
 /************* FETCH & DISPLAY PREVIOUS DATABASES *************/
@@ -1008,8 +1110,21 @@ function renderPreviousDbCards(records) {
     const dbId = String((hasSource && s.id && s.id !== '—' ? s.id : (hasTarget && t ? t.id : '')) || '').trim();
 
     initPipelineState(idx);
-    card.dataset.cardIdx = String(idx);
-    card.dataset.dbId = dbId;
+
+// Determine restored state from API status
+const apiStatus = String(s.status || '').trim().toLowerCase();
+const isDdlDone = apiStatus.includes('binary') || 
+                  apiStatus.includes('scanned') || 
+                  apiStatus.includes('extracted') ||
+                  localStorage.getItem('assessment_stage_' + dbId) === 'ddl';
+
+// Also persist to localStorage if API tells us DDL is done
+if (isDdlDone) {
+  localStorage.setItem('assessment_stage_' + dbId, 'ddl');
+}
+
+card.dataset.cardIdx = String(idx);
+card.dataset.dbId = dbId;
 
     card.querySelector('[data-summary-name]').textContent = summaryName;
     card.querySelector('[data-summary-meta]').textContent = `Database ${idx + 1} • ${summaryMeta}`;
@@ -1064,6 +1179,61 @@ function renderPreviousDbCards(records) {
 
   container.replaceChildren(fragment);
   bindPreviousDbToggles();
+
+  records.forEach(function(record, idx) {
+  const src = record.source;
+  const tgt = record.target;
+  const restoredDbId = String((src && src.id && src.id !== '—' ? src.id : (tgt ? tgt.id : '')) || '').trim();
+  if (!restoredDbId) return;
+
+  const apiStatus = String((src && src.status) || '').trim().toLowerCase();
+  const isDdlDone = apiStatus.includes('binary') ||
+                    apiStatus.includes('scanned') ||
+                    apiStatus.includes('extracted') ||
+                    localStorage.getItem('assessment_stage_' + restoredDbId) === 'ddl';
+
+  if (!isDdlDone) return;
+
+  // Restore pipeline visual state
+  setPipelineStepState(idx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
+  setArrowState(idx, 0, 'arrow-done');
+  setPipelineStepState(idx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
+  setArrowState(idx, 1, 'arrow-done');
+  setPipelineStepState(idx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
+
+  // Restore DDL Extracted pill
+  const pipeline = document.getElementById('pipeline-' + idx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (card) {
+    const pill = card.querySelector('[data-new-pill]');
+    if (pill) {
+      pill.textContent = 'DDL Extracted';
+      pill.hidden = false;
+      pill.style.background = '#f0fdf4';
+      pill.style.color = '#15803d';
+      pill.style.borderColor = '#bbf7d0';
+    }
+  }
+
+  // Disable Run Assessment button
+  const p = document.getElementById('pipeline-' + idx);
+  if (p) {
+    const btn = p.querySelector('.pipeline-btn[data-step="run-assessment"]');
+    if (btn) {
+      btn.setAttribute('aria-disabled', 'true');
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+
+  // Restore Schema Explorer and Binary Explorer buttons
+  showSchemaExplorerButton(idx);
+  //const store = readSchemaExplorerStore();
+  //if (store[restoredDbId] && store[restoredDbId].binaryCols) {
+  //  showBinaryExplorerButton(idx);
+  //}
+  showBinaryExplorerButton(idx);
+});
 }
 
 function bindPreviousDbToggles() {
