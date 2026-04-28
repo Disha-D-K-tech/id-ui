@@ -16,7 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (dbIdChip) dbIdChip.textContent = 'db_id: ' + (data.db_id || '--');
   if (fetchedAtNode) fetchedAtNode.textContent = '';
-  if (statusNode) statusNode.textContent = 'Binary columns found: Please provide the Coresponding Mappings.';
+
+  // const isReadOnly = String(data.status || '').trim().toLowerCase() === 'binary col. mapped';
+  const isReadOnly = false; // read-only enforcement disabled for now
+
+  if (statusNode) statusNode.textContent = 'Binary columns found: Please provide the Corresponding Mappings.';
 
   let parsedCols = null;
   const raw = data.binaryCols;
@@ -122,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         select.className = 'form-select form-select-sm mapping-dropdown';
         select.dataset.fulltable = originalKey;
         select.dataset.column = colName;
+        // if (isReadOnly) select.disabled = true;  // disabled for now
         
         tableSelects.push(select);
 
@@ -256,9 +261,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const data = dataStr ? JSON.parse(dataStr) : {};
   const dbId = data.db_id || '';
 
-  const approvalUrl = 'http://127.0.0.1:5501/approval.html?db_id=' + encodeURIComponent(dbId);
-  console.log("DB ID:", dbId);
-  console.log("Approval Link:", approvalUrl);
+  const userJson = sessionStorage.getItem('userJson');
+  let userId = '';
+  try {
+    const parsed = JSON.parse((userJson || '').replace(/'/g, '"'));
+    userId = parsed?.userid || parsed?.user_id || parsed?.id || '';
+  } catch(e) {}
+
+  const tokenPayload = {
+    user_id: userId,
+    db_id: dbId,
+    db_name: data.db_name || '',
+    entity: data.entity || '',
+    db_type: data.db_type || ''
+  };
+  const token = btoa(JSON.stringify(tokenPayload));
+  const basePath = window.location.href.split('?')[0];
+  const approvalUrl = basePath.replace('binary_explorer.html', 'approval.html') + '?token=' + encodeURIComponent(token);
+
+  console.log('Approval token payload:', tokenPayload);
+  console.log('Approval URL:', approvalUrl);
 
   const approverEmail = 'kushi.s@livisionit.com';//add to
   const subject = 'Schema & Binary Mapping Approval Required — DB ID: ' + dbId;
@@ -307,4 +329,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+  // Hide save if already mapped — disabled for now
+  // if (isReadOnly) {
+  //   document.getElementById('saveMappingBtn').style.display = 'none';
+  // }
 });

@@ -244,6 +244,180 @@ function showBinaryExplorerButton(cardIdx) {
   button.hidden = false;
 }
 
+/************* STATUS READER — REUSABLE CARD UPDATER *************/
+
+function callStatusReaderForCard(cardIdx, srcRecord, dbId) {
+  $.ajax({
+    url: 'https://f3pt5mhs4renqnqqcf24q4hudy0mkdpx.lambda-url.ap-south-1.on.aws',
+    type: 'POST',
+    data: {
+      db_id:   dbId,
+      user_id: getSafeUserId(),
+      db_type: srcRecord.type || '',
+      db_name: srcRecord.name || '',
+      entity:  getCurrentCompanyName()
+    },
+    // Form-encoded POST — do NOT add Content-Type: application/json
+    dataType: 'json',
+    complete: function(xhr) {
+      console.log('status_reader response (card ' + cardIdx + '):', xhr.responseJSON || xhr.responseText);
+      const res = xhr.responseJSON;
+      if (!res) return;
+
+      // --- 1. Compute DDL / in-progress state from status array ---
+      let ddlConfirmed = false;
+      let anyInProgress = false;
+
+      if (res.status && Array.isArray(res.status)) {
+        const items = res.status;
+        const nonSeqItems = items.filter(function(item) {
+          return (item.type || '').toLowerCase() !== 'sequences';
+        });
+        const nonSeqExtracted = nonSeqItems.filter(function(item) {
+          return item.status === 'DDL - Extracted';
+        }).length;
+
+        if (nonSeqItems.length > 0 && (nonSeqExtracted / nonSeqItems.length) >= 0.9) {
+          ddlConfirmed = true;
+        } else if (items.some(function(item) {
+          return item.status && item.status.includes('in Progress');
+        })) {
+          anyInProgress = true;
+        }
+
+        // --- 2. Update status pill ---
+        const pipeline2 = document.getElementById('pipeline-' + cardIdx);
+        const card2 = pipeline2 ? pipeline2.closest('[data-prev-db-card]') : null;
+        if (card2) {
+          const pill = card2.querySelector('[data-new-pill]');
+          if (pill) {
+            if (ddlConfirmed) {
+              pill.textContent = 'DDL Extracted';
+              pill.hidden = false;
+              pill.style.background = '#f0fdf4';
+              pill.style.color = '#15803d';
+              pill.style.borderColor = '#bbf7d0';
+              // Persist DDL stage
+              localStorage.setItem('assessment_stage_' + dbId, 'ddl');
+            } else if (anyInProgress) {
+              pill.textContent = 'In Progress';
+              pill.hidden = false;
+              pill.style.background = '#fff7ed';
+              pill.style.color = '#c2410c';
+              pill.style.borderColor = '#fed7aa';
+            }
+          
+          }
+        }
+
+        if (items.length > 0) {
+          showSchemaExplorerButton(cardIdx);
+        }
+
+        // Restore pipeline visuals if DDL confirmed ---
+        if (ddlConfirmed) {
+          setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
+          setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
+          setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
+          setArrowState(cardIdx, 0, 'arrow-done');
+          setArrowState(cardIdx, 1, 'arrow-done');
+          // Disable Run Assessment button
+          const pEl = document.getElementById('pipeline-' + cardIdx);
+          if (pEl) {
+            const btn = pEl.querySelector('.pipeline-btn[data-step="run-assessment"]');
+            if (btn) {
+              btn.setAttribute('aria-disabled', 'true');
+              btn.style.opacity = '0.5';
+              btn.style.cursor = 'not-allowed';
+            }
+          }
+        }
+
+        //Update stat chips 
+        const typeStats = new Map();
+        items.forEach(function(item) {
+          const type = item.type || 'unknown';
+          if (!typeStats.has(type)) typeStats.set(type, { total: 0, extracted: 0 });
+          typeStats.get(type).total++;
+          if (item.status && item.status.includes('Extracted') && !item.status.includes('in Progress')) {
+            if ((item.type || '').toLowerCase() !== 'sequences') typeStats.get(type).extracted++;
+          } else if ((item.type || '').toLowerCase() === 'sequences') {
+            typeStats.get(type).extracted++;
+          }
+        });
+
+        const pipelineC = document.getElementById('pipeline-' + cardIdx);
+        const cardC = pipelineC ? pipelineC.closest('[data-prev-db-card]') : null;
+        if (cardC) {
+          let statsContainer = cardC.querySelector('.stat-chips-container');
+          if (!statsContainer) {
+            statsContainer = document.createElement('div');
+            statsContainer.className = 'stat-chips-container';
+            statsContainer.style.display = 'flex';
+            statsContainer.style.flexWrap = 'wrap';
+            statsContainer.style.gap = '8px';
+            statsContainer.style.padding = '10px 0 0 0';
+            statsContainer.style.background = 'none';
+            statsContainer.style.justifyContent = 'flex-start';
+            cardC.querySelector('[data-target-details]').appendChild(statsContainer);
+          }
+          statsContainer.innerHTML = '';
+
+          const icons = {
+            tables: 'fa-table',
+            views: 'fa-eye',
+            functions: 'fa-code',
+            sequences: 'fa-list-ol',
+            unknown: 'fa-database'
+          };
+
+          typeStats.forEach(function(stats, type) {
+            const iconClass = icons[type.toLowerCase()] || icons.unknown;
+            const chip = document.createElement('div');
+            chip.title = type + ': ' + stats.total;
+            chip.style.display = 'inline-flex';
+            chip.style.alignItems = 'center';
+            chip.style.gap = '5px';
+            chip.style.padding = '4px 10px';
+            chip.style.borderRadius = '999px';
+            chip.style.border = '1px solid #d1d5db';
+            chip.style.background = '#fff';
+            chip.style.color = '#374151';
+            chip.style.fontSize = '12px';
+            chip.style.fontWeight = '600';
+            chip.style.cursor = 'default';
+            const displayCount = type.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
+            chip.innerHTML = '<i class="fa-solid ' + iconClass + '" style="font-size:11px;color:#6b7280;"></i><span>' + displayCount + '</span>';
+            statsContainer.appendChild(chip);
+          });
+
+          if (dbHistoryRecords[cardIdx]) {
+            dbHistoryRecords[cardIdx].typeStats = typeStats;
+            if (window.updateGlobalChart) window.updateGlobalChart();
+          }
+        }
+      }
+
+      // Show Binary Explorer button if binary-cols present 
+      console.log('binary-cols raw (card ' + cardIdx + '):', res['binary-cols'], res['binary_cols'], res['binaryCols']);
+      const binaryColsData = res['binary-cols'] || res['binary_cols'] || res['binaryCols'] || null;
+      if (binaryColsData) {
+        const store = readSchemaExplorerStore();
+        if (!store[String(dbId)]) store[String(dbId)] = {};
+        store[String(dbId)].binaryCols = binaryColsData;
+        store[String(dbId)].db_id = dbId;
+        writeSchemaExplorerStore(store);
+        showBinaryExplorerButton(cardIdx);
+      }
+
+     
+      if (ddlConfirmed && pipelineStates[cardIdx]) {
+        pipelineStates[cardIdx]._ddlConfirmed = true;
+      }
+    }
+  });
+}
+
 function readSchemaExplorerStore() {
   try {
     return JSON.parse(sessionStorage.getItem(SCHEMA_EXPLORER_STORAGE_KEY) || '{}');
@@ -477,220 +651,32 @@ if (localStorage.getItem('assessment_stage_' + dbId) === 'ddl') {
       setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
       setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'active'));
 
-      // Poll status_reader every 4 seconds
-      const pollInterval = setTimeout(function() {
-        $.ajax({
-        url: 'https://f3pt5mhs4renqnqqcf24q4hudy0mkdpx.lambda-url.ap-south-1.on.aws',
-        type: 'POST',
-        data: {
-          db_id:   dbId,
-          user_id: getSafeUserId(),
-          db_type: srcRecord.type || '',
-          db_name: srcRecord.name || '',
-          entity:  getCurrentCompanyName()
-        },
-        dataType: 'json',
-        complete: function(xhr2) {
-          console.log('status_reader response:', xhr2.responseJSON || xhr2.responseText);
-          hideOverlay();
-          const res2 = xhr2.responseJSON;
-          
-          // Parse table counts
-          if (res2 && res2['table-counts']) {
-            let tableCountsRaw = res2['table-counts'];
-            let tableCounts = [];
-            try {
-              // Convert Python tuples (...) to JSON arrays [...]
-              const cleaned = tableCountsRaw
-                .replace(/'/g, '"')
-                .replace(/\(/g, '[')
-                .replace(/\)/g, ']')
-                .replace(/\bNone\b/g, 'null')
-                .replace(/\bTrue\b/g, 'true')
-                .replace(/\bFalse\b/g, 'false');
-              const parsed = JSON.parse(cleaned);
-              tableCounts = parsed.table_counts || [];
-            } catch(e) {
-              console.warn('Failed to parse table-counts:', e);
-            }
+      // Poll status_reader every 4 seconds (max 15 calls = 60 s)
+      let pollCount = 0;
+      const MAX_POLLS = 15;
+      pipelineStates[cardIdx].pollInterval = setInterval(function() {
+        pollCount++;
+        callStatusReaderForCard(cardIdx, srcRecord, dbId);
 
-            if (tableCounts.length > 0) {
-              // Build a Map of schema.table -> count
-              const countMap = new Map();
-              let grandTotal = 0;
-              tableCounts.forEach(function(entry) {
-                const key = entry[0]; // e.g. "ecommerce.returns"
-                const count = entry[1] || 0;
-                countMap.set(key, count);
-                grandTotal += count;
-              });
-
-              //sessionStorage.setItem('tableCountMap_' + dbId, JSON.stringify(Array.from(countMap.entries())));
-              //count logic
-              // // Show total next to Source heading
-              // const pipeline3 = document.getElementById('pipeline-' + cardIdx);
-              // const card3 = pipeline3 ? pipeline3.closest('[data-prev-db-card]') : null;
-              // if (card3) {
-              //   const srcHeading = card3.querySelector('.prev-db-source .prev-db-heading-label');
-              //   if (srcHeading && !srcHeading.querySelector('.table-count-badge')) {
-              //     const badge = document.createElement('span');
-              //     badge.className = 'table-count-badge';
-              //     badge.style.cssText = 'margin-left:auto;font-size:11px;font-weight:700;color:#6b7280;border:1px solid #d1d5db;border-radius:999px;padding:2px 8px;background:#f9fafb;';
-              //     badge.textContent = grandTotal.toLocaleString() + ' rows';
-              //     srcHeading.parentElement.style.display = 'flex';
-              //     srcHeading.parentElement.style.justifyContent = 'space-between';
-              //     srcHeading.parentElement.style.alignItems = 'center';
-              //     srcHeading.parentElement.appendChild(badge);
-              //   }
-
-              //   // Show 0 next to Target heading
-              //   const tgtHeading = card3.querySelector('.prev-db-target .prev-db-heading-label');
-              //   if (tgtHeading && !tgtHeading.querySelector('.table-count-badge')) {
-              //     const badge2 = document.createElement('span');
-              //     badge2.className = 'table-count-badge';
-              //     badge2.style.cssText = 'margin-left:auto;font-size:11px;font-weight:700;color:#6b7280;border:1px solid #d1d5db;border-radius:999px;padding:2px 8px;background:#f9fafb;';
-              //     badge2.textContent = '0 rows';
-              //     tgtHeading.parentElement.style.display = 'flex';
-              //     tgtHeading.parentElement.style.justifyContent = 'space-between';
-              //     tgtHeading.parentElement.style.alignItems = 'center';
-              //     tgtHeading.parentElement.appendChild(badge2);
-              //   }
-              // }
-            }
+        // Stop polling when DDL confirmed or max polls reached
+        const ddlDone = pipelineStates[cardIdx]._ddlConfirmed;
+        if (ddlDone || pollCount >= MAX_POLLS) {
+          clearInterval(pipelineStates[cardIdx].pollInterval);
+          pipelineStates[cardIdx].pollInterval = null;
+          if (ddlDone) {
+            // DDL confirmed — hide overlay and release running lock
+            hideOverlay();
+            state.running = false;
           }
-          
-          if (res2 && res2.status && Array.isArray(res2.status)) {
-            const items = res2.status;
-            let extractedCount = 0;
-            const typeStats = new Map();
-
-            items.forEach(item => {
-            const type = item.type || 'unknown';
-            if (!typeStats.has(type)) typeStats.set(type, { total: 0, extracted: 0 });
-            typeStats.get(type).total++;
-            if (item.status && item.status.includes('Extracted') && !item.status.includes('in Progress')) {
-            if ((item.type || '').toLowerCase() !== 'sequences') extractedCount++;
-            typeStats.get(type).extracted++;
-          } else if ((item.type || '').toLowerCase() === 'sequences') {
-            typeStats.get(type).extracted++;
-            }
-           }
-        );
-            // const typeStats = {};
-
-            // items.forEach(item => {
-            //   const type = item.type || 'unknown';
-            //   if (!typeStats[type]) typeStats[type] = { total: 0, extracted: 0 };
-              
-            //   typeStats[type].total++;
-              
-            //   if (item.status && item.status.includes('Extracted') && !item.status.includes('in Progress')) {
-            //     extractedCount++;
-            //     typeStats[type].extracted++;
-            //   }
-            // });
-            const nonSeqItems = items.filter(item => (item.type || '').toLowerCase() !== 'sequences');
-            const nonSeqExtracted = nonSeqItems.filter(item => item.status === 'DDL - Extracted').length;
-            if (nonSeqItems.length > 0 && (nonSeqExtracted / nonSeqItems.length) >= 0.9) {
-            setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
-            setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
-            setArrowState(cardIdx, 1, 'arrow-done');
-            // Persist DDL stage reached
-            localStorage.setItem('assessment_stage_' + dbId, 'ddl');
-
-  // Update status pill → DDL Extracted
-            const pipeline2 = document.getElementById('pipeline-' + cardIdx);
-            const card2 = pipeline2 ? pipeline2.closest('[data-prev-db-card]') : null;
-            if (card2) {
-              const newPill = card2.querySelector('[data-new-pill]');
-                if (newPill) {
-                  newPill.textContent = 'DDL Extracted';
-                  newPill.hidden = false;
-                  newPill.style.background = '#f0fdf4';
-                  newPill.style.color = '#15803d';
-                  newPill.style.borderColor = '#bbf7d0';
-    }
-  }
-}
-
-            const pipeline = document.getElementById('pipeline-' + cardIdx);
-            const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
-            if (card) {
-              let statsContainer = card.querySelector('.stat-chips-container');
-              if (!statsContainer) {
-                statsContainer = document.createElement('div');
-                statsContainer.className = 'stat-chips-container';
-                statsContainer.style.display = 'flex';
-                statsContainer.style.flexWrap = 'wrap';
-                statsContainer.style.gap = '8px';
-                statsContainer.style.padding = '10px 0 0 0';
-                statsContainer.style.background = 'none';
-                statsContainer.style.justifyContent = 'flex-start';
-                card.querySelector('[data-target-details]').appendChild(statsContainer);
-              }
-              statsContainer.innerHTML = '';
-            
-              const icons = {
-                tables: 'fa-table',
-                views: 'fa-eye',
-                functions: 'fa-code',
-                sequences: 'fa-list-ol',
-                unknown: 'fa-database'
-              };
-
-              typeStats.forEach(function(stats, type) {
-                const iconClass = icons[type.toLowerCase()] || icons.unknown;
-                const chip = document.createElement('div');
-                chip.title = `${type}: ${stats.total}`;
-                chip.style.display = 'inline-flex';
-                chip.style.alignItems = 'center';
-                chip.style.gap = '5px';
-                chip.style.padding = '4px 10px';
-                chip.style.borderRadius = '999px';
-                chip.style.border = '1px solid #d1d5db';
-                chip.style.background = '#fff';
-                chip.style.color = '#374151';
-                chip.style.fontSize = '12px';
-                chip.style.fontWeight = '600';
-                chip.style.cursor = 'default';
-                const displayCount = type.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
-                chip.innerHTML = `
-                  <i class="fa-solid ${iconClass}" style="font-size:11px;color:#6b7280;"></i>
-                  <span>${displayCount}</span>
-                `; 
-                statsContainer.appendChild(chip);
-              });
-
-              if (dbHistoryRecords[cardIdx]) {
-                dbHistoryRecords[cardIdx].typeStats = typeStats;
-                if (window.updateGlobalChart) window.updateGlobalChart();
-              }
-            }
-          }
-
-          console.log('binary-cols raw:', res2['binary-cols'], res2['binary_cols'], res2['binaryCols']);
-const binaryColsData = res2['binary-cols'] || res2['binary_cols'] || res2['binaryCols'] || null;
-if (binaryColsData) {
-  const store = readSchemaExplorerStore();
-  if (!store[String(dbId)]) store[String(dbId)] = {};
-  store[String(dbId)].binaryCols = binaryColsData;
-  store[String(dbId)].db_id = dbId;
-  writeSchemaExplorerStore(store);
-  showBinaryExplorerButton(cardIdx);
-}
         }
-      });
-    });
+      }, 4000);
 
-    // Store interval so it can be cleared later
-    //pipelineStates[cardIdx].pollInterval = pollInterval;
-
-    if (dbId) showSchemaExplorerButton(cardIdx);
-    state.running = false;
+      if (dbId) showSchemaExplorerButton(cardIdx);
+      state.running = false;
+    }, 1000);
   }, 1000);
-}, 1000);
-}
-  });
+  }          
+  });       
 }
 
 // function handleRunAssessment(cardIdx) {
@@ -771,6 +757,7 @@ $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
       db_name: srcRec.name || '',
       db_type: srcRec.type || '',
       entity: getCurrentCompanyName()
+      // status: srcRec.status || ''  // reserved for read-only mapping enforcement
     }));
     window.location.href = 'binary_explorer.html';
     return;
@@ -812,6 +799,7 @@ $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
         db_name: srcRec.name || '',
         db_type: srcRec.type || '',
         entity: getCurrentCompanyName()
+        // status: srcRec.status || ''  // reserved for read-only mapping enforcement
       }));
       window.location.href = 'binary_explorer.html';
     }
@@ -900,6 +888,18 @@ function fetchPreviousDatabases() {
       updateDashboardVisualsFromHistory(records);
       updateStartMigrationPlacement(true);
       renderPreviousDbCards(records);
+
+      // Scenario 1 — silent background status_reader call per card after DOM is ready
+      records.forEach(function(record, idx) {
+        const srcRec = record.source;
+        if (!srcRec) return; // skip cards without a source
+        const status = String(srcRec.status || '').trim().toUpperCase();
+        // Only call status reader for records that have started assessment
+        if (status === 'NEW' || status === '—' || status === '') return;
+        const cardDbId = String(srcRec.id && srcRec.id !== '—' ? srcRec.id : '').trim();
+        if (!cardDbId) return;
+        callStatusReaderForCard(idx, srcRec, cardDbId);
+      });
     },
     error: function(xhr) {
       hideOverlay();

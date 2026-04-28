@@ -177,7 +177,10 @@
     </div>
 
     <!-- Approve -->
-    <div style="text-align:right; margin-top:8px;">
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:8px;">
+      <button id="rejectBtn" disabled style="padding:12px 36px;border:none;border-radius:10px;background:linear-gradient(90deg,#dc2626,#b91c1c);color:white;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(220,38,38,0.18);cursor:pointer;transition:opacity .15s;">
+        <i class="fa-solid fa-xmark" style="margin-right:8px;"></i>Reject
+      </button>
       <button class="approve-btn" id="approveBtn" disabled>
         <i class="fa-solid fa-check" style="margin-right:8px;"></i>Approve
       </button>
@@ -191,7 +194,29 @@
     const BINARY_API_URL = 'https://zw2ahet7yyteveqhv53euau5ym0obgpj.lambda-url.ap-south-1.on.aws';
 
     const params = new URLSearchParams(window.location.search);
-    const dbId = (params.get('db_id') || params.get('db') || '').trim();
+    let userId = '', dbId = '', dbName = '', entity = '', dbType = '';
+
+    const token = params.get('token');
+    if (token) {
+      try {
+        const decoded = JSON.parse(atob(decodeURIComponent(token)));
+        userId  = decoded.user_id  || '';
+        dbId    = decoded.db_id    || '';
+        dbName  = decoded.db_name  || '';
+        entity  = decoded.entity   || '';
+        dbType  = decoded.db_type  || '';
+      } catch(e) {
+        console.error('Failed to decode token:', e);
+      }
+    } else {
+      // fallback for direct URL params
+      dbId   = params.get('db_id') || params.get('db') || '';
+      dbName = params.get('db_name') || '';
+      entity = params.get('entity') || '';
+      dbType = params.get('db_type') || '';
+    }
+    
+    console.log('Final Approval Parameters:', { userId, dbId, dbName, entity, dbType });
 
     const dbIdChip     = document.getElementById('dbIdChip');
     const schemaStatus = document.getElementById('schemaStatus');
@@ -211,7 +236,10 @@
     let binaryLoaded = false;
 
     function checkAllLoaded() {
-      if (schemaLoaded && binaryLoaded) approveBtn.disabled = false;
+      if (schemaLoaded && binaryLoaded) {
+        approveBtn.disabled = false;
+        document.getElementById('rejectBtn').disabled = false;
+      }
     }
 
     // ── Parse table counts helper ──────────────────────────────────────────
@@ -329,9 +357,45 @@
     // ── Approve button ─────────────────────────────────────────────────────
     approveBtn.addEventListener('click', function() {
       approveBtn.disabled = true;
+      approveBtn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:8px;"></i>Approving...';
+
+      const approvePayload = {
+        user_id: userId,
+        db_id:   dbId,
+        db_name: dbName,
+        entity:  entity,
+        db_type: dbType
+      };
+      console.log('Approving with payload:', approvePayload);
+
+      // TODO: replace with actual approval Lambda URL
+      // fetch('https://your-approve-lambda.lambda-url.ap-south-1.on.aws', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      //   body: new URLSearchParams(approvePayload)
+      // }).then(...);
+
       approveBtn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:8px;"></i>Approved';
       approveBtn.style.background = '#94a3b8';
-      // TODO: call your approve Lambda here when ready
+    });
+
+    document.getElementById('rejectBtn').addEventListener('click', function() {
+      const rejectBtn = document.getElementById('rejectBtn');
+      rejectBtn.disabled = true;
+      approveBtn.disabled = true;
+      rejectBtn.innerHTML = '<i class="fa-solid fa-circle-xmark" style="margin-right:8px;"></i>Rejected';
+      rejectBtn.style.background = '#94a3b8';
+
+      const rejectPayload = {
+        user_id: userId,
+        db_id:   dbId,
+        db_name: dbName,
+        entity:  entity,
+        db_type: dbType,
+        action:  'reject'
+      };
+      console.log('Rejecting with payload:', rejectPayload);
+      // TODO: call rejection Lambda when ready
     });
 }
   </script>
