@@ -1,1009 +1,2100 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="icon" type="image/x-icon" href="ld.png">
-  <title>Livision DataHub — Dashboard</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="ld.png" />
+    <title>Livision DataHub — Dashboard</title>
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <!-- loader -->
-  <link href="./css/overlay.css" rel="stylesheet">
-  <!-- Sidebar CSS from prev -->
-  <link href="./css/sidebar.css" rel="stylesheet">
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- loader -->
+    <link href="./css/overlay.css" rel="stylesheet" />
+    <!-- Sidebar CSS from prev -->
+    <link href="./css/sidebar.css" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    /* Pipeline */
-.pipeline-flow { display:flex; align-items:center; padding:18px 24px 22px; border-top:1px solid rgba(120,110,220,0.08); background:linear-gradient(180deg,rgba(248,246,255,0.6),rgba(255,255,255,0.9)); width:100%; gap:10px; }
-.pipeline-step { display:flex; align-items:center; flex:1 1 0; min-width:0; }
-.pipeline-btn { border:none; border-radius:999px; padding:11px 18px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.25s ease; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; }
-.pipeline-btn[aria-disabled="true"] { cursor:default; }
-.pipeline-btn.state-run-assessment-pending { background:#fff3b0; color:#000000; border:1.5px solid #ffe066; box-shadow:0 4px 14px rgba(255,210,0,0.18); }
-.pipeline-btn.state-run-assessment-pending:hover { background:#ffe566; color:#5a4000; transform:translateY(-1px); }
-.pipeline-btn.state-run-assessment-active { background:#ffc107; color:#3d2e00; border:1.5px solid #e0b100; box-shadow:0 4px 16px rgba(245,196,0,0.32); }
-.pipeline-btn.state-run-assessment-complete { background:#ffc107; color:#3d2e00; border:1.5px solid #ffe066; box-shadow:0 4px 14px rgba(255,210,0,0.18); }
-.pipeline-btn.state-start-migration-pending { background:#cfe2ff; color:#000000; border:1.5px solid #9ec5fe; }
-.pipeline-btn.state-start-migration-active,
-.pipeline-btn.state-start-migration-complete { background:#397ce0; color:#000000; border:1.5px solid #6ea8fe; box-shadow:0 4px 16px rgba(110,168,254,0.28); }
-.pipeline-btn.state-ddl-extraction-pending { background:#e2d9f3; color:#000000; border:1.5px solid #cbb7ea; }
-.pipeline-btn.state-ddl-extraction-active,
-.pipeline-btn.state-ddl-extraction-complete { background:#9a78cb; color:#1f2937; border:1.5px solid #b197dc; box-shadow:0 4px 16px rgba(177,151,220,0.26); }
-.pipeline-btn.state-data-loading-pending { background:#d1ecf1; color:#000000; border:1.5px solid #9eeaf9; }
-.pipeline-btn.state-data-loading-active,
-.pipeline-btn.state-data-loading-complete { background:#31bdda; color:#0f172a; border:1.5px solid #6edff6; box-shadow:0 4px 16px rgba(110,223,246,0.26); }
-.pipeline-btn.state-validation-pending { background:#f8d7da; color:#000000; border:1.5px solid #f1aeb5; }
-.pipeline-btn.state-validation-active,
-.pipeline-btn.state-validation-complete { background:#ff982a; color:#000000; border:1.5px solid #f0ad4e; box-shadow:0 4px 16px rgba(240,173,78,0.26); }
-.pipeline-btn.state-success-pending { background:#d1e7dd; color:#000000; border:1.5px solid #a3cfbb; }
-.pipeline-btn.state-success-active { background:#22c55e; color:#000000; border:1.5px solid #5c9f80; box-shadow:0 4px 16px rgba(25,135,84,0.22); }
-.pipeline-btn.state-success-complete { background:#22c55e; color:#000000; border:1.5px solid #15803d; }
-.pipeline-arrow { width:52px; height:28px; display:flex; align-items:center; justify-content:center; flex:0 0 52px; margin:0; }
-.pipeline-arrow svg { width:100%; height:100%; }
-.arrow-line { stroke:#d1d5db; stroke-width:2.4; fill:none; stroke-dasharray:7 4; transition:stroke 0.4s ease; }
-.arrow-head { fill:#d1d5db; transition:fill 0.4s ease; }
-.pipeline-arrow.arrow-moving .arrow-line { stroke:#f59e0b; animation:dashMove 0.6s linear infinite; }
-.pipeline-arrow.arrow-moving .arrow-head { fill:#f59e0b; }
-.pipeline-arrow.arrow-done .arrow-line { stroke:#22c55e; stroke-dasharray:none; }
-.pipeline-arrow.arrow-done .arrow-head { fill:#22c55e; }
-@keyframes dashMove { to { stroke-dashoffset:-10; } }
+    <style>
+      /* Pipeline */
+      .pipeline-flow {
+        display: flex;
+        align-items: center;
+        padding: 18px 24px 22px;
+        border-top: 1px solid rgba(120, 110, 220, 0.08);
+        background: linear-gradient(
+          180deg,
+          rgba(248, 246, 255, 0.6),
+          rgba(255, 255, 255, 0.9)
+        );
+        width: 100%;
+        gap: 10px;
+      }
+      .pipeline-step {
+        display: flex;
+        align-items: center;
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .pipeline-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 11px 18px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+      }
+      .pipeline-btn[aria-disabled="true"] {
+        cursor: default;
+      }
+      .pipeline-btn.state-run-assessment-pending {
+        background: #fff3b0;
+        color: #000000;
+        border: 1.5px solid #ffe066;
+        box-shadow: 0 4px 14px rgba(255, 210, 0, 0.18);
+      }
+      .pipeline-btn.state-run-assessment-pending:hover {
+        background: #ffe566;
+        color: #5a4000;
+        transform: translateY(-1px);
+      }
+      .pipeline-btn.state-run-assessment-active {
+        background: #ffc107;
+        color: #3d2e00;
+        border: 1.5px solid #e0b100;
+        box-shadow: 0 4px 16px rgba(245, 196, 0, 0.32);
+      }
+      .pipeline-btn.state-run-assessment-complete {
+        background: #ffc107;
+        color: #3d2e00;
+        border: 1.5px solid #ffe066;
+        box-shadow: 0 4px 14px rgba(255, 210, 0, 0.18);
+      }
+      .pipeline-btn.state-start-migration-pending {
+        background: #cfe2ff;
+        color: #000000;
+        border: 1.5px solid #9ec5fe;
+      }
+      .pipeline-btn.state-start-migration-active,
+      .pipeline-btn.state-start-migration-complete {
+        background: #397ce0;
+        color: #000000;
+        border: 1.5px solid #6ea8fe;
+        box-shadow: 0 4px 16px rgba(110, 168, 254, 0.28);
+      }
+      .pipeline-btn.state-ddl-extraction-pending {
+        background: #e2d9f3;
+        color: #000000;
+        border: 1.5px solid #cbb7ea;
+      }
+      .pipeline-btn.state-ddl-extraction-active,
+      .pipeline-btn.state-ddl-extraction-complete {
+        background: #9a78cb;
+        color: #1f2937;
+        border: 1.5px solid #b197dc;
+        box-shadow: 0 4px 16px rgba(177, 151, 220, 0.26);
+      }
+      .pipeline-btn.state-data-loading-pending {
+        background: #d1ecf1;
+        color: #000000;
+        border: 1.5px solid #9eeaf9;
+      }
+      .pipeline-btn.state-data-loading-active,
+      .pipeline-btn.state-data-loading-complete {
+        background: #31bdda;
+        color: #0f172a;
+        border: 1.5px solid #6edff6;
+        box-shadow: 0 4px 16px rgba(110, 223, 246, 0.26);
+      }
+      .pipeline-btn.state-validation-pending {
+        background: #f8d7da;
+        color: #000000;
+        border: 1.5px solid #f1aeb5;
+      }
+      .pipeline-btn.state-validation-active,
+      .pipeline-btn.state-validation-complete {
+        background: #ff982a;
+        color: #000000;
+        border: 1.5px solid #f0ad4e;
+        box-shadow: 0 4px 16px rgba(240, 173, 78, 0.26);
+      }
+      .pipeline-btn.state-success-pending {
+        background: #d1e7dd;
+        color: #000000;
+        border: 1.5px solid #a3cfbb;
+      }
+      .pipeline-btn.state-success-active {
+        background: #22c55e;
+        color: #000000;
+        border: 1.5px solid #5c9f80;
+        box-shadow: 0 4px 16px rgba(25, 135, 84, 0.22);
+      }
+      .pipeline-btn.state-success-complete {
+        background: #22c55e;
+        color: #000000;
+        border: 1.5px solid #15803d;
+      }
+      .pipeline-arrow {
+        width: 52px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 52px;
+        margin: 0;
+      }
+      .pipeline-arrow svg {
+        width: 100%;
+        height: 100%;
+      }
+      .arrow-line {
+        stroke: #d1d5db;
+        stroke-width: 2.4;
+        fill: none;
+        stroke-dasharray: 7 4;
+        transition: stroke 0.4s ease;
+      }
+      .arrow-head {
+        fill: #d1d5db;
+        transition: fill 0.4s ease;
+      }
+      .pipeline-arrow.arrow-moving .arrow-line {
+        stroke: #f59e0b;
+        animation: dashMove 0.6s linear infinite;
+      }
+      .pipeline-arrow.arrow-moving .arrow-head {
+        fill: #f59e0b;
+      }
+      .pipeline-arrow.arrow-done .arrow-line {
+        stroke: #22c55e;
+        stroke-dasharray: none;
+      }
+      .pipeline-arrow.arrow-done .arrow-head {
+        fill: #22c55e;
+      }
+      @keyframes dashMove {
+        to {
+          stroke-dashoffset: -10;
+        }
+      }
 
-/* Source/Target heading labels */
-.prev-db-side-heading { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
-.prev-db-heading-label { font-size:13px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; }
-.prev-db-source .prev-db-heading-label { color:#000000; }
-.prev-db-target .prev-db-heading-label { color:#000000; }
+      /* Source/Target heading labels */
+      .prev-db-side-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .prev-db-heading-label {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .prev-db-source .prev-db-heading-label {
+        color: #000000;
+      }
+      .prev-db-target .prev-db-heading-label {
+        color: #000000;
+      }
 
-    /* ── PREVIOUS DATABASES SECTION ── */
-#previousDbSection { margin-top: 24px; }
-#previousDbSection .section-title { color: var(--lv-indigo); font-weight: 800; margin-bottom: 4px; }
+      /* ── PREVIOUS DATABASES SECTION ── */
+      #previousDbSection {
+        margin-top: 24px;
+      }
+      #previousDbSection .section-title {
+        color: var(--lv-indigo);
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
 
-.prev-db-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.95));
-  border-radius: 16px;
-  border: 1px solid rgba(120,110,220,0.08);
-  box-shadow: 0 10px 32px rgba(91,62,214,0.05);
-  margin-bottom: 18px;
-  overflow: hidden;
-}
-.prev-db-toggle {
-  width: 100%;
-  border: none;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 22px;
-  text-align: left;
-}
-.prev-db-toggle:focus {
-  outline: none;
-}
-.prev-db-toggle-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  flex: 1;
-}
-.prev-db-toggle-title {
-  margin: 0;
-  color: var(--lv-indigo);
-  font-size: 18px;
-  font-weight: 800;
-}
-.prev-db-toggle-meta {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-.prev-db-toggle-side {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-.prev-db-schema-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #c7d2fe;
-  background: #eef2ff;
-  color: #3730a3;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border: 1px solid #c7d2fe;
-  outline: none;
-}
-.prev-db-schema-btn:hover {
-  background: #e0e7ff;
-}
-.prev-db-schema-btn:focus-visible {
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.22);
-}
-.prev-db-status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.prev-db-toggle-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  border: 1px solid rgba(120,110,220,0.12);
-  background: #fff;
-  color: var(--lv-indigo);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform .18s ease;
-  flex-shrink: 0;
-}
-.prev-db-card.is-open .prev-db-toggle-icon {
-  transform: rotate(180deg);
-}
-.prev-db-content {
-  display: none;
-  border-top: 1px solid rgba(120,110,220,0.08);
-}
-.prev-db-card.is-open .prev-db-content {
-  display: block;
-}
-.prev-db-inner {
-  display: grid;
-  grid-template-columns: 1fr 72px 1fr;
-  min-height: 180px;
-}
-.prev-db-side { padding: 20px 24px; background:#fff; }
-.prev-db-side-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 14px;
-}
-.prev-db-badge {
-  padding: 5px 12px; border-radius: 999px;
-  font-size: 12px; font-weight: 700;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.src-badge { background: #ede9fe; color: #6d28d9; }
-.tgt-badge { background: #d1fae5; color: #065f46; }
-.prev-db-type-pill {
-  background: #f3f0ff; color: var(--lv-indigo);
-  padding: 4px 10px; border-radius: 8px;
-  font-size: 12px; font-weight: 700;
-}
-.prev-db-row {
-  display: flex; gap: 8px;
-  padding: 5px 0;
-  border-bottom: 1px solid rgba(120,110,220,0.05);
-  font-size: 13px;
-}
-.prev-db-row:last-child { border-bottom: none; }
-.prev-db-label {
-  color: var(--muted); font-weight: 600;
-  min-width: 90px; flex-shrink: 0;
-}
-.prev-db-value { color: #2b2448; font-weight: 500; word-break: break-all; }
-.prev-db-divider {
-  display: flex; align-items: center; justify-content: center;
-  background: #fff;
-  padding: 0 10px;
-}
-.prev-db-arrow,
-.prev-db-toggle-icon-round {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--lv-purple-1), var(--lv-indigo));
-  display: flex; align-items: center; justify-content: center;
-  color: white; font-size: 13px;
-  box-shadow: 0 6px 16px rgba(91,62,214,0.2);
-}
-.prev-db-toggle-icon-round { flex-shrink: 0; }
-.prev-db-flow-arrows {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  width: 100%;
-  overflow: visible;
-}
-.prev-db-flow-arrow {
-  width: 34px;
-  height: 20px;
-  flex: 0 0 20px;
-}
-.prev-db-flow-arrow svg {
-  width: 100%;
-  height: 100%;
-}
-.prev-db-card.is-transferring .prev-db-flow-arrow {
-  animation: sourceTargetArrowSlide 0.7s linear infinite;
-  transform-origin: center center;
-}
-.prev-db-card.is-transferring .prev-db-flow-arrow .arrow-line,
-.prev-db-card.is-transferring .prev-db-flow-arrow .arrow-head {
-  stroke: #98a2b3;
-  fill: #98a2b3;
-}
-@keyframes sourceTargetArrowSlide {
-  0% { opacity: 0.45; transform: translateX(0); }
-  50% { opacity: 1; transform: translateX(8px); }
-  100% { opacity: 0.45; transform: translateX(0); }
-}
-.prev-db-target-empty {
-  display: flex; align-items: center; justify-content: center;
-  background: #fff;
-}
+      .prev-db-card {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98),
+          rgba(250, 248, 255, 0.95)
+        );
+        border-radius: 16px;
+        border: 1px solid rgba(120, 110, 220, 0.08);
+        box-shadow: 0 10px 32px rgba(91, 62, 214, 0.05);
+        margin-bottom: 18px;
+        overflow: hidden;
+      }
+      .prev-db-toggle {
+        width: 100%;
+        border: none;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        text-align: left;
+      }
+      .prev-db-toggle:focus {
+        outline: none;
+      }
+      .prev-db-toggle-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 1;
+      }
+      .prev-db-toggle-title {
+        margin: 0;
+        color: var(--lv-indigo);
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .prev-db-toggle-meta {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .prev-db-toggle-side {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+      .prev-db-schema-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #c7d2fe;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        cursor: pointer;
+        border: 1px solid #c7d2fe;
+        outline: none;
+      }
+      .prev-db-schema-btn:hover {
+        background: #e0e7ff;
+      }
+      .prev-db-schema-btn:focus-visible {
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+      }
+      .prev-db-status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .prev-db-toggle-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        border: 1px solid rgba(120, 110, 220, 0.12);
+        background: #fff;
+        color: var(--lv-indigo);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.18s ease;
+        flex-shrink: 0;
+      }
+      .prev-db-card.is-open .prev-db-toggle-icon {
+        transform: rotate(180deg);
+      }
+      .prev-db-content {
+        display: none;
+        border-top: 1px solid rgba(120, 110, 220, 0.08);
+      }
+      .prev-db-card.is-open .prev-db-content {
+        display: block;
+      }
+      .prev-db-inner {
+        display: grid;
+        grid-template-columns: 1fr 72px 1fr;
+        min-height: 180px;
+      }
+      .prev-db-side {
+        padding: 20px 24px;
+        background: #fff;
+      }
+      .prev-db-side-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .prev-db-badge {
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .src-badge {
+        background: #ede9fe;
+        color: #6d28d9;
+      }
+      .tgt-badge {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .prev-db-type-pill {
+        background: #f3f0ff;
+        color: var(--lv-indigo);
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .prev-db-row {
+        display: flex;
+        gap: 8px;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(120, 110, 220, 0.05);
+        font-size: 13px;
+      }
+      .prev-db-row:last-child {
+        border-bottom: none;
+      }
+      .prev-db-label {
+        color: var(--muted);
+        font-weight: 600;
+        min-width: 90px;
+        flex-shrink: 0;
+      }
+      .prev-db-value {
+        color: #2b2448;
+        font-weight: 500;
+        word-break: break-all;
+      }
+      .prev-db-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        padding: 0 10px;
+      }
+      .prev-db-arrow,
+      .prev-db-toggle-icon-round {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          var(--lv-purple-1),
+          var(--lv-indigo)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 13px;
+        box-shadow: 0 6px 16px rgba(91, 62, 214, 0.2);
+      }
+      .prev-db-toggle-icon-round {
+        flex-shrink: 0;
+      }
+      .prev-db-flow-arrows {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+        overflow: visible;
+      }
+      .prev-db-flow-arrow {
+        width: 34px;
+        height: 20px;
+        flex: 0 0 20px;
+      }
+      .prev-db-flow-arrow svg {
+        width: 100%;
+        height: 100%;
+      }
+      .prev-db-card.is-transferring .prev-db-flow-arrow {
+        animation: sourceTargetArrowSlide 0.7s linear infinite;
+        transform-origin: center center;
+      }
+      .prev-db-card.is-transferring .prev-db-flow-arrow .arrow-line,
+      .prev-db-card.is-transferring .prev-db-flow-arrow .arrow-head {
+        stroke: #98a2b3;
+        fill: #98a2b3;
+      }
+      @keyframes sourceTargetArrowSlide {
+        0% {
+          opacity: 0.45;
+          transform: translateX(0);
+        }
+        50% {
+          opacity: 1;
+          transform: translateX(8px);
+        }
+        100% {
+          opacity: 0.45;
+          transform: translateX(0);
+        }
+      }
+      .prev-db-target-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+      }
 
-.prev-db-no-target { text-align: center; }
-.prev-db-actions {
-  display: flex;
-  justify-content: center;
-  padding: 0 24px 22px;
-}
-.prev-db-action-btn {
-  border: none;
-  border-radius: 10px;
-  padding: 11px 24px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(90deg, var(--lv-purple-1), var(--lv-indigo));
-  box-shadow: 0 12px 28px rgba(91,62,214,0.12);
-}
-    :root{
-      --lv-purple-1: #6a5acd;
-      --lv-purple-2: #7c63ff;
-      --lv-indigo: #5b3ed6;
-      --muted: #6b6b80;
-      --glass: rgba(255,255,255,0.86);
-      --accent-1: #7c3aed;
-      --accent-2: #ff9ab1;
-    }
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
-    body{
-      background: radial-gradient(1000px 400px at 10% 10%, rgba(123,97,255,0.06), transparent),
-                  linear-gradient(120deg,#eef0ff,#fbf8ff);
-      color:#172033;
-      padding-bottom:80px;
-      -webkit-font-smoothing:antialiased;
-    }
+      .prev-db-no-target {
+        text-align: center;
+      }
+      .prev-db-actions {
+        display: flex;
+        justify-content: center;
+        padding: 0 24px 22px;
+      }
+      .prev-db-action-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 11px 24px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(
+          90deg,
+          var(--lv-purple-1),
+          var(--lv-indigo)
+        );
+        box-shadow: 0 12px 28px rgba(91, 62, 214, 0.12);
+      }
+      :root {
+        --lv-purple-1: #6a5acd;
+        --lv-purple-2: #7c63ff;
+        --lv-indigo: #5b3ed6;
+        --muted: #6b6b80;
+        --glass: rgba(255, 255, 255, 0.86);
+        --accent-1: #7c3aed;
+        --accent-2: #ff9ab1;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial;
+      }
+      body {
+        background:
+          radial-gradient(
+            1000px 400px at 10% 10%,
+            rgba(123, 97, 255, 0.06),
+            transparent
+          ),
+          linear-gradient(120deg, #eef0ff, #fbf8ff);
+        color: #172033;
+        padding-bottom: 80px;
+        -webkit-font-smoothing: antialiased;
+      }
 
-    /* ── SIDEBAR — exactly from file 9 (prev) ── */
-    .sidebar {
-      position:fixed; left:0; top:0; bottom:0;
-      width:280px; padding:22px 20px;
-      background: var(--glass);
-      border-right: 1px solid rgba(120,110,220,0.06);
-      box-shadow: 0 12px 40px rgba(91,62,214,0.04);
-      backdrop-filter: blur(6px);
-    }
-    .brand { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
-    .brand .logo {
-      width:56px; height:56px; border-radius:12px; overflow:hidden;
-      background: linear-gradient(135deg,var(--lv-purple-1),var(--lv-indigo));
-      display:grid; place-items:center; color:white; font-weight:700;
-      box-shadow: 0 10px 34px rgba(91,62,214,0.12);
-      flex-shrink:0;
-    }
-    .brand h4{ margin:0; font-size:16px; color:var(--lv-indigo); }
-    .brand small{ display:block; color:var(--muted); margin-top:3px; font-size:12px; }
+      /* ── SIDEBAR — exactly from file 9 (prev) ── */
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        padding: 22px 20px;
+        background: var(--glass);
+        border-right: 1px solid rgba(120, 110, 220, 0.06);
+        box-shadow: 0 12px 40px rgba(91, 62, 214, 0.04);
+        backdrop-filter: blur(6px);
+      }
+      .brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .brand .logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(
+          135deg,
+          var(--lv-purple-1),
+          var(--lv-indigo)
+        );
+        display: grid;
+        place-items: center;
+        color: white;
+        font-weight: 700;
+        box-shadow: 0 10px 34px rgba(91, 62, 214, 0.12);
+        flex-shrink: 0;
+      }
+      .brand h4 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--lv-indigo);
+      }
+      .brand small {
+        display: block;
+        color: var(--muted);
+        margin-top: 3px;
+        font-size: 12px;
+      }
 
-    .nav-section{ margin-top:12px; display:block; font-weight:600; }
-    .nav-item{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:#333; text-decoration:none; margin-bottom:6px; transition:all .12s ease; cursor:pointer; }
-    .nav-item i{ width:20px; text-align:center; color:var(--lv-indigo); }
-    .nav-item:hover, .nav-item.active { background: linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); color:white; transform:translateY(-2px); box-shadow: 0 8px 26px rgba(91,62,214,0.08); }
+      .nav-section {
+        margin-top: 12px;
+        display: block;
+        font-weight: 600;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        color: #333;
+        text-decoration: none;
+        margin-bottom: 6px;
+        transition: all 0.12s ease;
+        cursor: pointer;
+      }
+      .nav-item i {
+        width: 20px;
+        text-align: center;
+        color: var(--lv-indigo);
+      }
+      .nav-item:hover,
+      .nav-item.active {
+        background: linear-gradient(
+          90deg,
+          var(--lv-purple-1),
+          var(--lv-indigo)
+        );
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 26px rgba(91, 62, 214, 0.08);
+      }
 
-    /* Nested menu — exactly from file 9 */
-    .nav-sub { margin-left:28px; margin-top:6px; margin-bottom:10px; display:block; cursor:pointer; }
-    .nav-sub .nav-leaf { padding:6px 10px; border-radius:6px; display:flex; align-items:center; gap:8px; color:#444; text-decoration:none; font-weight:600; margin-bottom:6px; cursor:pointer; }
-    .nav-leaf:hover { background:rgba(120,110,220,0.04); color:var(--lv-indigo); }
+      /* Nested menu — exactly from file 9 */
+      .nav-sub {
+        margin-left: 28px;
+        margin-top: 6px;
+        margin-bottom: 10px;
+        display: block;
+        cursor: pointer;
+      }
+      .nav-sub .nav-leaf {
+        padding: 6px 10px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #444;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 6px;
+        cursor: pointer;
+      }
+      .nav-leaf:hover {
+        background: rgba(120, 110, 220, 0.04);
+        color: var(--lv-indigo);
+      }
 
-    /* Main */
-    .main { margin-left:320px; padding:22px 34px 140px 34px; }
+      /* Main */
+      .main {
+        margin-left: 320px;
+        padding: 22px 34px 140px 34px;
+      }
 
-    /* Profile dropdown */
-    .profile-dropdown { position:relative; }
-    .profile-icon { width:40px; height:40px; border-radius:50%; background:#f3f4ff; padding:6px; cursor:pointer; transition:0.2s; }
-    .profile-icon:hover { background:#e6e8ff; }
-    .profile-menu {
-      position:absolute; top:50px; right:0; background:white;
-      border-radius:10px; padding:0; width:150px;
-      opacity:0; visibility:hidden;
-      box-shadow:0 10px 28px rgba(23,26,38,0.04);
-    }
-    .profile-menu .nav-item { margin:0; }
-    .profile-dropdown:hover .profile-menu { opacity:1; visibility:visible; }
-    .menu-item { padding:8px 12px; border-radius:6px; color:#ccc; cursor:pointer; }
-    .menu-item:hover { background:linear-gradient(90deg,#6a5acd,#7c63ff); color:white; }
-    .text-danger { color:#ff6b6b; }
+      /* Profile dropdown */
+      .profile-dropdown {
+        position: relative;
+      }
+      .profile-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f3f4ff;
+        padding: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .profile-icon:hover {
+        background: #e6e8ff;
+      }
+      .profile-menu {
+        position: absolute;
+        top: 50px;
+        right: 0;
+        background: white;
+        border-radius: 10px;
+        padding: 0;
+        width: 150px;
+        opacity: 0;
+        visibility: hidden;
+        box-shadow: 0 10px 28px rgba(23, 26, 38, 0.04);
+      }
+      .profile-menu .nav-item {
+        margin: 0;
+      }
+      .profile-dropdown:hover .profile-menu {
+        opacity: 1;
+        visibility: visible;
+      }
+      .menu-item {
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: #ccc;
+        cursor: pointer;
+      }
+      .menu-item:hover {
+        background: linear-gradient(90deg, #6a5acd, #7c63ff);
+        color: white;
+      }
+      .text-danger {
+        color: #ff6b6b;
+      }
 
-    /* Topbar */
-    .topbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--glass); padding:12px 18px; border-radius:12px; border:1px solid rgba(120,110,220,0.06); }
-    .topbar .title { font-size:18px; font-weight:700; color:var(--lv-indigo); }
-    .topbar .sub { font-size:13px; color:var(--muted); }
+      /* Topbar */
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        background: var(--glass);
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 110, 220, 0.06);
+      }
+      .topbar .title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--lv-indigo);
+      }
+      .topbar .sub {
+        font-size: 13px;
+        color: var(--muted);
+      }
 
-    /* Start migration */
-    .start-wrap { margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    .start { display:flex; justify-content:center; align-items:center; margin-top:22px; margin-bottom:8px; }
-    .start-btn { background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); border:none; padding:12px 64px; color:white; border-radius:10px; font-weight:700; box-shadow:0 12px 32px rgba(91,62,214,0.08); transition:transform .12s ease, box-shadow .12s ease; }
-    .start-btn:hover { transform:translateY(-4px); box-shadow:0 18px 44px rgba(91,62,214,0.12); }
-    .summary-action-slot { display:flex; align-items:center; justify-content:flex-end; }
-    .summary-action-slot .start-btn { padding:12px 28px; }
-    .history-empty {
-      text-align: center;
-      padding: 26px 18px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.95));
-      border: 1px dashed rgba(120,110,220,0.18);
-      color: var(--muted);
-      box-shadow: 0 10px 28px rgba(91,62,214,0.04);
-    }
-    .history-empty strong {
-      display: block;
-      color: var(--lv-indigo);
-      font-size: 15px;
-      margin-bottom: 6px;
-    }
+      /* Start migration */
+      .start-wrap {
+        margin-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .start {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 22px;
+        margin-bottom: 8px;
+      }
+      .start-btn {
+        background: linear-gradient(
+          90deg,
+          var(--lv-purple-1),
+          var(--lv-indigo)
+        );
+        border: none;
+        padding: 12px 64px;
+        color: white;
+        border-radius: 10px;
+        font-weight: 700;
+        box-shadow: 0 12px 32px rgba(91, 62, 214, 0.08);
+        transition:
+          transform 0.12s ease,
+          box-shadow 0.12s ease;
+      }
+      .start-btn:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 44px rgba(91, 62, 214, 0.12);
+      }
+      .summary-action-slot {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .summary-action-slot .start-btn {
+        padding: 12px 28px;
+      }
+      .history-empty {
+        text-align: center;
+        padding: 26px 18px;
+        border-radius: 14px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98),
+          rgba(250, 248, 255, 0.95)
+        );
+        border: 1px dashed rgba(120, 110, 220, 0.18);
+        color: var(--muted);
+        box-shadow: 0 10px 28px rgba(91, 62, 214, 0.04);
+      }
+      .history-empty strong {
+        display: block;
+        color: var(--lv-indigo);
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
 
-    .user-initials { width:40px; height:40px; background:#4a4cff; color:white; font-weight:600; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; text-transform:uppercase; }
+      .user-initials {
+        width: 40px;
+        height: 40px;
+        background: #4a4cff;
+        color: white;
+        font-weight: 600;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        text-transform: uppercase;
+      }
 
-    /* Cards row */
-    .cards-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-top:18px; width:100%; }
-    .card-compact { background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.95)); border-radius:14px; padding:18px; box-shadow:0 10px 28px rgba(23,26,38,0.04); transition:transform .18s ease, box-shadow .18s ease; border:1px solid rgba(120,110,220,0.05); }
-    .card-compact:hover { transform:translateY(-6px); box-shadow:0 18px 46px rgba(91,62,214,0.08); }
-    .card-compact h6 { margin:0; color:var(--muted); font-weight:700; font-size:13px; }
-    .card-compact h3 { margin:8px 0 0 0; color:var(--lv-indigo); font-weight:800; }
-    .card-compact .mini { font-size:12px; color:var(--muted); margin-top:6px; }
+      /* Cards row */
+      .cards-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+        margin-top: 18px;
+        width: 100%;
+      }
+      .card-compact {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98),
+          rgba(250, 248, 255, 0.95)
+        );
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 10px 28px rgba(23, 26, 38, 0.04);
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease;
+        border: 1px solid rgba(120, 110, 220, 0.05);
+      }
+      .card-compact:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 46px rgba(91, 62, 214, 0.08);
+      }
+      .card-compact h6 {
+        margin: 0;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .card-compact h3 {
+        margin: 8px 0 0 0;
+        color: var(--lv-indigo);
+        font-weight: 800;
+      }
+      .card-compact .mini {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
 
-    /* DB overview */
-    .db-overview { margin-top:18px; padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,248,255,0.96)); border:1px solid rgba(120,110,220,0.06); box-shadow:0 14px 40px rgba(91,62,214,0.03); }
-    .db-overview .controls { display:flex; gap:8px; align-items:center; }
-    .badge-pill { padding:8px 12px; border-radius:999px; font-weight:700; }
+      /* DB overview */
+      .db-overview {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 14px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98),
+          rgba(250, 248, 255, 0.96)
+        );
+        border: 1px solid rgba(120, 110, 220, 0.06);
+        box-shadow: 0 14px 40px rgba(91, 62, 214, 0.03);
+      }
+      .db-overview .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .badge-pill {
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-weight: 700;
+      }
 
-    /* Schema Explorer */
-    .schema-shell { margin-top:18px; padding:18px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,246,255,0.98)); border:1px solid rgba(120,110,220,0.04); box-shadow:0 10px 28px rgba(91,62,214,0.03); }
-    .chip { padding:7px 14px; border-radius:999px; background:#fff; border:1px solid rgba(160,140,240,0.22); cursor:pointer; font-weight:700; transition:all .12s; font-size:13px; }
-    .chip.active { background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; box-shadow:0 8px 16px rgba(124,58,237,0.12); }
-    .badge-low { background:#22c55e; color:#fff; padding:6px 8px; border-radius:8px; font-weight:700; }
-    .badge-mid { background:#f59e0b; color:#fff; padding:6px 8px; border-radius:8px; font-weight:700; }
-    .badge-high { background:#ef4444; color:#fff; padding:6px 8px; border-radius:8px; font-weight:700; }
+      /* Schema Explorer */
+      .schema-shell {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 12px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98),
+          rgba(249, 246, 255, 0.98)
+        );
+        border: 1px solid rgba(120, 110, 220, 0.04);
+        box-shadow: 0 10px 28px rgba(91, 62, 214, 0.03);
+      }
+      .chip {
+        padding: 7px 14px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid rgba(160, 140, 240, 0.22);
+        cursor: pointer;
+        font-weight: 700;
+        transition: all 0.12s;
+        font-size: 13px;
+      }
+      .chip.active {
+        background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+        color: #fff;
+        box-shadow: 0 8px 16px rgba(124, 58, 237, 0.12);
+      }
+      .badge-low {
+        background: #22c55e;
+        color: #fff;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-weight: 700;
+      }
+      .badge-mid {
+        background: #f59e0b;
+        color: #fff;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-weight: 700;
+      }
+      .badge-high {
+        background: #ef4444;
+        color: #fff;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-weight: 700;
+      }
 
-    /* Footer */
-    footer { position:fixed; left:320px; right:0; bottom:0; height:72px; background:linear-gradient(180deg,#fff,#fbfbff); border-top:1px solid rgba(120,110,220,0.05); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; box-shadow:0 -6px 20px rgba(91,62,214,0.02); }
+      /* Footer */
+      footer {
+        position: fixed;
+        left: 320px;
+        right: 0;
+        bottom: 0;
+        height: 72px;
+        background: linear-gradient(180deg, #fff, #fbfbff);
+        border-top: 1px solid rgba(120, 110, 220, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 14px;
+        box-shadow: 0 -6px 20px rgba(91, 62, 214, 0.02);
+      }
 
-    /* ── MODAL — improved styles from file 10 ── */
-    .modal-content {
-      border-radius:20px;
-      border:1px solid rgba(120,110,220,0.10);
-      background:linear-gradient(180deg, #fcfbff, #f5f2ff);
-      box-shadow:0 24px 60px rgba(91,62,214,0.14);
-      overflow:hidden;
-    }
-    .form-required::after { content:" *"; color:#d33; font-weight:700; margin-left:4px; }
-    .migration-tabs {
-      padding:14px 16px 0;
-      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(246,242,255,0.92));
-      border-bottom:1px solid rgba(120,110,220,0.08);
-    }
-    .migration-tabs .nav-tabs { border-bottom:none; }
-    .migration-tabs .nav-link { border:none; border-radius:12px 12px 0 0; color:var(--muted); font-weight:700; padding:12px 20px; }
-    .migration-tabs .nav-link.active { color:#fff; background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo)); box-shadow:0 12px 28px rgba(91,62,214,0.16); }
-    .migration-pane { padding:22px; }
-    .migration-form-card { background:#ffffff; padding:28px; border-radius:18px; box-shadow:0 14px 32px rgba(91,62,214,0.08); border:1px solid rgba(120,110,220,0.08); }
-    .migration-form-head { margin-bottom:22px; }
-    .migration-form-head h5 { margin:0 0 6px; color:var(--lv-indigo); font-weight:800; }
-    .migration-form-head p { margin:0; color:var(--muted); font-size:14px; }
-    .migration-field { margin-bottom:18px; }
-    .migration-field label { font-size:14px; font-weight:600; margin-bottom:6px; display:block; color:#2b2448; }
-    .migration-field input,
-    .migration-field select,
-    .migration-field textarea { width:100%; padding:12px 14px; border-radius:10px; border:1px solid #e5defa; font-size:14px; background:#faf8ff; transition:border-color .2s ease, box-shadow .2s ease, background-color .2s ease; }
-    .migration-field input:focus,
-    .migration-field select:focus,
-    .migration-field textarea:focus { outline:none; border-color:#6a5acd; background:#fff; box-shadow:0 0 0 4px rgba(106,90,205,0.10); }
-    .migration-field textarea { min-height:110px; resize:vertical; }
-    .migration-field input[readonly] { background:#f3f0ff; color:#5b3ed6; border-color:#d9cffd; cursor:default; user-select:none; pointer-events:none; }
-    .migration-field input[readonly]:hover,
-    .migration-field input[readonly]:focus { background:#f3f0ff; color:#5b3ed6; border-color:#d9cffd; box-shadow:none; }
-    .migration-field select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236a5acd' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
-    .status-static-field {
-      background: #fff !important;
-      border: 1px solid #e5defa !important;
-      color: #2b2448 !important;
-      font-weight: 600;
-      letter-spacing: 0;
-      text-transform: none;
-      text-align: left;
-      font-family: inherit;
-    }
-    .status-static-field::placeholder {
-      color: #2b2448;
-      opacity: 1;
-    }
-    .status-static-field[readonly],
-    .status-static-field[readonly]:hover,
-    .status-static-field[readonly]:focus {
-      background: #e5defa !important;
-      border-color: #e5defa !important;
-      color: #2b2448 !important;
-      box-shadow: none;
-      cursor: default;
-      pointer-events: none;
-    }
-    .migration-actions { padding:0 22px 22px; border-top:none; gap:12px; }
-    .migration-actions .btn { border-radius:10px; padding:11px 18px; font-weight:700; }
-    .migration-shell .modal-dialog { max-width:min(1180px, 94vw); }
+      /* ── MODAL — improved styles from file 10 ── */
+      .modal-content {
+        border-radius: 20px;
+        border: 1px solid rgba(120, 110, 220, 0.1);
+        background: linear-gradient(180deg, #fcfbff, #f5f2ff);
+        box-shadow: 0 24px 60px rgba(91, 62, 214, 0.14);
+        overflow: hidden;
+      }
+      .form-required::after {
+        content: " *";
+        color: #d33;
+        font-weight: 700;
+        margin-left: 4px;
+      }
+      .migration-tabs {
+        padding: 14px 16px 0;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.9),
+          rgba(246, 242, 255, 0.92)
+        );
+        border-bottom: 1px solid rgba(120, 110, 220, 0.08);
+      }
+      .migration-tabs .nav-tabs {
+        border-bottom: none;
+      }
+      .migration-tabs .nav-link {
+        border: none;
+        border-radius: 12px 12px 0 0;
+        color: var(--muted);
+        font-weight: 700;
+        padding: 12px 20px;
+      }
+      .migration-tabs .nav-link.active {
+        color: #fff;
+        background: linear-gradient(
+          90deg,
+          var(--lv-purple-1),
+          var(--lv-indigo)
+        );
+        box-shadow: 0 12px 28px rgba(91, 62, 214, 0.16);
+      }
+      .migration-pane {
+        padding: 22px;
+      }
+      .migration-form-card {
+        background: #ffffff;
+        padding: 28px;
+        border-radius: 18px;
+        box-shadow: 0 14px 32px rgba(91, 62, 214, 0.08);
+        border: 1px solid rgba(120, 110, 220, 0.08);
+      }
+      .migration-form-head {
+        margin-bottom: 22px;
+      }
+      .migration-form-head h5 {
+        margin: 0 0 6px;
+        color: var(--lv-indigo);
+        font-weight: 800;
+      }
+      .migration-form-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .migration-field {
+        margin-bottom: 18px;
+      }
+      .migration-field label {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+        color: #2b2448;
+      }
+      .migration-field input,
+      .migration-field select,
+      .migration-field textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid #e5defa;
+        font-size: 14px;
+        background: #faf8ff;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease,
+          background-color 0.2s ease;
+      }
+      .migration-field input:focus,
+      .migration-field select:focus,
+      .migration-field textarea:focus {
+        outline: none;
+        border-color: #6a5acd;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(106, 90, 205, 0.1);
+      }
+      .migration-field textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+      .migration-field input[readonly] {
+        background: #f3f0ff;
+        color: #5b3ed6;
+        border-color: #d9cffd;
+        cursor: default;
+        user-select: none;
+        pointer-events: none;
+      }
+      .migration-field input[readonly]:hover,
+      .migration-field input[readonly]:focus {
+        background: #f3f0ff;
+        color: #5b3ed6;
+        border-color: #d9cffd;
+        box-shadow: none;
+      }
+      .migration-field select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236a5acd' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+      }
+      .status-static-field {
+        background: #fff !important;
+        border: 1px solid #e5defa !important;
+        color: #2b2448 !important;
+        font-weight: 600;
+        letter-spacing: 0;
+        text-transform: none;
+        text-align: left;
+        font-family: inherit;
+      }
+      .status-static-field::placeholder {
+        color: #2b2448;
+        opacity: 1;
+      }
+      .status-static-field[readonly],
+      .status-static-field[readonly]:hover,
+      .status-static-field[readonly]:focus {
+        background: #e5defa !important;
+        border-color: #e5defa !important;
+        color: #2b2448 !important;
+        box-shadow: none;
+        cursor: default;
+        pointer-events: none;
+      }
+      .migration-actions {
+        padding: 0 22px 22px;
+        border-top: none;
+        gap: 12px;
+      }
+      .migration-actions .btn {
+        border-radius: 10px;
+        padding: 11px 18px;
+        font-weight: 700;
+      }
+      .migration-shell .modal-dialog {
+        max-width: min(1180px, 94vw);
+      }
 
-    /* Tab disabled wrap */
-    .tab-disabled-wrap { display:inline-flex; cursor:not-allowed; }
-    .tab-disabled-wrap .nav-link[disabled] { pointer-events:none; opacity:0.55; }
+      /* Tab disabled wrap */
+      .tab-disabled-wrap {
+        display: inline-flex;
+        cursor: not-allowed;
+      }
+      .tab-disabled-wrap .nav-link[disabled] {
+        pointer-events: none;
+        opacity: 0.55;
+      }
 
-    /* Nav tabs layout */
-    .nav-tabs { display:flex; justify-content:space-between; align-items:center; }
-    .nav-tabs-btns { display:flex; justify-content:center; align-items:center; }
+      /* Nav tabs layout */
+      .nav-tabs {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .nav-tabs-btns {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-    /* Messages */
-    .message { margin:10px 0; padding:10px; border-radius:4px; font-weight:bold; }
-    .message.success { background-color:#d4edda; color:#155724; border:1px solid #c3e6cb; }
-    .message.error { background-color:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+      /* Messages */
+      .message {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
 
-    /* Helpers */
-    .muted { color:var(--muted); font-size:13px; }
+      /* Helpers */
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
 
-    /* Responsive */
-    @media(max-width:1000px){
-      .main{ margin-left:20px; padding:18px; }
-      .cards-row{ grid-template-columns:1fr; }
-      footer { left:0; }
-      .sidebar{ display:none; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Overlay / Loader -->
-  <div id="overlay" class="overlay"></div>
-  <div id="messageBox" class="message-box">
-    <p id="messageContent">This is your message!</p>
-    <div class="spinner-grow text-secondary" role="status"><span class="visually-hidden">Loading...</span></div>
-    <div class="spinner-grow text-info"      role="status"><span class="visually-hidden">Loading...</span></div>
-    <div class="spinner-grow text-warning"   role="status"><span class="visually-hidden">Loading...</span></div>
-    <div class="spinner-grow text-success"   role="status"><span class="visually-hidden">Loading...</span></div>
-    <div class="spinner-grow text-dark"      role="status"><span class="visually-hidden">Loading...</span></div>
-  </div>
-
-  <!-- ── SIDEBAR — exactly as file 9 (prev), structure unchanged ── -->
-  <aside class="sidebar" role="navigation" aria-label="Main sidebar">
-    <div class="sidebar-top">
-      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">☰</button>
+      /* Responsive */
+      @media (max-width: 1000px) {
+        .main {
+          margin-left: 20px;
+          padding: 18px;
+        }
+        .cards-row {
+          grid-template-columns: 1fr;
+        }
+        footer {
+          left: 0;
+        }
+        .sidebar {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Overlay / Loader -->
+    <div id="overlay" class="overlay"></div>
+    <div id="messageBox" class="message-box">
+      <p id="messageContent">This is your message!</p>
+      <div class="spinner-grow text-secondary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="spinner-grow text-info" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="spinner-grow text-warning" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="spinner-grow text-success" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="spinner-grow text-dark" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
-    <div class="brand">
-      <div class="logo">
-        <img src="ld.png" alt="Livision logo"
-             style="width:100%;height:100%;object-fit:cover;border-radius:12px" />
-      </div>
-      <div class="brand-text">
-        <div class="title"><h5 id="companyName1">Welcome</h5></div>
-        <small>Empowering smarter data</small>
-      </div>
-    </div>
 
-    <nav class="nav-section" aria-label="Main navigation">
-      <a class="nav-item active" href="#" id="navDashboard">
-        <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
-        <span class="nav-text">Dashboard</span>
-      </a>
-
-      <div class="nav-item has-sub" id="navRdbms">
-        <span class="nav-icon"><i class="fa-solid fa-database"></i></span>
-        <span class="nav-text">Database</span>
-        <button class="nav-arrow" type="button" aria-label="Toggle RDBMS submenu" aria-expanded="true" aria-controls="submenu-rdbms">▼</button>
-      </div>
-      <div class="nav-sub is-open" id="submenu-rdbms" aria-label="Database subnav">
-        <div class="nav-leaf has-sub" id="navSchemaLink">
-          <span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span>
-          <span class="nav-text">Schema Explorer</span>
-          <button class="nav-arrow" type="button" aria-label="Toggle Schema Explorer submenu" aria-expanded="false" aria-controls="submenu-schema">▼</button>
-        </div>
-        <div class="nav-sub nav-sub--nested" id="submenu-schema" aria-label="Schema Explorer subnav"></div>
-      </div>
-
-      <div class="nav-item" id="navFileTransfer">
-        <span class="nav-icon"><i class="fa-solid fa-file-arrow-up"></i></span>
-        <span class="nav-text">File Transfer</span>
-      </div>
-
-      <div class="nav-item has-sub" id="navCloud">
-        <span class="nav-icon"><i class="fa-solid fa-cloud"></i></span>
-        <span class="nav-text">Cloud Platforms</span>
-        <button class="nav-arrow" type="button" aria-label="Toggle Cloud Platforms submenu" aria-expanded="true" aria-controls="submenu-cloud">▼</button>
-      </div>
-      <div class="nav-sub is-open" id="submenu-cloud" aria-label="Cloud subnav">
-        <div class="nav-leaf has-sub" id="navAws">
-          <span class="nav-icon"><i class="fa-brands fa-aws"></i></span>
-          <span class="nav-text">AWS</span>
-          <button class="nav-arrow" type="button" aria-label="Toggle AWS submenu" aria-expanded="false" aria-controls="submenu-aws">▼</button>
-        </div>
-        <div class="nav-sub nav-sub--nested" id="submenu-aws" aria-label="AWS subnav"></div>
-        <div class="nav-leaf has-sub" id="navGcp">
-          <span class="nav-icon"><i class="fa-brands fa-google"></i></span>
-          <span class="nav-text">GCP</span>
-          <button class="nav-arrow" type="button" aria-label="Toggle GCP submenu" aria-expanded="false" aria-controls="submenu-gcp">▼</button>
-        </div>
-        <div class="nav-sub nav-sub--nested" id="submenu-gcp" aria-label="GCP subnav"></div>
-        <div class="nav-leaf has-sub" id="navAzure">
-          <span class="nav-icon"><i class="fa-brands fa-microsoft"></i></span>
-          <span class="nav-text">Azure</span>
-          <button class="nav-arrow" type="button" aria-label="Toggle Azure submenu" aria-expanded="false" aria-controls="submenu-azure">▼</button>
-        </div>
-        <div class="nav-sub nav-sub--nested" id="submenu-azure" aria-label="Azure subnav"></div>
-      </div>
-
-      <div style="height:8px"></div>
-
-      <div class="nav-item" id="navMigrations">
-        <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
-        <span class="nav-text">Migrations</span>
-      </div>
-      <div class="nav-item" id="navSettings">
-        <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
-        <span class="nav-text">Settings</span>
-      </div>
-      <a class="nav-item" href="./contact.html" id="navContactUs">
-        <span class="nav-icon"><i class="fa-solid fa-envelope"></i></span>
-        <span class="nav-text">Help/FAQ</span>
-      </a>
-      <a class="nav-item logout-btn" href="#">
-        <span class="nav-icon"><i class="fa-solid fa-sign-out"></i></span>
-        <span class="nav-text">Logout</span>
-      </a>
-    </nav>
-  </aside>
-
-  <!-- Main -->
-  <main class="main body" role="main">
-
-    <div class="topbar" role="banner">
-      <div>
-        <div class="title"><h5 id="companyName">Welcome</h5></div>
-        <div class="sub muted">Admin Dashboard — overview</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="title"><h5 id="userName">Welcome</h5></div>
-
-        <!-- Profile Dropdown -->
-        <div class="profile-dropdown">
-          <div class="profile-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"
-                 style="width:100%;height:100%;fill:#a5a6f6;">
-              <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
-            </svg>
-          </div>
-          <div class="profile-menu">
-            <a class="nav-item logout-btn" href="#">
-              <i class="fa-solid fa-sign-out"></i> Logout
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Database Summary header -->
-    <div class="start-wrap" style="margin-top:18px">
-      <div>
-        <h5 style="margin:0;color:var(--lv-indigo)">Database Summary</h5>
-        <small class="muted">Click to open the Add Database form and submit migration request</small>
-      </div>
-      <div id="summaryActionSlot" class="summary-action-slot" style="display:none"></div>
-    </div>
-
-    <!-- Dashboard Section -->
-    <div id="dashboardSection">
-      <div class="cards-row" aria-live="polite">
-
-        <div class="card-compact" id="card-databases" role="article" tabindex="0">
-          <h6>Databases</h6>
-          <h3 id="dbCount">12 Active</h3>
-          <div class="mini muted">Total DB Tables: <strong id="dbTablesCount">4,380</strong></div>
-          <div style="margin-top:10px">
-            <canvas id="dbMiniChart" height="80"></canvas>
-          </div>
-        </div>
-
-        <div class="card-compact" id="card-sftp" role="article" tabindex="0">
-          <h6>SFTP</h6>
-          <h3 id="sftpCount">7 Connected</h3>
-          <div class="mini muted">Recent SFTP Transfers: <strong id="sftpTransfers">128</strong></div>
-          <div style="margin-top:10px">
-            <canvas id="sftpMiniChart" height="80"></canvas>
-          </div>
-        </div>
-
-        <div class="card-compact" id="card-clouds" role="article" tabindex="0">
-          <h6>Cloud Platforms</h6>
-          <h3 id="cloudCount">3 Enabled</h3>
-          <div class="mini muted">Connected: <strong id="cloudConnected">AWS, GCP, Azure</strong></div>
-          <div style="margin-top:10px">
-            <canvas id="cloudMiniChart" height="80"></canvas>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="start">
-        <button id="startMigrationBtn" class="start-btn">
-          <i class="fa-solid fa-plus"></i> Start New Migration
+    <!-- ── SIDEBAR — exactly as file 9 (prev), structure unchanged ── -->
+    <aside class="sidebar" role="navigation" aria-label="Main sidebar">
+      <div class="sidebar-top">
+        <button
+          class="sidebar-toggle"
+          id="sidebarToggle"
+          type="button"
+          aria-label="Toggle sidebar"
+        >
+          ☰
         </button>
       </div>
-    </div>
-    <!-- Previous Databases -->
-<div id="previousDbSection" style="display:none">
-  <div class="start-wrap" style="margin-top:10px; margin-bottom:4px">
-    <div>
-      <h5 class="section-title" style="margin:0;color:var(--lv-indigo)">Previous Databases</h5>
-      <small class="muted">Your previously configured source and target databases</small>
-    </div>
-  </div>
-  <div id="previousDbCards"></div>
-</div>
+      <div class="brand">
+        <div class="logo">
+          <img
+            src="ld.png"
+            alt="Livision logo"
+            style="
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              border-radius: 12px;
+            "
+          />
+        </div>
+        <div class="brand-text">
+          <div class="title"><h5 id="companyName1">Welcome</h5></div>
+          <small>Empowering smarter data</small>
+        </div>
+      </div>
 
-<template id="previousDbCardTemplate">
-  <div class="prev-db-card" data-prev-db-card>
-    <button type="button" class="prev-db-toggle" data-prev-db-toggle aria-expanded="false">
-      <div class="prev-db-toggle-main">
-        <div class="prev-db-toggle-icon-round"><i class="fa-solid fa-database"></i></div>
+      <nav class="nav-section" aria-label="Main navigation">
+        <a class="nav-item active" href="#" id="navDashboard">
+          <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
+          <span class="nav-text">Dashboard</span>
+        </a>
+
+        <div class="nav-item has-sub" id="navRdbms">
+          <span class="nav-icon"><i class="fa-solid fa-database"></i></span>
+          <span class="nav-text">Database</span>
+          <button
+            class="nav-arrow"
+            type="button"
+            aria-label="Toggle RDBMS submenu"
+            aria-expanded="true"
+            aria-controls="submenu-rdbms"
+          >
+            ▼
+          </button>
+        </div>
+        <div
+          class="nav-sub is-open"
+          id="submenu-rdbms"
+          aria-label="Database subnav"
+        >
+          <div class="nav-leaf has-sub" id="navSchemaLink">
+            <span class="nav-icon"
+              ><i class="fa-solid fa-layer-group"></i
+            ></span>
+            <span class="nav-text">Schema Explorer</span>
+            <button
+              class="nav-arrow"
+              type="button"
+              aria-label="Toggle Schema Explorer submenu"
+              aria-expanded="false"
+              aria-controls="submenu-schema"
+            >
+              ▼
+            </button>
+          </div>
+          <div
+            class="nav-sub nav-sub--nested"
+            id="submenu-schema"
+            aria-label="Schema Explorer subnav"
+          ></div>
+        </div>
+
+        <div class="nav-item" id="navFileTransfer">
+          <span class="nav-icon"
+            ><i class="fa-solid fa-file-arrow-up"></i
+          ></span>
+          <span class="nav-text">File Transfer</span>
+        </div>
+
+        <div class="nav-item has-sub" id="navCloud">
+          <span class="nav-icon"><i class="fa-solid fa-cloud"></i></span>
+          <span class="nav-text">Cloud Platforms</span>
+          <button
+            class="nav-arrow"
+            type="button"
+            aria-label="Toggle Cloud Platforms submenu"
+            aria-expanded="true"
+            aria-controls="submenu-cloud"
+          >
+            ▼
+          </button>
+        </div>
+        <div
+          class="nav-sub is-open"
+          id="submenu-cloud"
+          aria-label="Cloud subnav"
+        >
+          <div class="nav-leaf has-sub" id="navAws">
+            <span class="nav-icon"><i class="fa-brands fa-aws"></i></span>
+            <span class="nav-text">AWS</span>
+            <button
+              class="nav-arrow"
+              type="button"
+              aria-label="Toggle AWS submenu"
+              aria-expanded="false"
+              aria-controls="submenu-aws"
+            >
+              ▼
+            </button>
+          </div>
+          <div
+            class="nav-sub nav-sub--nested"
+            id="submenu-aws"
+            aria-label="AWS subnav"
+          ></div>
+          <div class="nav-leaf has-sub" id="navGcp">
+            <span class="nav-icon"><i class="fa-brands fa-google"></i></span>
+            <span class="nav-text">GCP</span>
+            <button
+              class="nav-arrow"
+              type="button"
+              aria-label="Toggle GCP submenu"
+              aria-expanded="false"
+              aria-controls="submenu-gcp"
+            >
+              ▼
+            </button>
+          </div>
+          <div
+            class="nav-sub nav-sub--nested"
+            id="submenu-gcp"
+            aria-label="GCP subnav"
+          ></div>
+          <div class="nav-leaf has-sub" id="navAzure">
+            <span class="nav-icon"><i class="fa-brands fa-microsoft"></i></span>
+            <span class="nav-text">Azure</span>
+            <button
+              class="nav-arrow"
+              type="button"
+              aria-label="Toggle Azure submenu"
+              aria-expanded="false"
+              aria-controls="submenu-azure"
+            >
+              ▼
+            </button>
+          </div>
+          <div
+            class="nav-sub nav-sub--nested"
+            id="submenu-azure"
+            aria-label="Azure subnav"
+          ></div>
+        </div>
+
+        <div style="height: 8px"></div>
+
+        <div class="nav-item" id="navMigrations">
+          <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
+          <span class="nav-text">Migrations</span>
+        </div>
+        <div class="nav-item" id="navSettings">
+          <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+          <span class="nav-text">Settings</span>
+        </div>
+        <a class="nav-item" href="./contact.html" id="navContactUs">
+          <span class="nav-icon"><i class="fa-solid fa-envelope"></i></span>
+          <span class="nav-text">Help/FAQ</span>
+        </a>
+        <a class="nav-item logout-btn" href="#">
+          <span class="nav-icon"><i class="fa-solid fa-sign-out"></i></span>
+          <span class="nav-text">Logout</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main body" role="main">
+      <div class="topbar" role="banner">
         <div>
-          <p class="prev-db-toggle-title" data-summary-name></p>
-          <div class="prev-db-toggle-meta" data-summary-meta></div>
+          <div class="title"><h5 id="companyName">Welcome</h5></div>
+          <div class="sub muted">Admin Dashboard — overview</div>
         </div>
-      </div>
-      <div class="prev-db-toggle-side">
-        <span class="prev-db-schema-btn" role="button" tabindex="0" data-schema-explorer-btn hidden>Schema Explorer</span>
-        <span class="prev-db-schema-btn" role="button" tabindex="0" data-binary-explorer-btn hidden>Binary Explorer</span>
-        <span class="prev-db-status-pill" data-new-pill hidden>NEW</span>
-        <span class="prev-db-toggle-icon" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
-      </div>
-    </button>
-    <div class="prev-db-content">
-      <div class="prev-db-inner">
-        <div class="prev-db-side prev-db-source">
-          <div class="prev-db-side-heading">
-            <span class="prev-db-heading-label">Source</span>
-          </div>
-          <div data-source-type></div>
-          <div data-source-details></div>
-        </div>
+        <div style="display: flex; align-items: center; gap: 12px">
+          <div class="title"><h5 id="userName">Welcome</h5></div>
 
-        <div class="prev-db-divider">
-          <div class="prev-db-flow-arrows" aria-hidden="true">
-            <div class="prev-db-flow-arrow">
-              <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
-                <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
-                <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
+          <!-- Profile Dropdown -->
+          <div class="profile-dropdown">
+            <div class="profile-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 16 16"
+                style="width: 100%; height: 100%; fill: #a5a6f6"
+              >
+                <path
+                  d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"
+                />
               </svg>
             </div>
-            <div class="prev-db-flow-arrow">
-              <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
-                <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
-                <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
-              </svg>
+            <div class="profile-menu">
+              <a class="nav-item logout-btn" href="#">
+                <i class="fa-solid fa-sign-out"></i> Logout
+              </a>
             </div>
-            <div class="prev-db-flow-arrow">
-              <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
-                <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
-                <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="prev-db-side prev-db-target" data-target-side>
-          <div data-target-content>
-            <div class="prev-db-side-heading">
-              <span class="prev-db-heading-label">Target</span>
-            </div>
-            <div data-target-type></div>
-            <div data-target-details></div>
-          </div>
-          <div class="prev-db-no-target" data-target-empty hidden>
-            <i class="fa-solid fa-clock-rotate-left fa-2x" style="color:#c4b5fd;margin-bottom:10px"></i>
-            <p style="margin:0;color:var(--muted);font-size:13px;font-weight:600">Target not configured yet</p>
           </div>
         </div>
       </div>
 
-      <div data-pipeline-mount></div>
-    </div>
-  </div>
-</template>
+      <!-- Database Summary header -->
+      <div class="start-wrap" style="margin-top: 18px">
+        <div>
+          <h5 style="margin: 0; color: var(--lv-indigo)">Database Summary</h5>
+          <small class="muted"
+            >Click to open the Add Database form and submit migration
+            request</small
+          >
+        </div>
+        <div
+          id="summaryActionSlot"
+          class="summary-action-slot"
+          style="display: none"
+        ></div>
+      </div>
 
-<template id="previousDbDetailRowTemplate">
-  <div class="prev-db-row">
-    <span class="prev-db-label" data-detail-label></span>
-    <span class="prev-db-value" data-detail-value></span>
-  </div>
-</template>
+      <!-- Dashboard Section -->
+      <div id="dashboardSection">
+        <div class="cards-row" aria-live="polite">
+          <div
+            class="card-compact"
+            id="card-databases"
+            role="article"
+            tabindex="0"
+          >
+            <h6>Databases</h6>
+            <h3 id="dbCount">12 Active</h3>
+            <div class="mini muted">
+              Total DB Tables: <strong id="dbTablesCount">4,380</strong>
+            </div>
+            <div style="margin-top: 10px">
+              <canvas id="dbMiniChart" height="80"></canvas>
+            </div>
+          </div>
 
-<template id="previousDbTypeBlockTemplate">
-  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:rgba(120,110,220,0.04);border:1px solid rgba(120,110,220,0.08);margin-bottom:14px;">
-    <span data-db-type-icon aria-hidden="true"></span>
-    <span style="font-size:15px;font-weight:700;color:#2b2448;" data-db-type-name></span>
-  </div>
-</template>
+          <div class="card-compact" id="card-sftp" role="article" tabindex="0">
+            <h6>SFTP</h6>
+            <h3 id="sftpCount">7 Connected</h3>
+            <div class="mini muted">
+              Recent SFTP Transfers: <strong id="sftpTransfers">128</strong>
+            </div>
+            <div style="margin-top: 10px">
+              <canvas id="sftpMiniChart" height="80"></canvas>
+            </div>
+          </div>
 
-<template id="previousDbPipelineTemplate">
-  <div class="pipeline-flow" data-pipeline-flow></div>
-</template>
+          <div
+            class="card-compact"
+            id="card-clouds"
+            role="article"
+            tabindex="0"
+          >
+            <h6>Cloud Platforms</h6>
+            <h3 id="cloudCount">3 Enabled</h3>
+            <div class="mini muted">
+              Connected: <strong id="cloudConnected">AWS, GCP, Azure</strong>
+            </div>
+            <div style="margin-top: 10px">
+              <canvas id="cloudMiniChart" height="80"></canvas>
+            </div>
+          </div>
+        </div>
 
-<template id="previousDbPipelineStepTemplate">
-  <div class="pipeline-step">
-    <button type="button" class="pipeline-btn">
-      <i aria-hidden="true"></i>
-      <span data-step-label></span>
-    </button>
-  </div>
-</template>
-
-<template id="previousDbPipelineArrowTemplate">
-  <div class="pipeline-arrow">
-    <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
-      <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
-      <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
-    </svg>
-  </div>
-</template>
-
-    <!-- Schema Explorer Section -->
-    <div id="schemaSection" style="display:none">
-      <div class="schema-shell">
-        <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="start">
+          <button id="startMigrationBtn" class="start-btn">
+            <i class="fa-solid fa-plus"></i> Start New Migration
+          </button>
+        </div>
+      </div>
+      <!-- Previous Databases -->
+      <div id="previousDbSection" style="display: none">
+        <div class="start-wrap" style="margin-top: 10px; margin-bottom: 4px">
           <div>
-            <h5 style="margin:0;color:var(--lv-indigo)">Schema Explorer</h5>
-            <small class="muted">Browse schemas and table row counts</small>
-          </div>
-          <div>
-            <select id="sortSelect" class="form-select form-select-sm">
-              <option value="desc">Rows: High → Low</option>
-              <option value="asc">Rows: Low → High</option>
-            </select>
+            <h5
+              class="section-title"
+              style="margin: 0; color: var(--lv-indigo)"
+            >
+              Previous Databases
+            </h5>
+            <small class="muted"
+              >Your previously configured source and target databases</small
+            >
           </div>
         </div>
-        <div id="chipBar" class="d-flex gap-2 flex-wrap mb-3"></div>
-        <div id="schemaAccordion"></div>
+        <div id="previousDbCards"></div>
       </div>
-    </div>
 
-    <!-- Placeholder Section -->
-    <div id="placeholderSection" style="display:none; margin-top:18px">
-      <div class="schema-shell">
-        <h5 id="placeholderTitle">Placeholder</h5>
-        <p class="muted" id="placeholderText">Content coming here.</p>
+      <template id="previousDbCardTemplate">
+        <div class="prev-db-card" data-prev-db-card>
+          <button
+            type="button"
+            class="prev-db-toggle"
+            data-prev-db-toggle
+            aria-expanded="false"
+          >
+            <div class="prev-db-toggle-main">
+              <div class="prev-db-toggle-icon-round">
+                <i class="fa-solid fa-database"></i>
+              </div>
+              <div>
+                <p class="prev-db-toggle-title" data-summary-name></p>
+                <div class="prev-db-toggle-meta" data-summary-meta></div>
+              </div>
+            </div>
+            <div class="prev-db-toggle-side">
+              <span
+                class="prev-db-schema-btn"
+                role="button"
+                tabindex="0"
+                data-schema-explorer-btn
+                hidden
+                >Schema Explorer</span
+              >
+              <span
+                class="prev-db-schema-btn"
+                role="button"
+                tabindex="0"
+                data-binary-explorer-btn
+                hidden
+                >Binary Explorer</span
+              >
+              <span class="prev-db-status-pill" data-new-pill hidden>NEW</span>
+              <span class="prev-db-toggle-icon" aria-hidden="true"
+                ><i class="fa-solid fa-chevron-down"></i
+              ></span>
+            </div>
+          </button>
+          <div class="prev-db-content">
+            <div class="prev-db-inner">
+              <div class="prev-db-side prev-db-source">
+                <div class="prev-db-side-heading">
+                  <span class="prev-db-heading-label">Source</span>
+                </div>
+                <div data-source-type></div>
+                <div data-source-details></div>
+              </div>
+
+              <div class="prev-db-divider">
+                <div class="prev-db-flow-arrows" aria-hidden="true">
+                  <div class="prev-db-flow-arrow">
+                    <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+                      <line
+                        x1="2"
+                        y1="10"
+                        x2="30"
+                        y2="10"
+                        class="arrow-line"
+                      ></line>
+                      <polygon
+                        points="28,5 38,10 28,15"
+                        class="arrow-head"
+                      ></polygon>
+                    </svg>
+                  </div>
+                  <div class="prev-db-flow-arrow">
+                    <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+                      <line
+                        x1="2"
+                        y1="10"
+                        x2="30"
+                        y2="10"
+                        class="arrow-line"
+                      ></line>
+                      <polygon
+                        points="28,5 38,10 28,15"
+                        class="arrow-head"
+                      ></polygon>
+                    </svg>
+                  </div>
+                  <div class="prev-db-flow-arrow">
+                    <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+                      <line
+                        x1="2"
+                        y1="10"
+                        x2="30"
+                        y2="10"
+                        class="arrow-line"
+                      ></line>
+                      <polygon
+                        points="28,5 38,10 28,15"
+                        class="arrow-head"
+                      ></polygon>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="prev-db-side prev-db-target" data-target-side>
+                <div data-target-content>
+                  <div class="prev-db-side-heading">
+                    <span class="prev-db-heading-label">Target</span>
+                  </div>
+                  <div data-target-type></div>
+                  <div data-target-details></div>
+                </div>
+                <div class="prev-db-no-target" data-target-empty hidden>
+                  <i
+                    class="fa-solid fa-clock-rotate-left fa-2x"
+                    style="color: #c4b5fd; margin-bottom: 10px"
+                  ></i>
+                  <p
+                    style="
+                      margin: 0;
+                      color: var(--muted);
+                      font-size: 13px;
+                      font-weight: 600;
+                    "
+                  >
+                    Target not configured yet
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div data-pipeline-mount></div>
+          </div>
+        </div>
+      </template>
+
+      <template id="previousDbDetailRowTemplate">
+        <div class="prev-db-row">
+          <span class="prev-db-label" data-detail-label></span>
+          <span class="prev-db-value" data-detail-value></span>
+        </div>
+        <div class="db-detail-row">
+          <span data-detail-label></span>
+          <span data-detail-value></span>
+        </div>
+      </template>
+
+      <template id="previousDbTypeBlockTemplate">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(120, 110, 220, 0.04);
+            border: 1px solid rgba(120, 110, 220, 0.08);
+            margin-bottom: 14px;
+          "
+        >
+          <span data-db-type-icon aria-hidden="true"></span>
+          <span
+            style="font-size: 15px; font-weight: 700; color: #2b2448"
+            data-db-type-name
+          ></span>
+          
+        </div>
+      </template>
+
+      <template id="previousDbPipelineTemplate">
+        <div class="pipeline-flow" data-pipeline-flow></div>
+      </template>
+
+      <template id="previousDbPipelineStepTemplate">
+        <div class="pipeline-step">
+          <button type="button" class="pipeline-btn">
+            <i aria-hidden="true"></i>
+            <span data-step-label></span>
+          </button>
+        </div>
+      </template>
+
+      <template id="previousDbPipelineArrowTemplate">
+        <div class="pipeline-arrow">
+          <svg viewBox="0 0 38 20" xmlns="http://www.w3.org/2000/svg">
+            <line x1="2" y1="10" x2="30" y2="10" class="arrow-line"></line>
+            <polygon points="28,5 38,10 28,15" class="arrow-head"></polygon>
+          </svg>
+        </div>
+      </template>
+
+      <!-- Schema Explorer Section -->
+      <div id="schemaSection" style="display: none">
+        <div class="schema-shell">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div>
+              <h5 style="margin: 0; color: var(--lv-indigo)">
+                Schema Explorer
+              </h5>
+              <small class="muted">Browse schemas and table row counts</small>
+            </div>
+            <div>
+              <select id="sortSelect" class="form-select form-select-sm">
+                <option value="desc">Rows: High → Low</option>
+                <option value="asc">Rows: Low → High</option>
+              </select>
+            </div>
+          </div>
+          <div id="chipBar" class="d-flex gap-2 flex-wrap mb-3"></div>
+          <div id="schemaAccordion"></div>
+        </div>
       </div>
-    </div>
 
-  </main>
+      <!-- Placeholder Section -->
+      <div id="placeholderSection" style="display: none; margin-top: 18px">
+        <div class="schema-shell">
+          <h5 id="placeholderTitle">Placeholder</h5>
+          <p class="muted" id="placeholderText">Content coming here.</p>
+        </div>
+      </div>
+    </main>
 
-  <!-- Footer -->
-  <footer>© 2025 Livision DataHub — Empowering smarter decisions</footer>
+    <!-- Footer -->
+    <footer>© 2025 Livision DataHub — Empowering smarter decisions</footer>
 
-  <!-- ── ADD DATABASE MODAL — improved from file 10 ── -->
-  <div class="modal fade migration-shell" id="addDbModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-
-        <nav class="migration-tabs">
-          <div class="nav nav-tabs" id="nav-tab" role="tablist">
-            <div class="nav-tabs-btns">
-              <button class="nav-link active" id="nav-home-tab"
-                data-bs-toggle="tab" data-bs-target="#nav-home"
-                type="button" role="tab"
-                aria-controls="nav-home" aria-selected="true">
-                Source Database
-              </button>
-              <span class="tab-disabled-wrap" id="targetTabWrap"
-                title="Available only after source database is tested and saved">
-                <button class="nav-link" id="nav-profile-tab"
-                  data-bs-toggle="tab" data-bs-target="#nav-profile"
-                  type="button" role="tab"
-                  aria-controls="nav-profile" aria-selected="false" disabled>
-                  To Database
+    <!-- ── ADD DATABASE MODAL — improved from file 10 ── -->
+    <div
+      class="modal fade migration-shell"
+      id="addDbModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <nav class="migration-tabs">
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+              <div class="nav-tabs-btns">
+                <button
+                  class="nav-link active"
+                  id="nav-home-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#nav-home"
+                  type="button"
+                  role="tab"
+                  aria-controls="nav-home"
+                  aria-selected="true"
+                >
+                  Source Database
                 </button>
-              </span>
+                <span
+                  class="tab-disabled-wrap"
+                  id="targetTabWrap"
+                  title="Available only after source database is tested and saved"
+                >
+                  <button
+                    class="nav-link"
+                    id="nav-profile-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#nav-profile"
+                    type="button"
+                    role="tab"
+                    aria-controls="nav-profile"
+                    aria-selected="false"
+                    disabled
+                  >
+                    To Database
+                  </button>
+                </span>
+              </div>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                style="padding-right: 20px; margin-right: 10px"
+              ></button>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"
-              aria-label="Close" style="padding-right:20px;margin-right:10px;"></button>
-          </div>
-        </nav>
+          </nav>
 
-        <div class="tab-content" id="nav-tabContent">
-
-          <!-- SOURCE TAB -->
-          <div class="tab-pane fade show active" id="nav-home"
-            role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
-            <form id="addDbForm" novalidate>
-              <div class="modal-body migration-pane">
-                <div class="migration-form-card">
-                  <div class="migration-form-head">
-                    <h5>Source Database</h5>
-                    <p>Enter the source connection details, test them, then save to continue.</p>
-                  </div>
-                  <div id="modalAlert" style="display:none" class="alert" role="alert"></div>
-                  <div id="message" class="message"></div>
-                  <div class="row g-3">
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Entity</label>
-                      <input id="src_entity_id" class="form-control" required placeholder="Entity ID" readonly>
+          <div class="tab-content" id="nav-tabContent">
+            <!-- SOURCE TAB -->
+            <div
+              class="tab-pane fade show active"
+              id="nav-home"
+              role="tabpanel"
+              aria-labelledby="nav-home-tab"
+              tabindex="0"
+            >
+              <form id="addDbForm" novalidate>
+                <div class="modal-body migration-pane">
+                  <div class="migration-form-card">
+                    <div class="migration-form-head">
+                      <h5>Source Database</h5>
+                      <p>
+                        Enter the source connection details, test them, then
+                        save to continue.
+                      </p>
                     </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">BU ID</label>
-                      <select id="src_bu_id" class="form-select" required>
-                       <option value="" selected disabled>Select BU ID </option>
-                      </select>
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Database Type</label>
-                      <select id="dbType" class="form-select" required>
-                        <option value="">Select type</option>
-                        <option>PostgreSQL</option>
-                        <option>MySQL</option>
-                        <option>SQL Server</option>
-                      </select>
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Host Name</label>
-                      <input id="dbHost" class="form-control" required placeholder="db.example.com">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Port</label>
-                      <input id="dbPort" class="form-control" required type="number" placeholder="5432">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Database Name</label>
-                      <input id="dbName" class="form-control" required placeholder="db_name">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Username</label>
-                      <input id="dbUser" class="form-control" required placeholder="db_user">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Password</label>
-                      <input id="dbPass" type="password" class="form-control" required placeholder="••••••">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Approver Email 1</label>
-                      <input id="approver1" type="email" class="form-control" required placeholder="approver1@company.com">
-                      <div class="form-text muted">Must be company email (not personal)</div>
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label">Approver Email 2 (optional)</label>
-                      <input id="approver2" type="email" class="form-control" placeholder="approver2@company.com">
-                    </div>
-                    <div class="col-12 migration-field">
-                      <label class="form-label">Description (optional)</label>
-                      <textarea id="dbDesc" class="form-control" rows="3" placeholder="Short description (optional)"></textarea>
+                    <div
+                      id="modalAlert"
+                      style="display: none"
+                      class="alert"
+                      role="alert"
+                    ></div>
+                    <div id="message" class="message"></div>
+                    <div class="row g-3">
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Entity</label>
+                        <input
+                          id="src_entity_id"
+                          class="form-control"
+                          required
+                          placeholder="Entity ID"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">BU ID</label>
+                        <select id="src_bu_id" class="form-select" required>
+                          <option value="" selected disabled>
+                            Select BU ID
+                          </option>
+                        </select>
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required"
+                          >Database Type</label
+                        >
+                        <select id="dbType" class="form-select" required>
+                          <option value="">Select type</option>
+                          <option>PostgreSQL</option>
+                          <option>MySQL</option>
+                          <option>SQL Server</option>
+                        </select>
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required"
+                          >Host Name</label
+                        >
+                        <input
+                          id="dbHost"
+                          class="form-control"
+                          required
+                          placeholder="db.example.com"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Port</label>
+                        <input
+                          id="dbPort"
+                          class="form-control"
+                          required
+                          type="number"
+                          placeholder="5432"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required"
+                          >Database Name</label
+                        >
+                        <input
+                          id="dbName"
+                          class="form-control"
+                          required
+                          placeholder="db_name"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Username</label>
+                        <input
+                          id="dbUser"
+                          class="form-control"
+                          required
+                          placeholder="db_user"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Password</label>
+                        <input
+                          id="dbPass"
+                          type="password"
+                          class="form-control"
+                          required
+                          placeholder="••••••"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required"
+                          >Approver Email 1</label
+                        >
+                        <input
+                          id="approver1"
+                          type="email"
+                          class="form-control"
+                          required
+                          placeholder="approver1@company.com"
+                        />
+                        <div class="form-text muted">
+                          Must be company email (not personal)
+                        </div>
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label"
+                          >Approver Email 2 (optional)</label
+                        >
+                        <input
+                          id="approver2"
+                          type="email"
+                          class="form-control"
+                          placeholder="approver2@company.com"
+                        />
+                      </div>
+                      <div class="col-12 migration-field">
+                        <label class="form-label">Description (optional)</label>
+                        <textarea
+                          id="dbDesc"
+                          class="form-control"
+                          rows="3"
+                          placeholder="Short description (optional)"
+                        ></textarea>
+                      </div>
                     </div>
                   </div>
                 </div>
+              </form>
+              <div class="modal-footer migration-actions">
+                <button
+                  id="testConnectionBtn"
+                  type="button"
+                  class="btn btn-outline-secondary"
+                >
+                  Test Connection
+                </button>
+                <button
+                  id="saveDetailsBtn"
+                  type="button"
+                  class="btn btn-primary"
+                  style="
+                    background: linear-gradient(
+                      90deg,
+                      var(--lv-purple-1),
+                      var(--lv-indigo)
+                    );
+                    color: #fff;
+                    font-weight: 700;
+                  "
+                >
+                  Save Details
+                </button>
               </div>
-            </form>
-            <div class="modal-footer migration-actions">
-              <button id="testConnectionBtn" type="button" class="btn btn-outline-secondary">Test Connection</button>
-              <button id="saveDetailsBtn" type="button" class="btn btn-primary"
-                style="background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo));color:#fff;font-weight:700">
-                Save Details
-              </button>
             </div>
-          </div>
 
-          <!-- TARGET TAB -->
-          <div class="tab-pane fade" id="nav-profile"
-            role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
-            <form id="targetDbForm" novalidate>
-              <div class="modal-body migration-pane">
-                <div class="migration-form-card">
-                  <div class="migration-form-head">
-                    <h5>Target Database</h5>
-                    <p>Enter the destination details. Entity is pre-filled from your session.</p>
-                  </div>
-                  <div id="targetModalAlert" style="display:none" class="alert" role="alert"></div>
-                  <div id="targetMessage" class="message"></div>
-                  <div class="row g-3">
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Entity</label>
-                      <input id="entity_id" class="form-control" required placeholder="Entity ID" readonly>
+            <!-- TARGET TAB -->
+            <div
+              class="tab-pane fade"
+              id="nav-profile"
+              role="tabpanel"
+              aria-labelledby="nav-profile-tab"
+              tabindex="0"
+            >
+              <form id="targetDbForm" novalidate>
+                <div class="modal-body migration-pane">
+                  <div class="migration-form-card">
+                    <div class="migration-form-head">
+                      <h5>Target Database</h5>
+                      <p>
+                        Enter the destination details. Entity is pre-filled from
+                        your session.
+                      </p>
                     </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">BU ID</label>
-                      <input id="bu_id" class="form-control" required placeholder="BU ID" readonly>
-                      <input id="bu_id_value" type="hidden">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Type</label>
-                      <select id="targetType" class="form-select" required>
-                        <option value="">Select type</option>
-                        <option>SnowFlake</option>
-                        <option>Fabric OneLake</option>
-                        <option>DataBricks</option>
-                      </select>
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Host URL</label>
-                      <input id="host_url" class="form-control" required placeholder="host.example.com">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Port</label>
-                      <input id="t_dbPort" class="form-control" required type="number" placeholder="5432">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Username</label>
-                      <input id="t_dbUser" class="form-control" required placeholder="username">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Password</label>
-                      <input id="t_dbPass" type="password" class="form-control" required placeholder="••••••">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Role</label>
-                      <input id="role" class="form-control" required placeholder="Role">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Warehouse</label>
-                      <input id="warehouse" class="form-control" required placeholder="Warehouse">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label form-required">Database Name</label>
-                      <input id="t_dbName" class="form-control" required placeholder="db_name">
-                    </div>
-                    <div class="col-md-6 migration-field">
-                      <label class="form-label">Status</label>
-                      <input id="status" class="form-control status-static-field" value="NEW" placeholder="NEW" readonly tabindex="-1" aria-readonly="true">
-                    </div>
-                    <div class="col-12 migration-field">
-                      <label class="form-label form-required">Description</label>
-                      <textarea id="targetDesc" class="form-control" rows="3" required placeholder="Short description"></textarea>
+                    <div
+                      id="targetModalAlert"
+                      style="display: none"
+                      class="alert"
+                      role="alert"
+                    ></div>
+                    <div id="targetMessage" class="message"></div>
+                    <div class="row g-3">
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Entity</label>
+                        <input
+                          id="entity_id"
+                          class="form-control"
+                          required
+                          placeholder="Entity ID"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">BU ID</label>
+                        <input
+                          id="bu_id"
+                          class="form-control"
+                          required
+                          placeholder="BU ID"
+                          readonly
+                        />
+                        <input id="bu_id_value" type="hidden" />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Type</label>
+                        <select id="targetType" class="form-select" required>
+                          <option value="">Select type</option>
+                          <option>SnowFlake</option>
+                          <option>Fabric OneLake</option>
+                          <option>DataBricks</option>
+                        </select>
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Host URL</label>
+                        <input
+                          id="host_url"
+                          class="form-control"
+                          required
+                          placeholder="host.example.com"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Port</label>
+                        <input
+                          id="t_dbPort"
+                          class="form-control"
+                          required
+                          type="number"
+                          placeholder="5432"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Username</label>
+                        <input
+                          id="t_dbUser"
+                          class="form-control"
+                          required
+                          placeholder="username"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Password</label>
+                        <input
+                          id="t_dbPass"
+                          type="password"
+                          class="form-control"
+                          required
+                          placeholder="••••••"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required">Role</label>
+                        <input
+                          id="role"
+                          class="form-control"
+                          required
+                          placeholder="Role"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required"
+                          >Warehouse</label
+                        >
+                        <input
+                          id="warehouse"
+                          class="form-control"
+                          required
+                          placeholder="Warehouse"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label form-required"
+                          >Database Name</label
+                        >
+                        <input
+                          id="t_dbName"
+                          class="form-control"
+                          required
+                          placeholder="db_name"
+                        />
+                      </div>
+                      <div class="col-md-6 migration-field">
+                        <label class="form-label">Status</label>
+                        <input
+                          id="status"
+                          class="form-control status-static-field"
+                          value="NEW"
+                          placeholder="NEW"
+                          readonly
+                          tabindex="-1"
+                          aria-readonly="true"
+                        />
+                      </div>
+                      <div class="col-12 migration-field">
+                        <label class="form-label form-required"
+                          >Description</label
+                        >
+                        <textarea
+                          id="targetDesc"
+                          class="form-control"
+                          rows="3"
+                          required
+                          placeholder="Short description"
+                        ></textarea>
+                      </div>
                     </div>
                   </div>
                 </div>
+              </form>
+              <div class="modal-footer migration-actions">
+                <button
+                  id="saveTargetBtn"
+                  type="button"
+                  class="btn btn-primary"
+                  style="
+                    background: linear-gradient(
+                      90deg,
+                      var(--lv-purple-1),
+                      var(--lv-indigo)
+                    );
+                    color: #fff;
+                    font-weight: 700;
+                  "
+                >
+                  Save Details
+                </button>
               </div>
-            </form>
-            <div class="modal-footer migration-actions">
-              <button id="saveTargetBtn" type="button" class="btn btn-primary"
-                style="background:linear-gradient(90deg,var(--lv-purple-1),var(--lv-indigo));color:#fff;font-weight:700">
-                Save Details
-              </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Libraries — correct load order -->
-  <script src="js/bootstrap.bundle.min.js"></script>
-  <script src="js/jquery-3.7.1.min.js"></script>
-  <script src="js/jquery.modal.min.js"></script>
-  <script src="js/sidebar.js"></script>
-  <script src="js/dashboard.js"></script>
-  <script src="js/logout.js"></script>
-
-</body>
+    <!-- Libraries — correct load order -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="js/jquery.modal.min.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/logout.js"></script>
+  </body>
 </html>

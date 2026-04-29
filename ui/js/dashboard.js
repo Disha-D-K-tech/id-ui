@@ -89,6 +89,9 @@ document.getElementById("addDbModal").addEventListener("hidden.bs.modal", functi
 let sourceDetailsLocked = false;
 
 /************* HELPER FUNCTIONS *************/
+
+
+
 function getSafeUserId() {
   const direct = sessionStorage.getItem("userid");
   if (direct && direct !== 'undefined' && direct !== 'null' && direct.trim() !== '') {
@@ -243,7 +246,74 @@ function showBinaryExplorerButton(cardIdx) {
   if (!button) return;
   button.hidden = false;
 }
+function formatCompactNumber(num) {
+  if (!num || isNaN(num)) return '';
 
+  if (num >= 1_000_000_000) {
+    return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+  }
+
+  if (num >= 1_000_000) {
+    return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+
+  if (num >= 1_000) {
+    return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+
+  return num.toString();
+}
+function updateDashboardRowCount(cardIdx, totalRows) {
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (!card) return;
+
+  let rowEl = card.querySelector('[data-row-count]');
+  
+  if (!rowEl) {
+    rowEl = document.createElement('div');
+    rowEl.setAttribute('data-row-count', '');
+
+    rowEl.style.fontSize = '12px';
+    rowEl.style.marginTop = '0';
+    rowEl.style.marginLeft = 'auto';
+    rowEl.style.fontWeight = '600';
+    rowEl.style.color = '#374151';
+
+    // ✅ append INSIDE flex box (correct place)
+    const sourceType = card.querySelector('[data-source-type] > div');
+    if (sourceType) {
+      sourceType.appendChild(rowEl);
+    }
+  }
+
+  rowEl.textContent = formatCompactNumber(totalRows);
+}
+function updateTargetRowCount(cardIdx, totalRows = 0) {
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (!card) return;
+
+  let rowEl = card.querySelector('[data-target-row-count]');
+
+  if (!rowEl) {
+    rowEl = document.createElement('div');
+    rowEl.setAttribute('data-target-row-count', '');
+
+    rowEl.style.fontSize = '12px';
+    rowEl.style.marginLeft = 'auto';
+    rowEl.style.fontWeight = '600';
+    rowEl.style.color = '#374151';
+
+    // ✅ TARGET side (Snowflake box)
+    const targetType = card.querySelector('[data-target-type] > div');
+    if (targetType) {
+      targetType.appendChild(rowEl);
+    }
+  }
+
+  rowEl.textContent = formatCompactNumber(totalRows);
+}
 /************* STATUS READER — REUSABLE CARD UPDATER *************/
 
 function callStatusReaderForCard(cardIdx, srcRecord, dbId) {
@@ -263,6 +333,74 @@ function callStatusReaderForCard(cardIdx, srcRecord, dbId) {
       console.log('status_reader response (card ' + cardIdx + '):', xhr.responseJSON || xhr.responseText);
       const res = xhr.responseJSON;
       if (!res) return;
+
+      // ===== STEP 1: Extract total row count =====
+let totalRows = 0;
+
+try {
+  const raw = res['table-counts'];
+   if (raw) {
+  const fixed = raw
+    .replace(/\(/g, '[')
+    .replace(/\)/g, ']')
+    .replace(/'/g, '"');
+
+  const parsed = JSON.parse(fixed);
+  const tableCounts = parsed.table_counts || [];
+
+  totalRows = tableCounts.reduce((sum, item) => {
+    return sum + (parseInt(item[1]) || 0);
+  }, 0);
+
+  // ✅ STORE AFTER calculation
+  const store = readSchemaExplorerStore();
+  const existing = store[String(dbId)] || {};
+
+  store[String(dbId)] = {
+    ...existing,
+    db_id: dbId,
+    'table-counts': raw,
+    totalRows: totalRows
+  };
+
+  writeSchemaExplorerStore(store);
+
+  console.log('FINAL STORE AFTER STATUS:', store[String(dbId)]);
+
+
+}
+// const store = readSchemaExplorerStore();
+// if (!store[String(dbId)]) store[String(dbId)] = {};
+
+// store[String(dbId)]['table-counts'] = raw;   // THIS LINE IS KEY
+// store[String(dbId)].db_id = dbId;
+
+// writeSchemaExplorerStore(store);
+
+  if (raw) {
+    // FIX 1: convert tuple () → array []
+    const fixed = raw
+      .replace(/\(/g, '[')
+      .replace(/\)/g, ']')
+      .replace(/'/g, '"');
+
+    const parsed = JSON.parse(fixed);
+
+    const tableCounts = parsed.table_counts || [];
+    
+
+    totalRows = tableCounts.reduce((sum, item) => {
+      return sum + (parseInt(item[1]) || 0);
+    }, 0);
+  }
+} catch (e) {
+  console.error('Row count parse error:', e);
+}
+
+console.log('TOTAL ROWS (computed):', totalRows);
+updateDashboardRowCount(cardIdx, totalRows);
+
+
 
       // --- 1. Compute DDL / in-progress state from status array ---
       let ddlConfirmed = false;
@@ -455,12 +593,15 @@ function fetchSchemaExplorerAssessment(dbId) {
       success: function(response) {
         console.log('Schema Explorer API response:', response);
         const payload = {
-          db_id: dbId,
-          fetched_at: new Date().toISOString(),
-          ok: true,
-          request: requestPayload,
-          response: response
-        };
+  db_id: dbId,
+  fetched_at: new Date().toISOString(),
+  ok: true,
+  request: requestPayload,
+  response: response,
+
+  //  ADD THIS
+  'table-counts': response['table-counts'] || response.table_counts || null
+};
         storeSchemaExplorerResult(dbId, payload);
         resolve(payload);
       },
@@ -494,21 +635,32 @@ function openSchemaExplorerPage(dbId) {
 
   $.ajax({
     url: SCHEMA_EXPLORER_API_URL,
-    type: 'POST',
-    data: { db_id: String(dbId) },
     success: function(htmlResponse) {
   console.log('Schema Explorer success:', htmlResponse);
   hideOverlay();
+
   const store = readSchemaExplorerStore();
-  store[String(dbId)] = { db_id: dbId, fetched_at: new Date().toISOString(), ok: true, html: htmlResponse };
+  const existing = store[String(dbId)] || {};
+
+  store[String(dbId)] = {
+    ...existing,   // ✅ KEEP table-counts
+    db_id: dbId,
+    fetched_at: new Date().toISOString(),
+    ok: true,
+    html: htmlResponse
+  };
+
   writeSchemaExplorerStore(store);
-  console.log('Schema Explorer stored payload:', store[String(dbId)]);
+
+  console.log('✅ FINAL STORE BEFORE NAV:', store[String(dbId)]);
+
   window.location.href = `${schemaExplorerPage}?db_id=${encodeURIComponent(dbId)}`;
 },
 error: function(xhr) {
   console.log('Schema Explorer error status:', xhr.status);
   console.log('Schema Explorer error responseText:', xhr.responseText);
   hideOverlay();
+  
   const store = readSchemaExplorerStore();
   store[String(dbId)] = { db_id: dbId, fetched_at: new Date().toISOString(), ok: true, html: xhr.responseText || null };
   writeSchemaExplorerStore(store);
@@ -913,12 +1065,20 @@ function fetchPreviousDatabases() {
 
 
 function createDbDetailRow(label, value) {
-  if (!value || value === '' || value === 'undefined' || value === 'null') return null;
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  console.log('CREATING ROW:', label, value);
+
   const row = cloneTemplateElement('previousDbDetailRowTemplate');
   if (!row) return null;
 
   row.querySelector('[data-detail-label]').textContent = label;
-  row.querySelector('[data-detail-value]').textContent = value;
+  row.querySelector('[data-detail-value]').textContent =
+    value === '' ? '_' : value;
+
+  console.log('FINAL VALUE:', label, value, typeof value);
   return row;
 }
 
@@ -1167,6 +1327,7 @@ card.dataset.dbId = dbId;
       ]);
       targetContent.hidden = false;
       targetEmpty.hidden = true;
+      updateTargetRowCount(idx, 0);
     } else {
       targetSide.classList.add('prev-db-target-empty');
       targetContent.hidden = true;
