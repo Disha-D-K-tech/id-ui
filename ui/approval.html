@@ -134,7 +134,7 @@
 <body>
 
   <div class="top">
-    <a href="dashboard.html" class="logo">LD</a>
+    <div class="logo" style="cursor:default;">LD</div>
     <div class="brand">
       <div class="title">Livision DataHub</div>
       <div class="sub">Empowering smarter data</div>
@@ -147,24 +147,16 @@
         <div class="title">Approval Review</div>
         <div class="sub">Review schema and binary mappings before approving.</div>
       </div>
-      <a class="nav-item" href="dashboard.html">
-        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-      </a>
+      <div style="font-size:13px;color:#6b6b80;font-weight:600;">
+        <i class="fa-solid fa-envelope-open-text" style="color:#5b3ed6;margin-right:6px;"></i>
+        Approval Request — Livision DataHub
+      </div>
     </div>
 
     <!-- DB ID chip -->
     <div class="schema-chip">
       <i class="fa-solid fa-database"></i>
       <span id="dbIdChip">db_id: --</span>
-    </div>
-
-    <!-- Schema Section -->
-    <div class="page-card">
-      <h5><i class="fa-solid fa-diagram-project"></i> Schema Explorer</h5>
-      <div class="status-panel" id="schemaStatus">
-        <span class="spinner"></span> Loading schema...
-      </div>
-      <div id="schemaMount"></div>
     </div>
 
     <!-- Binary Columns Section -->
@@ -176,11 +168,24 @@
       <div id="binaryMount"></div>
     </div>
 
+    <!-- Schema Section -->
+    <div class="page-card">
+      <h5><i class="fa-solid fa-diagram-project"></i> Schema Explorer</h5>
+      <div class="status-panel" id="schemaStatus">
+        <span class="spinner"></span> Loading schema...
+      </div>
+      <div id="schemaMount"></div>
+    </div>
+
     <!-- Approve -->
-    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:16px 20px;background:rgba(255,255,255,0.95);border:1px solid rgba(120,110,220,0.08);border-radius:14px;box-shadow:0 4px 16px rgba(91,62,214,0.04);">
       <button id="rejectBtn" disabled style="padding:12px 36px;border:none;border-radius:10px;background:linear-gradient(90deg,#dc2626,#b91c1c);color:white;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(220,38,38,0.18);cursor:pointer;transition:opacity .15s;">
         <i class="fa-solid fa-xmark" style="margin-right:8px;"></i>Reject
       </button>
+      <div style="text-align:center;">
+        <div style="font-size:15px;font-weight:800;color:#5b3ed6;">Review for Approval</div>
+        <div style="font-size:12px;color:#6b6b80;margin-top:4px;" id="approvalReviewMeta">Awaiting data...</div>
+      </div>
       <button class="approve-btn" id="approveBtn" disabled>
         <i class="fa-solid fa-check" style="margin-right:8px;"></i>Approve
       </button>
@@ -274,17 +279,17 @@
     }
 
     // ── 1. Schema API ──────────────────────────────────────────────────────
-    fetch(SCHEMA_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ db_id: dbId })
-    })
-    .then(r => r.text())
-    .then(function(html) {
+    // Read from sessionStorage first — same store dashboard.js uses
+    function readSchemaStore() {
+      try { return JSON.parse(sessionStorage.getItem('schemaExplorerResults') || '{}'); }
+      catch(e) { return {}; }
+    }
+
+    function injectSchemaHtml(html) {
       schemaStatus.style.display = 'none';
       schemaMount.innerHTML = html;
 
-      // Re-run injected scripts
+      // Re-execute injected scripts
       schemaMount.querySelectorAll('script').forEach(function(old) {
         const s = document.createElement('script');
         s.textContent = old.textContent;
@@ -292,13 +297,83 @@
         document.body.removeChild(s);
       });
 
+      // Remove duplicate schema nodes
+      setTimeout(function() {
+        const seen = new Set();
+        schemaMount.querySelectorAll('.node.schema-node').forEach(function(node) {
+          const name = node.textContent.trim().toLowerCase();
+          if (seen.has(name)) {
+            const panel = node.nextElementSibling;
+            node.remove();
+            if (panel && panel.classList.contains('panel')) panel.remove();
+          } else {
+            seen.add(name);
+          }
+        });
+      }, 200);
+
       schemaLoaded = true;
       checkAllLoaded();
-    })
-    .catch(function(err) {
-      console.error('Schema API error:', err);
-      schemaStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626"></i> Failed to load schema.';
-    });
+    }
+
+    const storedSchema = readSchemaStore()[String(dbId)];
+
+    if (storedSchema && storedSchema.html) {
+      // Use cached HTML — no API call needed
+      console.log('Schema loaded from sessionStorage for db_id:', dbId);
+      injectSchemaHtml(storedSchema.html);
+
+      // Apply table counts if stored
+      if (storedSchema['table-counts']) {
+        setTimeout(function() {
+          try {
+            const fixed = storedSchema['table-counts']
+              .replace(/\(/g, '[').replace(/\)/g, ']').replace(/'/g, '"');
+            const parsed = JSON.parse(fixed);
+            const tableMap = {};
+            parsed.table_counts.forEach(function(e) {
+              tableMap[String(e[0]).toLowerCase().trim()] = parseInt(e[1]) || 0;
+            });
+            schemaMount.querySelectorAll('.node.schema-node').forEach(function(schema) {
+              const panel = schema.nextElementSibling;
+              if (!panel || !panel.classList.contains('panel')) return;
+              const schemaName = schema.childNodes[0]?.nodeValue?.trim().toLowerCase() || '';
+              let total = 0;
+              panel.querySelectorAll('.node.table-node').forEach(function(table) {
+                const key = schemaName + '.' + table.textContent.trim().toLowerCase();
+                if (tableMap.hasOwnProperty(key)) total += tableMap[key];
+              });
+              schema.textContent = schemaName + ' (' + total + ')';
+            });
+          } catch(e) {
+            console.warn('Failed to apply table counts in approval:', e);
+          }
+        }, 500);
+      }
+
+    } else {
+      // Not in storage — fetch from API and cache it
+      console.log('Schema not in sessionStorage — fetching from API for db_id:', dbId);
+      fetch(SCHEMA_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ db_id: dbId })
+      })
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        // Cache it so next refresh doesn't call API again
+        const store = readSchemaStore();
+        store[String(dbId)] = store[String(dbId)] || {};
+        store[String(dbId)].html = html;
+        store[String(dbId)].db_id = dbId;
+        sessionStorage.setItem('schemaExplorerResults', JSON.stringify(store));
+        injectSchemaHtml(html);
+      })
+      .catch(function(err) {
+        console.error('Schema API error:', err);
+        schemaStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626"></i> Failed to load schema.';
+      });
+    }
 
     // ── 2. Binary API ──────────────────────────────────────────────────────
     fetch(BINARY_API_URL, {
@@ -352,6 +427,104 @@
     .catch(function(err) {
       console.error('Binary API error:', err);
       binaryStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626"></i> Failed to load binary mappings.';
+    });
+
+    // ── Status Reader — row counts ─────────────────────────────────────────
+    const STATUS_READER_URL = 'https://f3pt5mhs4renqnqqcf24q4hudy0mkdpx.lambda-url.ap-south-1.on.aws';
+
+    fetch(STATUS_READER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        db_id:   dbId,
+        user_id: userId,
+        db_name: dbName,
+        entity:  entity,
+        db_type: dbType
+      })
+    })
+    .then(function(r) {
+      const text = r.text();
+      return text;
+    })
+    .then(function(text) {
+      console.log('Status reader raw response:', text);
+      let res;
+      try {
+        res = JSON.parse(text);
+      } catch(e) {
+        console.error('Status reader returned non-JSON:', text);
+        return;
+      }
+      return res;
+    })
+    .then(function(res) {
+      if (!res) return;
+      console.log('Approval status_reader response:', res);
+
+      if (!res || !res.status || !Array.isArray(res.status)) return;
+
+      const items = res.status;
+      const typeStats = new Map();
+      const icons = {
+        tables: 'fa-table',
+        views: 'fa-eye',
+        functions: 'fa-code',
+        sequences: 'fa-list-ol',
+        unknown: 'fa-database'
+      };
+
+      items.forEach(function(item) {
+        const type = (item.type || 'unknown').toLowerCase();
+        if (!typeStats.has(type)) typeStats.set(type, { total: 0, extracted: 0 });
+        typeStats.get(type).total++;
+        if (item.status && item.status.includes('Extracted') && !item.status.includes('in Progress')) {
+          if (type !== 'sequences') typeStats.get(type).extracted++;
+          else typeStats.get(type).extracted++;
+        } else if (type === 'sequences') {
+          typeStats.get(type).extracted++;
+        }
+      });
+
+      // Build chips and inject into review meta bar
+      const chipsWrap = document.createElement('div');
+      chipsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px;';
+
+      typeStats.forEach(function(stats, type) {
+        const iconClass = icons[type] || icons.unknown;
+        const displayCount = type === 'sequences' ? stats.total : stats.extracted;
+        const chip = document.createElement('div');
+        chip.title = type + ': ' + stats.total;
+        chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:600;';
+        chip.innerHTML = `<i class="fa-solid ${iconClass}" style="font-size:10px;color:#6b7280;"></i><span>${displayCount}</span>`;
+        chipsWrap.appendChild(chip);
+      });
+
+      // Replace "Awaiting data..." with chips
+      const meta = document.getElementById('approvalReviewMeta');
+      if (meta) {
+        meta.textContent = '';
+        meta.appendChild(chipsWrap);
+      }
+
+      // Also parse table counts if present
+      if (res['table-counts']) {
+        try {
+          const cleaned = res['table-counts']
+            .replace(/'/g, '"').replace(/\(/g, '[').replace(/\)/g, ']')
+            .replace(/\bNone\b/g, 'null').replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false');
+          const parsed = JSON.parse(cleaned);
+          const tableCounts = parsed.table_counts || [];
+          let grandTotal = 0;
+          tableCounts.forEach(function(e) { grandTotal += (Number(e[1]) || 0); });
+          console.log('Approval grand total rows:', grandTotal);
+        } catch(e) {
+          console.warn('Failed to parse table-counts in approval:', e);
+        }
+      }
+    })
+    .catch(function(err) {
+      console.error('Status reader error in approval:', err);
     });
 
     // ── Approve button ─────────────────────────────────────────────────────
