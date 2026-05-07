@@ -212,6 +212,15 @@
       .prev-db-target .prev-db-heading-label {
         color: #000000;
       }
+      .prev-db-heading-meta {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 700;
+        color: #3a3939;
+        background: rgba(81, 75, 156, 0.08);
+        padding: 4px 10px;
+        border-radius: 8px;
+      }
 
       /* ── PREVIOUS DATABASES SECTION ── */
       #previousDbSection {
@@ -1509,6 +1518,7 @@
               <div class="prev-db-side prev-db-source">
                 <div class="prev-db-side-heading">
                   <span class="prev-db-heading-label">Source</span>
+                  <span class="prev-db-heading-meta" data-source-count></span>
                 </div>
                 <div data-source-type></div>
                 <div data-source-details></div>
@@ -1568,6 +1578,9 @@
                 <div data-target-content>
                   <div class="prev-db-side-heading">
                     <span class="prev-db-heading-label">Target</span>
+                    <span class="prev-db-heading-meta" data-target-status
+                      >...</span
+                    >
                   </div>
                   <div data-target-type></div>
                   <div data-target-details></div>
@@ -1625,7 +1638,6 @@
             style="font-size: 15px; font-weight: 700; color: #2b2448"
             data-db-type-name
           ></span>
-          
         </div>
       </template>
 
