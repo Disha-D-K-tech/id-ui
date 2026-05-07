@@ -476,20 +476,10 @@ updateDashboardRowCount(cardIdx, totalRows);
         const pipelineC = document.getElementById('pipeline-' + cardIdx);
         const cardC = pipelineC ? pipelineC.closest('[data-prev-db-card]') : null;
         if (cardC) {
-          let statsContainer = cardC.querySelector('.stat-chips-container');
-          if (!statsContainer) {
-            statsContainer = document.createElement('div');
-            statsContainer.className = 'stat-chips-container';
-            statsContainer.style.display = 'flex';
-            statsContainer.style.flexWrap = 'wrap';
-            statsContainer.style.gap = '8px';
-            statsContainer.style.padding = '10px 0 0 0';
-            statsContainer.style.background = 'none';
-            statsContainer.style.justifyContent = 'flex-start';
-            cardC.querySelector('[data-target-details]').appendChild(statsContainer);
-          }
-          statsContainer.innerHTML = '';
-
+          // stat-chips-container is already created at render time inside target-details-row
+const statsContainer = cardC.querySelector('.stat-chips-container');
+if (!statsContainer) return;
+statsContainer.innerHTML = '';
           const icons = {
             tables: 'fa-table',
             views: 'fa-eye',
@@ -1321,17 +1311,35 @@ card.dataset.dbId = dbId;
     const targetSide = card.querySelector('[data-target-side]');
     const targetContent = card.querySelector('[data-target-content]');
     const targetEmpty = card.querySelector('[data-target-empty]');
-    if (hasTarget) {
-      const targetTypeBlock = createDbTypeBlock(t.type);
-      if (targetTypeBlock) {
-        card.querySelector('[data-target-type]').appendChild(targetTypeBlock);
-      }
-      appendDbDetails(card.querySelector('[data-target-details]'), [
-        { label: 'DB Name', value: t.name },
-        { label: 'Host', value: t.host },
-        { label: 'Status', value: t.status },
-        { label: 'Description', value: t.desc }
-      ]);
+  if (hasTarget) {
+  const targetTypeBlock = createDbTypeBlock(t.type);
+  if (targetTypeBlock) {
+    card.querySelector('[data-target-type]').appendChild(targetTypeBlock);
+  }
+
+  // Wrap details + chips in a flex row at render time
+  const targetDetailsMount = card.querySelector('[data-target-details]');
+  const detailsRow = document.createElement('div');
+  detailsRow.className = 'target-details-row';
+  detailsRow.style.cssText = 'display:flex;align-items:flex-start;gap:12px;';
+  
+  const detailsCol = document.createElement('div');
+  detailsCol.style.flex = '1 1 0';
+  detailsRow.appendChild(detailsCol);
+
+  const chipsCol = document.createElement('div');
+  chipsCol.className = 'stat-chips-container';
+  chipsCol.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end;padding-top:2px;';
+  detailsRow.appendChild(chipsCol);
+
+  targetDetailsMount.appendChild(detailsRow);
+
+  appendDbDetails(detailsCol, [
+    { label: 'DB Name', value: t.name },
+    { label: 'Host', value: t.host },
+    { label: 'Status', value: t.status },
+    { label: 'Description', value: t.desc }
+  ]);
       targetContent.hidden = false;
       targetEmpty.hidden = true;
       updateTargetRowCount(idx, 0);
@@ -1901,6 +1909,7 @@ const missingRequired = !buVal || required.some(function (sel) {
     }
   });
 });
+
 
 /************* SAMPLE STATS DATA *************/
 let demo = {
