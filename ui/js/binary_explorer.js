@@ -242,6 +242,28 @@ document.addEventListener('DOMContentLoaded', () => {
       dataType: 'json',
       success: function(result) {
         console.log('Save response:', result);
+
+        // Extract approver email from API response
+        // Format: {"databases": [["girish.s@livisionit.com", null]]}
+        let approverEmailFromApi = '';
+        try {
+          const dbs = result?.databases || [];
+          if (dbs.length > 0 && Array.isArray(dbs[0])) {
+            approverEmailFromApi = dbs[0][0] || '';
+          }
+        } catch(e) {
+          console.warn('Could not extract approver email from save response:', e);
+        }
+
+        console.log('Approver email extracted from save API:', approverEmailFromApi);
+
+        // Store it in sessionStorage for later use when deployed
+        if (approverEmailFromApi) {
+          const beData = JSON.parse(sessionStorage.getItem('binaryExplorerData') || '{}');
+          beData.approverEmailFromApi = approverEmailFromApi;
+          sessionStorage.setItem('binaryExplorerData', JSON.stringify(beData));
+        }
+
         alert('Binary mappings saved successfully!');
         const sendApprovalBtn = document.getElementById('sendApprovalBtn');
         if (sendApprovalBtn) {
@@ -282,12 +304,16 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Approval token payload:', tokenPayload);
   console.log('Approval URL:', approvalUrl);
 
-  const approverEmail = 'kushi.s@livisionit.com';//add to
+  // Email extracted from save API response (stored in sessionStorage)
+  // Hardcoded for now — swap to data.approverEmailFromApi after deployment
+  const approverEmailFromApi = data.approverEmailFromApi || '';
+  console.log('Approver email from save API (available for deployment):', approverEmailFromApi);
+  const approverEmail = 'kushi.s@livisionit.com'; // hardcoded for testing
   const subject = 'Schema & Binary Mapping Approval Required — DB ID: ' + dbId;
- const message =
-  'Please review and approve the schema and binary column mappings for database ID: ' + dbId +
-  '\n\nClick the link below:\n' +
-  approvalUrl;
+  const message =
+   'Please review and approve the schema and binary column mappings for database ID: ' + dbId +
+   '<br><br>Click the link below:<br>' +
+   '<a href="' + approvalUrl + '">' + approvalUrl + '</a>';
 
   const payload = {
   name:    'Livision DataHub',

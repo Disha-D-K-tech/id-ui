@@ -280,11 +280,11 @@ function updateDashboardRowCount(cardIdx, totalRows) {
     rowEl.style.fontWeight = '600';
     rowEl.style.color = '#374151';
 
-    // ✅ append INSIDE flex box (correct place)
-    const sourceType = card.querySelector('[data-source-type] > div');
-    if (sourceType) {
-      sourceType.appendChild(rowEl);
-    }
+   const header = card.querySelector('[data-source-count]');
+
+if (header) {
+  header.textContent = `row_count : ${formatCompactNumber(totalRows)}`;
+}
   }
 
   rowEl.textContent = formatCompactNumber(totalRows);
@@ -294,25 +294,14 @@ function updateTargetRowCount(cardIdx, totalRows = 0) {
   const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
   if (!card) return;
 
-  let rowEl = card.querySelector('[data-target-row-count]');
+  const targetHeader = card.querySelector('[data-target-status]');
 
-  if (!rowEl) {
-    rowEl = document.createElement('div');
-    rowEl.setAttribute('data-target-row-count', '');
-
-    rowEl.style.fontSize = '12px';
-    rowEl.style.marginLeft = 'auto';
-    rowEl.style.fontWeight = '600';
-    rowEl.style.color = '#374151';
-
-    // ✅ TARGET side (Snowflake box)
-    const targetType = card.querySelector('[data-target-type] > div');
-    if (targetType) {
-      targetType.appendChild(rowEl);
-    }
+  if (targetHeader) {
+    targetHeader.textContent =
+      totalRows && totalRows > 0
+        ? `row_count : ${formatCompactNumber(totalRows)}`
+        : 'Pending';
   }
-
-  rowEl.textContent = formatCompactNumber(totalRows);
 }
 /************* STATUS READER — REUSABLE CARD UPDATER *************/
 
@@ -620,62 +609,8 @@ function fetchSchemaExplorerAssessment(dbId) {
 
 function openSchemaExplorerPage(dbId) {
   if (!dbId) return;
-
-  showOverlay('Loading Schema Explorer...');
-
-  $.ajax({
-    url: SCHEMA_EXPLORER_API_URL,
-    success: function(htmlResponse) {
-  console.log('Schema Explorer success:', htmlResponse);
-  hideOverlay();
-
-  const store = readSchemaExplorerStore();
-  // const existing = store[String(dbId)] || {};
-
-  // store[String(dbId)] = {
-  //   ...existing,   // ✅ KEEP table-counts
-  //   db_id: dbId,
-  //   fetched_at: new Date().toISOString(),
-  //   ok: true,
-  //   html: htmlResponse
-  // };
- const STORAGE_KEY = 'schemaExplorerResults';
-
-const existing = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
-
-existing[dbId] = {
-  ...(existing[dbId] || {}),   // KEEP OLD DATA
-  db_id: dbId,
-  html: htmlResponse           // ONLY add html
-};
-
-sessionStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-
-  writeSchemaExplorerStore(store);
-
-  console.log('✅ FINAL STORE BEFORE NAV:', store[String(dbId)]);
-
   sessionStorage.setItem('currentSchemaDbId', dbId);
   window.location.href = schemaExplorerPage;
-},
-error: function(xhr) {
-  console.log('Schema Explorer error status:', xhr.status);
-  console.log('Schema Explorer error responseText:', xhr.responseText);
-  hideOverlay();
-  
-  const store = readSchemaExplorerStore();
-
-store[String(dbId)] = {
-  ...(store[String(dbId)] || {}),  // ✅ KEEP table-counts
-  html: xhr.responseText || null   // only add html
-};
-
-writeSchemaExplorerStore(store);
-  console.log('Schema Explorer stored payload:', store[String(dbId)]);
-  sessionStorage.setItem('currentSchemaDbId', dbId);
-  window.location.href = schemaExplorerPage;
-}
-  });
 }
 
 function simulateStep(cardIdx, stepIdx) {
@@ -1988,7 +1923,8 @@ window.updateGlobalChart = function() {
         if (!globalStats.has(typeName)) {
           globalStats.set(typeName, 0);
         }
-        globalStats.set(typeName, globalStats.get(typeName) + stats.extracted);
+        const value = typeName.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
+        globalStats.set(typeName, globalStats.get(typeName) + value);
       });
     }
   });
