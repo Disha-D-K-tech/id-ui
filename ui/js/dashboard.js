@@ -609,62 +609,8 @@ function fetchSchemaExplorerAssessment(dbId) {
 
 function openSchemaExplorerPage(dbId) {
   if (!dbId) return;
-
-  showOverlay('Loading Schema Explorer...');
-
-  $.ajax({
-    url: SCHEMA_EXPLORER_API_URL,
-    success: function(htmlResponse) {
-  console.log('Schema Explorer success:', htmlResponse);
-  hideOverlay();
-
-  const store = readSchemaExplorerStore();
-  // const existing = store[String(dbId)] || {};
-
-  // store[String(dbId)] = {
-  //   ...existing,   // ✅ KEEP table-counts
-  //   db_id: dbId,
-  //   fetched_at: new Date().toISOString(),
-  //   ok: true,
-  //   html: htmlResponse
-  // };
- const STORAGE_KEY = 'schemaExplorerResults';
-
-const existing = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
-
-existing[dbId] = {
-  ...(existing[dbId] || {}),   // KEEP OLD DATA
-  db_id: dbId,
-  html: htmlResponse           // ONLY add html
-};
-
-sessionStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-
-  writeSchemaExplorerStore(store);
-
-  console.log('✅ FINAL STORE BEFORE NAV:', store[String(dbId)]);
-
   sessionStorage.setItem('currentSchemaDbId', dbId);
   window.location.href = schemaExplorerPage;
-},
-error: function(xhr) {
-  console.log('Schema Explorer error status:', xhr.status);
-  console.log('Schema Explorer error responseText:', xhr.responseText);
-  hideOverlay();
-  
-  const store = readSchemaExplorerStore();
-
-store[String(dbId)] = {
-  ...(store[String(dbId)] || {}),  // ✅ KEEP table-counts
-  html: xhr.responseText || null   // only add html
-};
-
-writeSchemaExplorerStore(store);
-  console.log('Schema Explorer stored payload:', store[String(dbId)]);
-  sessionStorage.setItem('currentSchemaDbId', dbId);
-  window.location.href = schemaExplorerPage;
-}
-  });
 }
 
 function simulateStep(cardIdx, stepIdx) {
@@ -1977,7 +1923,8 @@ window.updateGlobalChart = function() {
         if (!globalStats.has(typeName)) {
           globalStats.set(typeName, 0);
         }
-        globalStats.set(typeName, globalStats.get(typeName) + stats.extracted);
+        const value = typeName.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
+        globalStats.set(typeName, globalStats.get(typeName) + value);
       });
     }
   });

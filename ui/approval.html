@@ -129,6 +129,16 @@
       text-align: center; padding: 18px;
       color: #6b6b80; font-size: 13px; margin-top: 26px;
     }
+    .node { display: flex; align-items: center; }
+    .node span { margin-left: auto; }
+    .panel { overflow-x: auto; }
+    .binary-highlight { background: #dcfce7 !important; }
+    .binary-btn {
+      padding: 1px 6px; margin-left: 6px; margin-right: 6px;
+      cursor: pointer; border: none; border-radius: 3px;
+      background: #6ee7b7; color: #065f46;
+      font-size: 10px; font-weight: 600; height: 20px; line-height: 18px;
+    }
   </style>
 </head>
 <body>
@@ -175,7 +185,17 @@
 
     <!-- Schema Section -->
     <div class="page-card">
-      <h5><i class="fa-solid fa-diagram-project"></i> Schema Explorer</h5>
+      <h5 class="d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-diagram-project"></i> Schema Explorer</span>
+        <div>
+          <button id="topBinaryBtn" class="btn btn-sm btn-outline-primary" style="font-size: 11px; font-weight: 700; border-radius: 8px; margin-right: 8px;">
+            <i class="fa-solid fa-eye" style="margin-right: 4px;"></i> Show Binary Only
+          </button>
+          <button id="topUnmatchedBtn" class="btn btn-sm btn-outline-primary" style="font-size: 11px; font-weight: 700; border-radius: 8px; background: #7c3aed; color: white; border: none;">
+            Show Unmatched
+          </button>
+        </div>
+      </h5>
       <div class="status-panel" id="schemaStatus">
         <span class="spinner"></span> Loading schema...
       </div>
@@ -243,6 +263,82 @@
 
     let schemaLoaded = false;
     let binaryLoaded = false;
+    let binaryMode = false;
+
+    const topBinaryBtn = document.getElementById('topBinaryBtn');
+    if (topBinaryBtn) {
+      topBinaryBtn.onclick = function() {
+        binaryMode = !binaryMode;
+        this.innerHTML = binaryMode 
+          ? '<i class="fa-solid fa-eye-slash" style="margin-right: 4px;"></i> Show All' 
+          : '<i class="fa-solid fa-eye" style="margin-right: 4px;"></i> Show Binary Only';
+        
+        schemaMount.querySelectorAll('.node.schema-node').forEach(schemaNode => {
+          const panel = schemaNode.nextElementSibling;
+          if (binaryMode) {
+            if (schemaNode.dataset.hasBinary === "true") {
+              schemaNode.style.display = 'flex';
+              if (panel) panel.style.display = 'block';
+            } else {
+              schemaNode.style.display = 'none';
+              if (panel) panel.style.display = 'none';
+            }
+          } else {
+            schemaNode.style.display = 'flex';
+            if (panel) panel.style.display = 'none';
+          }
+        });
+      };
+    }
+
+    let unmatchedMode = false;
+    const topUnmatchedBtn = document.getElementById('topUnmatchedBtn');
+    if (topUnmatchedBtn) {
+      topUnmatchedBtn.onclick = function() {
+        unmatchedMode = !unmatchedMode;
+        this.innerText = unmatchedMode ? 'Show All' : 'Show Unmatched';
+        
+        const unmatchedTables = schemaMount._unmatchedTables || new Set();
+        const unmatchedSchemas = schemaMount._unmatchedSchemas || new Set();
+
+        schemaMount.querySelectorAll('.node.schema-node').forEach(schemaNode => {
+          const schemaPanel = schemaNode.nextElementSibling;
+          if (!unmatchedMode) {
+            schemaNode.style.display = 'flex';
+            if (schemaPanel) {
+              schemaPanel.style.display = 'none';
+              schemaPanel.querySelectorAll('.node.table-node').forEach(tn => {
+                tn.style.display = 'flex';
+                const tp = tn.nextElementSibling;
+                if (tp) tp.style.display = 'none';
+              });
+            }
+            return;
+          }
+
+          if (!unmatchedSchemas.has(schemaNode)) {
+            schemaNode.style.display = 'none';
+            if (schemaPanel) schemaPanel.style.display = 'none';
+            return;
+          }
+
+          schemaNode.style.display = 'flex';
+          if (schemaPanel) {
+            schemaPanel.style.display = 'block';
+            schemaPanel.querySelectorAll('.node.table-node').forEach(tn => {
+              const tp = tn.nextElementSibling;
+              if (unmatchedTables.has(tn)) {
+                tn.style.display = 'flex';
+                if (tp) tp.style.display = 'block';
+              } else {
+                tn.style.display = 'none';
+                if (tp) tp.style.display = 'none';
+              }
+            });
+          }
+        });
+      };
+    }
 
     function checkAllLoaded() {
       if (schemaLoaded && binaryLoaded) {
@@ -310,18 +406,25 @@
       checkAllLoaded();
     }
 
-    // Apply row counts to schema nodes (same logic as schema_explorer.js)
+    function formatCount(num) {
+      if (num === 0) return "—";
+      if (num >= 1_000_000) return Math.floor(num / 1_000_000) + "M";
+      if (num >= 1_000) return Math.floor(num / 1_000) + "K";
+      return num.toString();
+    }
+
+    // Apply row counts and binary logic (aligned with schema_explorer.js)
     function applySchemaRowCounts(tableCountsRaw) {
       if (!tableCountsRaw) return;
 
       setTimeout(function() {
-        var tableMap = {};
+        let tableMap = {};
         try {
-          var dataStr = typeof tableCountsRaw === 'string'
-            ? tableCountsRaw.replace(/\(/g, '[').replace(/\)/g, ']').replace(/'/g, '"')
+          const dataStr = typeof tableCountsRaw === 'string'
+            ? tableCountsRaw.replace(/\(/g, '[').replace(/\)/g, ']').replace(/'/g, '"').replace(/,\s*]/g, ']')
             : JSON.stringify(tableCountsRaw);
-          var parsed = JSON.parse(dataStr);
-          var list = parsed.table_counts || (Array.isArray(parsed) ? parsed : []);
+          const parsed = JSON.parse(dataStr);
+          const list = parsed.table_counts || (Array.isArray(parsed) ? parsed : []);
           list.forEach(function(entry) {
             tableMap[entry[0].toLowerCase().trim()] = parseInt(entry[1]) || 0;
           });
@@ -331,29 +434,171 @@
         }
 
         schemaMount.querySelectorAll('.node.schema-node').forEach(function(schemaNode) {
-          var panel = schemaNode.nextElementSibling;
+          const panel = schemaNode.nextElementSibling;
           if (!panel) return;
 
-          var schemaName = schemaNode.innerText.toLowerCase().replace('schema:', '').split('(')[0].trim();
-          var schemaTotal = 0;
+          const schemaName = schemaNode.innerText.toLowerCase().replace('schema:', '').split('(')[0].trim();
+          let schemaTotal = 0;
 
           panel.querySelectorAll('.node.table-node').forEach(function(tableNode) {
-            var tableName = tableNode.innerText.toLowerCase().replace('table:', '').split('(')[0].trim();
-            var key = schemaName + '.' + tableName;
-            if (tableMap[key] !== undefined) {
-              schemaTotal += tableMap[key];
+            const tableName = tableNode.innerText.toLowerCase().replace('table:', '').split('(')[0].trim();
+            const key = schemaName + '.' + tableName;
+            const count = tableMap[key] || 0;
+            schemaTotal += count;
+
+            const tablePanel = tableNode.nextElementSibling;
+
+            // Binary mapping logic from schema_explorer.js
+            if (tablePanel && tablePanel.innerHTML.includes('BIN-MAPPED')) {
+              schemaNode.dataset.hasBinary = "true";
+              if (!tableNode.querySelector('.binary-btn')) {
+                const btn = document.createElement('button');
+                btn.textContent = 'Show Binary';
+                btn.className = 'binary-btn';
+                btn.onclick = function(e) {
+                  e.stopPropagation();
+                  const isOpen = tablePanel.style.display === 'block';
+                  if (isOpen) {
+                    tablePanel.style.display = 'none';
+                    tablePanel.querySelectorAll('tr').forEach(r => r.classList.remove('binary-highlight'));
+                  } else {
+                    panel.style.display = 'block';
+                    tablePanel.style.display = 'block';
+                    tableNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    tablePanel.querySelectorAll('tr').forEach(r => {
+                      if (r.innerText.includes('BIN-MAPPED')) r.classList.add('binary-highlight');
+                    });
+                  }
+                };
+
+                // RIGHT SIDE BUTTON + COUNT
+                const spanId = schemaName + '.' + tableName + '_c';
+                const span = tableNode.querySelector('#' + CSS.escape(spanId));
+
+                const rightBox = document.createElement('div');
+                rightBox.style.display = 'flex';
+                rightBox.style.alignItems = 'center';
+                rightBox.style.marginLeft = 'auto';
+                rightBox.style.gap = '6px';
+
+                if (span) {
+                  span.remove();
+                  rightBox.appendChild(btn);
+                  rightBox.appendChild(span);
+                } else {
+                  rightBox.appendChild(btn);
+                }
+                tableNode.appendChild(rightBox);
+              }
+            }
+
+            // Table Count Display
+            const spanId = schemaName + '.' + tableName + '_c';
+            const span = tableNode.querySelector('#' + CSS.escape(spanId));
+            if (span) {
+              span.textContent = formatCount(count);
+              span.style.cssText = 'color:#10b981; font-weight:bold; margin-left:auto;';
             }
           });
 
-          // Update the <span> next to Schema name
-          var span = schemaNode.querySelector('span');
-          if (span) {
-            span.textContent = ' (' + schemaTotal.toLocaleString() + ')';
-            span.style.cssText = 'color: #6366f1; font-weight: bold; margin-left: 10px;';
+          // Update Schema name span
+          let schemaSpan = schemaNode.querySelector('span');
+          if (schemaSpan) {
+            schemaSpan.textContent = formatCount(schemaTotal);
+            schemaSpan.style.cssText = 'color: #6366f1; font-weight: bold; margin-left: auto;';
           }
         });
       }, 400);
+
+      function normalizeType(t) {
+        t = (t || '').toLowerCase().trim();
+        if (t === 'character' || t.includes('char(') || t.startsWith('char')) return 'char';
+        if (t.includes('character varying') || t.startsWith('varchar')) return 'varchar';
+        if (t === 'text' || t === 'string') return 'string';
+        if (t === 'integer' || t === 'int') return 'integer';
+        if (t === 'smallint') return 'smallint';
+        if (t === 'boolean') return 'boolean';
+        if (t === 'date') return 'date';
+        if (t.includes('timestamp')) return 'timestamp';
+        if (t === 'numeric' || t.startsWith('number')) return 'numeric';
+        if (t === 'uuid') return 'uuid';
+        if (t === 'xml' || t === 'variant') return 'variant';
+        if (t === 'bytea' || t === 'bin-mapped') return 'binary';
+        if (t === 'time without time zone' || t === 'time') return 'time';
+        return t;
+      }
+
+      function normalizeDefault(d) {
+        d = (d || '').toLowerCase().trim();
+        if (d === 'none' || d === '' || d === 'null') return '__none__';
+        if (d === 'now()' || d === 'current_timestamp()' || d === 'current_timestamp') return '__now__';
+        if (d.includes('uuid_generate') || d.includes('uuid_string')) return '__uuid__';
+        if (d.includes('nextval') || d.includes('.nextval')) return '__seq__';
+        if (d.includes('@data_stage') || d.includes('binary col. mapped')) return '__binary__';
+        d = d.replace(/::[a-z ]+$/, '').trim();
+        d = d.replace(/^'(.*)'$/, '$1');
+        return d;
+      }
+
+      setTimeout(() => {
+        const unmatchedTables = new Set();
+        const unmatchedSchemas = new Set();
+
+        schemaMount.querySelectorAll('.panel table tr').forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          if (tds.length < 6) return;
+
+          const srcType = tds[2].textContent.trim();
+          const tgtType = tds[3].textContent.trim();
+          const srcDef  = tds[4].textContent.trim();
+          const tgtDef  = tds[5].textContent.trim();
+
+          const typeMismatch = normalizeType(srcType) !== normalizeType(tgtType);
+          const defMismatch  = normalizeDefault(srcDef) !== normalizeDefault(tgtDef);
+
+          if (typeMismatch || defMismatch) {
+            tr.style.backgroundColor = '#ede9fe';
+            tr.style.borderLeft = '3px solid #7c3aed';
+
+            const tablePanel = tr.closest('.panel');
+            if (tablePanel) {
+              const tableNode = tablePanel.previousElementSibling;
+              if (tableNode && tableNode.classList.contains('table-node')) {
+                unmatchedTables.add(tableNode);
+                const schemaPanel = tableNode.closest('.panel');
+                if (schemaPanel) {
+                  const schemaNode = schemaPanel.previousElementSibling;
+                  if (schemaNode && schemaNode.classList.contains('schema-node')) {
+                    unmatchedSchemas.add(schemaNode);
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        schemaMount._unmatchedTables = unmatchedTables;
+        schemaMount._unmatchedSchemas = unmatchedSchemas;
+      }, 600);
     }
+
+    window.toggle = function (el) {
+      const panel = el.nextElementSibling;
+      if (panel) {
+        panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+      }
+    };
+
+    window.expandAll = function (expand) {
+      schemaMount.querySelectorAll('.node.schema-node').forEach(schemaNode => {
+        const schemaPanel = schemaNode.nextElementSibling;
+        if (schemaPanel) schemaPanel.style.display = expand ? 'block' : 'none';
+        schemaPanel?.querySelectorAll('.node.table-node').forEach(tableNode => {
+          const tablePanel = tableNode.nextElementSibling;
+          if (tablePanel) tablePanel.style.display = 'none';
+        });
+      });
+    };
 
     // Always fetch schema from API
     console.log('Fetching schema from API for db_id:', dbId);
