@@ -310,7 +310,10 @@
               schemaPanel.querySelectorAll('.node.table-node').forEach(tn => {
                 tn.style.display = 'flex';
                 const tp = tn.nextElementSibling;
-                if (tp) tp.style.display = 'none';
+                if (tp) {
+                  tp.style.display = 'none';
+                  tp.querySelectorAll('tr').forEach(row => row.style.display = '');
+                }
               });
             }
             return;
@@ -329,7 +332,19 @@
               const tp = tn.nextElementSibling;
               if (unmatchedTables.has(tn)) {
                 tn.style.display = 'flex';
-                if (tp) tp.style.display = 'block';
+                if (tp) {
+                  tp.style.display = 'block';
+                  // Show ONLY mismatched rows
+                  tp.querySelectorAll('tr').forEach(row => {
+                    if (row.querySelector('th')) {
+                      row.style.display = ''; // Keep header
+                    } else if (row.classList.contains('mismatch-row')) {
+                      row.style.display = '';
+                    } else {
+                      row.style.display = 'none';
+                    }
+                  });
+                }
               } else {
                 tn.style.display = 'none';
                 if (tp) tp.style.display = 'none';
@@ -557,8 +572,24 @@
           const defMismatch  = normalizeDefault(srcDef) !== normalizeDefault(tgtDef);
 
           if (typeMismatch || defMismatch) {
-            tr.style.backgroundColor = '#ede9fe';
-            tr.style.borderLeft = '3px solid #7c3aed';
+            tr.classList.add('mismatch-row');
+
+            const isBinMapped = tr.innerText.includes('BIN-MAPPED') || srcType.includes('bin-mapped') || tgtType.includes('bin-mapped');
+            const isAtSign = tgtDef.includes('@');
+
+            if (isBinMapped) {
+              // RED for bin mapped
+              tr.style.backgroundColor = '#fee2e2';
+              tr.style.borderLeft = '3px solid #ef4444';
+            } else if (isAtSign) {
+              // GREEN if target default has @
+              tr.style.backgroundColor = '#dcfce7';
+              tr.style.borderLeft = '3px solid #22c55e';
+            } else {
+              // PURPLE mismatch color
+              tr.style.backgroundColor = '#ede9fe';
+              tr.style.borderLeft = '3px solid #7c3aed';
+            }
 
             const tablePanel = tr.closest('.panel');
             if (tablePanel) {

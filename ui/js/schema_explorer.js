@@ -340,10 +340,10 @@
 
         controls.appendChild(topBtn);
 
-        // Show Unmatched button
+        // Show Mismatch button
         const unmatchedBtn = document.createElement('button');
         unmatchedBtn.id = 'topUnmatchedBtn';
-        unmatchedBtn.innerText = 'Show Unmatched';
+        unmatchedBtn.innerText = 'Show Mismatch';
         unmatchedBtn.style.cssText = `
           padding: 5px 15px;
   margin-right: 10px;
@@ -360,7 +360,7 @@
 
         unmatchedBtn.onclick = function() {
           unmatchedMode = !unmatchedMode;
-          unmatchedBtn.innerText = unmatchedMode ? 'Show All' : 'Show Unmatched';
+          unmatchedBtn.innerText = unmatchedMode ? 'Show All' : 'Show Mismatch';
 
           const unmatchedTables = mountNode._unmatchedTables || new Set();
           const unmatchedSchemas = mountNode._unmatchedSchemas || new Set();
@@ -376,7 +376,10 @@
                 schemaPanel.querySelectorAll('.node.table-node').forEach(tn => {
                   tn.style.display = 'flex';
                   const tp = tn.nextElementSibling;
-                  if (tp) tp.style.display = 'none';
+                  if (tp) {
+                    tp.style.display = 'none';
+                    tp.querySelectorAll('tr').forEach(row => row.style.display = '');
+                  }
                 });
               }
               return;
@@ -399,7 +402,19 @@
                 const tp = tn.nextElementSibling;
                 if (unmatchedTables.has(tn)) {
                   tn.style.display = 'flex';
-                  if (tp) tp.style.display = 'block';
+                  if (tp) {
+                    tp.style.display = 'block';
+                    // Show ONLY mismatched rows
+                    tp.querySelectorAll('tr').forEach(row => {
+                      if (row.querySelector('th')) {
+                        row.style.display = ''; // Keep header
+                      } else if (row.classList.contains('mismatch-row')) {
+                        row.style.display = '';
+                      } else {
+                        row.style.display = 'none';
+                      }
+                    });
+                  }
                 } else {
                   tn.style.display = 'none';
                   if (tp) tp.style.display = 'none';
@@ -707,21 +722,43 @@ const raw = payload['table-counts'] || payload['table_counts'];
     }, 400);
 
     function normalizeType(t) {
-      t = (t || '').toLowerCase().trim();
-      if (t === 'character' || t.includes('char(') || t.startsWith('char')) return 'char';
-      if (t.includes('character varying') || t.startsWith('varchar')) return 'varchar';
-      if (t === 'text' || t === 'string') return 'string';
-      if (t === 'integer' || t === 'int') return 'integer';
-      if (t === 'smallint') return 'smallint';
-      if (t === 'boolean') return 'boolean';
-      if (t === 'date') return 'date';
-      if (t.includes('timestamp')) return 'timestamp';
-      if (t === 'numeric' || t.startsWith('number')) return 'numeric';
-      if (t === 'uuid') return 'uuid';
-      if (t === 'xml' || t === 'variant') return 'variant';
-      if (t === 'bytea' || t === 'bin-mapped') return 'binary';
-      if (t === 'time without time zone' || t === 'time') return 'time';
-      return t;
+      const raw = (t || '').trim();
+      const lower = raw.toLowerCase();
+
+      // Special mapped pairs — source → expected target canonical form
+      // character varying → VARCHAR(n) family
+      if (lower.includes('character varying')) return 'VARCHAR';
+
+      // timestamp without time zone → TIMESTAMP_NTZ
+      if (lower.includes('timestamp')) return 'TIMESTAMP_NTZ';
+
+      // character / char(n) → CHAR
+      if (lower === 'character' || lower.startsWith('char(') || lower === 'char') return 'CHAR';
+
+      // For everything else — uppercase the source type and strip
+      // size qualifiers like (10), (10,2) so INTEGER matches INTEGER etc.
+      // This means: integer → INTEGER, smallint → SMALLINT, boolean → BOOLEAN etc.
+      let normalized = raw.toUpperCase().trim();
+
+      // Strip size qualifiers e.g. VARCHAR(50) → VARCHAR, NUMBER(10,2) → NUMBER
+      normalized = normalized.replace(/\s*\([\d,\s]+\)$/, '').trim();
+
+      // Strip " WITHOUT TIME ZONE" suffix
+      normalized = normalized.replace(' WITHOUT TIME ZONE', '').trim();
+
+      // Source-specific expansions that map to Snowflake types
+      if (normalized === 'TEXT') return 'STRING';
+      if (normalized === 'BYTEA') return 'BINARY';
+      if (normalized === 'INTEGER' || normalized === 'INT') return 'INTEGER';
+      if (normalized === 'NUMERIC') return 'NUMBER';
+      if (normalized === 'TIME') return 'TIME';
+
+      // xml and VARIANT are DIFFERENT — do NOT normalize together
+      // xml stays as XML, VARIANT stays as VARIANT → will be flagged as mismatch
+      if (normalized === 'XML') return 'XML';
+      if (normalized === 'VARIANT') return 'VARIANT';
+
+      return normalized;
     }
 
     function normalizeDefault(d) {
@@ -753,20 +790,24 @@ const raw = payload['table-counts'] || payload['table_counts'];
         const defMismatch  = normalizeDefault(srcDef) !== normalizeDefault(tgtDef);
 
         if (typeMismatch || defMismatch) {
-          
+          tr.classList.add('mismatch-row');
 
-  // GREEN if target default has @
-  if (tgtDef.includes('@')) {
+          const isBinMapped = tr.innerText.includes('BIN-MAPPED') || srcType.includes('bin-mapped') || tgtType.includes('bin-mapped');
+          const isAtSign = tgtDef.includes('@');
 
-    tr.style.backgroundColor = '#dcfce7';
-    tr.style.borderLeft = '3px solid #22c55e';
-
-  } else {
-
-    // NORMAL mismatch color
-    tr.style.backgroundColor = '#ede9fe';
-    tr.style.borderLeft = '3px solid #7c3aed';
-  }
+          if (isBinMapped) {
+            // RED for bin mapped
+            tr.style.backgroundColor = '#fee2e2';
+            tr.style.borderLeft = '3px solid #ef4444';
+          } else if (isAtSign) {
+            // GREEN if target default has @
+            tr.style.backgroundColor = '#dcfce7';
+            tr.style.borderLeft = '3px solid #22c55e';
+          } else {
+            // PURPLE mismatch color
+            tr.style.backgroundColor = '#ede9fe';
+            tr.style.borderLeft = '3px solid #7c3aed';
+          }
 
           // Find parent table-node and schema-node
           const tablePanel = tr.closest('.panel');
