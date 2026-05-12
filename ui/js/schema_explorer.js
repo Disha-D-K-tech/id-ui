@@ -61,9 +61,143 @@
       }
 
       .binary-highlight{
-        background:#dcfce7 !important;
+        background:#fee2e2 !important;
       }
+        /* =========================
+   SUMMARY OVERVIEW
+========================= */
 
+.summary-box{
+  width: 92%;
+  margin: 22px auto 18px auto;
+  padding: 15px 15px 20px;
+  border-radius: 26px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(168,85,247,0.12);
+  box-shadow:
+    0 8px 30px rgba(124,58,237,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
+/* TITLE */
+
+.summary-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:16px;
+  font-weight:800;
+  color:#6d28d9;
+  margin-bottom:6px;
+}
+
+.summary-subtitle{
+  color:#6b7280;
+  font-size:13px;
+  margin-left:26px;
+  margin-bottom:18px;
+}
+
+/* TABLE */
+
+.summary-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 10px;
+}
+
+.summary-head th{
+  background:#fefce8;
+  color:#5b21b6;
+  font-size:13px;
+  text-align:left;
+  padding:12px 16px;
+  border-top:1px solid #ede9fe;
+  border-bottom:1px solid #ede9fe;
+}
+
+.summary-head th:first-child{
+  border-top-left-radius:14px;
+  border-bottom-left-radius:14px;
+}
+
+.summary-head th:last-child{
+  border-top-right-radius:14px;
+  border-bottom-right-radius:14px;
+}
+
+/* ROWS */
+
+.summary-table tr td{
+  padding:15px 15px;
+  font-size:14px;
+  border-top:1px solid rgba(255,255,255,0.6);
+  border-bottom:1px solid rgba(255,255,255,0.6);
+}
+
+.summary-table tr td:first-child{
+  border-top-left-radius:18px;
+  border-bottom-left-radius:18px;
+}
+
+.summary-table tr td:last-child{
+  border-top-right-radius:18px;
+  border-bottom-right-radius:18px;
+}
+
+/* COLORS */
+
+.summary-green td{
+  background:rgba(220,252,231,0.72);
+}
+
+.summary-red td{
+  background:rgba(254,226,226,0.72);
+}
+
+.summary-purple td{
+  background:rgba(237,233,254,0.72);
+}
+
+/* STATUS */
+
+.summary-status{
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.summary-green .summary-status{
+  color:#16a34a;
+}
+
+.summary-red .summary-status{
+  color:#ef4444;
+}
+
+.summary-purple .summary-status{
+  color:#7c3aed;
+}
+
+/* DESCRIPTION */
+
+.summary-desc{
+  color:#111827 !important;
+  font-weight:500;
+}
+
+/* DOT */
+
+.summary-dot{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  flex-shrink:0;
+  box-shadow:0 0 10px rgba(0,0,0,0.08);
+}
     `;
 
     document.head.appendChild(style);
@@ -127,43 +261,82 @@
           margin-left:auto;
         `;
 
-        topBtn.onclick = function () {
+     topBtn.onclick = function () {
 
-          binaryMode = !binaryMode;
+  binaryMode = !binaryMode;
 
-          mountNode.querySelectorAll('.node.schema-node').forEach(schemaNode => {
+  mountNode.querySelectorAll('.node.schema-node').forEach(schemaNode => {
 
-            const panel = schemaNode.nextElementSibling;
+    const schemaPanel = schemaNode.nextElementSibling;
 
-            if (binaryMode) {
+    if (!schemaPanel) return;
 
-              if (schemaNode.dataset.hasBinary === "true") {
+    if (binaryMode) {
 
-                schemaNode.style.display = 'flex';
+      let hasVisibleBinaryTable = false;
 
-                if (panel) {
-                  panel.style.display = 'block';
-                }
+      // CHECK ALL TABLES
+      schemaPanel.querySelectorAll('.node.table-node').forEach(tableNode => {
 
-              } else {
+        const tablePanel = tableNode.nextElementSibling;
 
-                schemaNode.style.display = 'none';
+        const hasBinaryBtn =
+          tableNode.querySelector('.binary-btn');
 
-                if (panel) {
-                  panel.style.display = 'none';
-                }
-              }
+        if (hasBinaryBtn) {
 
-            } else {
+          // SHOW ONLY BINARY TABLES
+          tableNode.style.display = 'flex';
 
-              schemaNode.style.display = 'flex';
+          hasVisibleBinaryTable = true;
 
-              if (panel) {
-                panel.style.display = 'none';
-              }
-            }
-          });
-        };
+          if (tablePanel) {
+            tablePanel.style.display = 'none';
+          }
+
+        } else {
+
+          // HIDE NORMAL TABLES
+          tableNode.style.display = 'none';
+
+          if (tablePanel) {
+            tablePanel.style.display = 'none';
+          }
+        }
+      });
+
+      // SHOW ONLY SCHEMAS HAVING BINARY TABLES
+      if (hasVisibleBinaryTable) {
+
+        schemaNode.style.display = 'flex';
+        schemaPanel.style.display = 'block';
+
+      } else {
+
+        schemaNode.style.display = 'none';
+        schemaPanel.style.display = 'none';
+      }
+
+    } else {
+
+      // RESTORE EVERYTHING
+      schemaNode.style.display = 'flex';
+
+      schemaPanel.style.display = 'none';
+
+      schemaPanel.querySelectorAll('.node.table-node').forEach(tableNode => {
+
+        tableNode.style.display = 'flex';
+
+        const tablePanel = tableNode.nextElementSibling;
+
+        if (tablePanel) {
+          tablePanel.style.display = 'none';
+        }
+      });
+    }
+  });
+};
 
         controls.appendChild(topBtn);
 
@@ -173,13 +346,14 @@
         unmatchedBtn.innerText = 'Show Unmatched';
         unmatchedBtn.style.cssText = `
           padding: 5px 15px;
-          margin-right: 10px;
-          cursor: pointer;
-          border: none;
-          border-radius: 4px;
-          background: #7c3aed;
-          color: white;
-          font-weight: bold;
+  margin-right: 10px;
+  cursor: pointer;
+  border: 1px solid #cb8af0;
+  border-radius: 4px;
+  background: rgba(207, 181, 229, 0.55);
+  backdrop-filter: blur(8px);
+  color: #9b2db7;
+  font-weight: 700;
         `;
 
         let unmatchedMode = false;
@@ -236,6 +410,66 @@
         };
 
         controls.appendChild(unmatchedBtn);
+        // =========================
+// SUMMARY BOX
+// =========================
+
+const summaryBox =
+  document.getElementById('summaryBox');
+
+summaryBox.innerHTML = `
+  <div class="summary-title">
+    <span>▦</span>
+    <span>Schema Overview</span>
+  </div>
+
+  <div class="summary-subtitle">
+    Summary of row comparison across schemas
+  </div>
+
+  <table class="summary-table">
+
+    <tr class="summary-head">
+      <th>Status</th>
+      <th>Description</th>
+    </tr>
+
+    <tr class="summary-green">
+      <td class="summary-status">
+        <span class="summary-dot" style="background:#22c55e"></span>
+        Updated Rows
+      </td>
+
+      <td class="summary-desc">
+        Rows updated in target
+      </td>
+    </tr>
+
+    <tr class="summary-red">
+      <td class="summary-status">
+        <span class="summary-dot" style="background:#ef4444"></span>
+        BIN-Map Rows
+      </td>
+
+      <td class="summary-desc">
+        Rows binary column mapped
+      </td>
+    </tr>
+
+    <tr class="summary-purple">
+      <td class="summary-status">
+        <span class="summary-dot" style="background:#7c3aed"></span>
+        Mismatched Rows
+      </td>
+
+      <td class="summary-desc">
+        Rows with mismatched data
+      </td>
+    </tr>
+
+  </table>
+`;
+controls.parentNode.insertBefore(summaryBox, controls);
       }
     }
 
@@ -248,7 +482,19 @@
 
       const payload = readStore();
 
-      const raw = payload['table-counts'] || payload['table_counts'];
+const totalRows =
+  payload.totalRows ||
+  payload.total_rows ||
+  0;
+
+const dbChip = document.getElementById('dbIdChip');
+
+if (dbChip) {
+  dbChip.innerHTML =
+    `adworks: ${formatCount(totalRows)} rows`;
+}
+
+const raw = payload['table-counts'] || payload['table_counts'];
 
       let tableMap = {};
 
@@ -335,24 +581,27 @@
 
               const btn = document.createElement('button');
 
-              btn.textContent = 'Show Binary';
+              btn.textContent = 'BIN_Map';
 
               btn.className = 'binary-btn';
 
               // SMALL LIGHT BUTTON
               btn.style.cssText = `
-                padding: 1px 6px;
-                margin-left: 6px;
-                margin-right: 6px;
-                cursor: pointer;
-                border: none;
-                border-radius: 3px;
-                background: #6ee7b7;
-                color: #065f46;
-                font-size: 10px;
-                font-weight: 600;
-                height: 20px;
-                line-height: 18px;
+       padding: 4px 13px;
+  margin-left: 6px;
+  margin-right: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(34,197,94,0.35);
+  border-radius: 999px;
+  background: rgba(34,197,94,0.10);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #16a34a;
+  font-size: 10px;
+  font-weight: 700;
+  height: auto;
+  line-height: normal;
+  box-shadow: 0 2px 8px rgba(34,197,94,0.08);
               `;
 
               btn.onclick = function (e) {
@@ -504,8 +753,20 @@
         const defMismatch  = normalizeDefault(srcDef) !== normalizeDefault(tgtDef);
 
         if (typeMismatch || defMismatch) {
-          tr.style.backgroundColor = '#ede9fe';
-          tr.style.borderLeft = '3px solid #7c3aed';
+          
+
+  // GREEN if target default has @
+  if (tgtDef.includes('@')) {
+
+    tr.style.backgroundColor = '#dcfce7';
+    tr.style.borderLeft = '3px solid #22c55e';
+
+  } else {
+
+    // NORMAL mismatch color
+    tr.style.backgroundColor = '#ede9fe';
+    tr.style.borderLeft = '3px solid #7c3aed';
+  }
 
           // Find parent table-node and schema-node
           const tablePanel = tr.closest('.panel');
