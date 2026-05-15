@@ -1580,11 +1580,11 @@ function populateSrcBuDropdown(items) {
 }
 
 function setTargetTabLocked(isLocked) {
-  $('#nav-profile-tab').prop('disabled', isLocked);
+  // TEMPORARILY DISABLED — allow direct access to target tab for testing
+  // $('#nav-profile-tab').prop('disabled', isLocked);
+  $('#nav-profile-tab').prop('disabled', false); // hardcoded open for testing
   if (targetTabWrap) {
-    targetTabWrap.title = isLocked
-      ? 'Available only after source database is tested and saved'
-      : 'Target database form is ready';
+    targetTabWrap.title = 'Target database form is ready';
   }
 }
 
@@ -1602,7 +1602,8 @@ function resetTargetForm() {
   $('#targetModalAlert').hide();
   $('#targetDbForm')[0].reset();
   $('#targetMessage').removeClass('success error').text('');
-  $('#saveTargetBtn').prop('disabled', false).text('Save Details');
+  $('#testTargetConnectionBtn').prop('disabled', true);
+  $('#saveTargetBtn').prop('disabled', true).text('Save Details');
   $('#entity_id').val(getCurrentCompanyName());
   $('#status').val('NEW');
   $('#bu_id').prop('disabled', false).css({ 'background': '', 'color': '', 'border-color': '', 'pointer-events': '' });
@@ -1622,7 +1623,8 @@ function resetMigrationFlow() {
   sourceDetailsLocked = false;
   resetSourceForm();
   resetTargetForm();
-  setTargetTabLocked(true);
+  // setTargetTabLocked(true); // disabled for testing — target tab always accessible
+  setTargetTabLocked(false);
   sourceTab.show();
 }
 
@@ -1660,7 +1662,8 @@ $('#targetDbForm input, #targetDbForm select').on('input change', function () {
   const required = ['#entity_id', '#targetType', '#host_url', '#t_dbPort', '#t_dbUser', '#t_dbPass', '#t_dbName'];
   const buVal = ($('#bu_id').val() || $('#bu_id option:selected').val() || $('#src_bu_id').val() || '').trim();
   const ok = !!buVal && required.every(sel => $(sel).val() && $(sel).val().toString().trim() !== '');
-  $('#saveTargetBtn').prop('disabled', !ok);
+  $('#testTargetConnectionBtn').prop('disabled', !ok);
+  $('#saveTargetBtn').prop('disabled', true); // re-lock until test passes
 });
 
 /************* TEST CONNECTION *************/
@@ -1727,18 +1730,18 @@ $('#saveDetailsBtn').on('click', function () {
   messageDiv.removeClass('success error').text('');
 
   //Check for duplicate source database in history
-  const dbExists = dbHistoryRecords.some(function(r) {
-    return r.source && 
-           r.source.name.toLowerCase() === dbName.toLowerCase() && 
-           r.source.host.toLowerCase() === dbHost.toLowerCase();
-  });
+  // const dbExists = dbHistoryRecords.some(function(r) {
+  //   return r.source && 
+  //          r.source.name.toLowerCase() === dbName.toLowerCase() && 
+  //          r.source.host.toLowerCase() === dbHost.toLowerCase();
+  // });
 
-  if (dbExists) {
-    hideOverlay();
-    $('#modalAlert').removeClass().addClass('alert alert-danger')
-      .text('A source database with this Hostname and Database Name already exists.').show();
-    return;
-  }
+  // if (dbExists) {
+  //   hideOverlay();
+  //   $('#modalAlert').removeClass().addClass('alert alert-danger')
+  //     .text('A source database with this Hostname and Database Name already exists.').show();
+  //   return;
+  // }
 
   if (!isCompanyEmail(approver1)) {
     hideOverlay();
@@ -1792,6 +1795,75 @@ $('#saveDetailsBtn').on('click', function () {
 
 
 
+/************* TEST TARGET CONNECTION *************/
+$('#testTargetConnectionBtn').on('click', function () {
+  showOverlay("Testing target connection...");
+
+  const targetMessageDiv = $('#targetMessage');
+  const targetType = $('#targetType option:selected').val();
+  const hostUrl = $('#host_url').val().trim();
+  const port = $('#t_dbPort').val().trim();
+  const username = $('#t_dbUser').val().trim();
+  const password = $('#t_dbPass').val().trim();
+  const dbName = $('#t_dbName').val().trim();
+
+  targetMessageDiv.removeClass('success error').text('');
+  $('#targetModalAlert').hide();
+  targetMessageDiv.addClass('success').text('Saving Target Database...');
+  $('#saveTargetBtn').prop('disabled', true);
+
+  // DEBUG — log full payload before sending
+  console.log('=== SAVE TARGET PAYLOAD ===');
+  console.log('user_id:', getSafeUserId());
+  console.log('entity:', $('#entity_id').val().trim() || getCurrentCompanyName());
+  console.log('bu_id:', $('#bu_id_value').val() || $('#src_bu_id').val() || '');
+  console.log('type:', $('#targetType option:selected').val());
+  console.log('host_url:', $('#host_url').val().trim());
+  console.log('port:', $('#t_dbPort').val().trim());
+  console.log('username:', $('#t_dbUser').val().trim());
+  console.log('db_name:', $('#t_dbName').val().trim());
+  console.log('role:', $('#role').val().trim());
+  console.log('warehouse:', $('#warehouse').val().trim());
+  console.log('description parts:', $('#targetDesc').val().trim(), '|||', $('#dbType option:selected').val(), '|||', $('#dbName').val().trim());
+  console.log('===========================');
+$.ajax({
+    url: 'https://kxgefkhovxwvmyoyuwnm2st3bq0mbijb.lambda-url.ap-south-1.on.aws',
+    type: 'POST',
+    data: {
+      action: 'Test',
+      user_id: getSafeUserId(),
+      entity: $('#entity_id').val().trim() || getCurrentCompanyName(),
+      bu_id: $('#bu_id_value').val() || $('#src_bu_id').val() || '',
+      type: targetType,
+      //host_url: hostUrl,
+      host_url: $('#host_url').val().trim().replace(/\.snowflakecomputing\.com.*/i, '').replace(/^https?:\/\//i, ''),
+      port: port,
+      username: username,
+      password: password,
+      role: $('#role').val().trim(),
+      warehouse: $('#warehouse').val().trim(),
+      db_name: dbName,
+      status: $('#status').val().trim(),
+      description: ($('#targetDesc').val().trim() ? $('#targetDesc').val().trim() : '')
+             + '|||' + $('#dbType option:selected').val()
+             + '|||' + $('#dbName').val().trim()
+    },
+    dataType: 'json',
+    success: function (response) {
+      hideOverlay();
+      targetMessageDiv.removeClass('error').addClass('success').text('Connection successful!');
+      $('#saveTargetBtn').prop('disabled', false);
+    },
+    error: function (xhr, status, error) {
+    hideOverlay();
+    console.error('Save target error response:', xhr.responseText);
+    console.error('Status code:', xhr.status);
+    targetMessageDiv.removeClass('success').addClass('error').text("Connection Failed!");
+    $('#saveTargetBtn').prop('disabled', false);
+  }
+  });
+});
+
 /************* SAVE TARGET DB DETAILS *************/
 $('#saveTargetBtn').on('click', function () {
 showOverlay("Saving target...");
@@ -1822,11 +1894,13 @@ const missingRequired = !buVal || required.some(function (sel) {
     url: 'https://kxgefkhovxwvmyoyuwnm2st3bq0mbijb.lambda-url.ap-south-1.on.aws',
     type: 'POST',
     data: {
+      action: "save",
       user_id: getSafeUserId(),
       entity: $('#entity_id').val().trim() || getCurrentCompanyName(),
       bu_id: $('#bu_id_value').val() || $('#src_bu_id').val() || '',
       type: $('#targetType option:selected').val(),
-      host_url: $('#host_url').val().trim(),
+      //host_url: $('#host_url').val().trim(),
+      host_url: $('#host_url').val().trim().replace(/\.snowflakecomputing\.com.*/i, '').replace(/^https?:\/\//i, ''),
       port: $('#t_dbPort').val().trim(),
       username: $('#t_dbUser').val().trim(),
       password: $('#t_dbPass').val().trim(),
