@@ -1,7 +1,55 @@
 (function () {
 
   const STORAGE_KEY = 'schemaExplorerResults';
-  const dbId = (sessionStorage.getItem('currentSchemaDbId') || '').trim();
+  const dbId =
+  (sessionStorage.getItem('currentSchemaDbId') || '').trim();
+
+  
+  const parseUserJson = (str) => {
+    if (!str || typeof str !== 'string') return {};
+    try { return JSON.parse(str.replace(/'/g, '"')); } catch (e) { return {}; }
+  };
+
+
+  function getSafeUserId() {
+    const direct = sessionStorage.getItem("userid");
+    if (direct && direct !== 'undefined' && direct !== 'null' && direct.trim() !== '') {
+      return direct.trim();
+    }
+    const userJson = parseUserJson(sessionStorage.getItem("userJson")) || {};
+    const fromJson = userJson.userid || userJson.user_id || userJson.id || '';
+    if (fromJson) return String(fromJson).trim();
+    return '';
+  }
+
+  function getCurrentCompanyName() {
+    const companyEl = document.getElementById('companyName');
+    const userJson = parseUserJson(sessionStorage.getItem("userJson")) || {};
+    const fromDom = companyEl ? companyEl.textContent.trim() : '';
+    
+    return (fromDom || userJson.company || userJson.company_name || sessionStorage.getItem("company") || 'livision').trim();
+  }
+
+  const userJson = parseUserJson(sessionStorage.getItem("userJson"));
+  (sessionStorage.getItem('currentSchemaDbId') || '').trim();
+
+const sourceDbName =
+(
+ sessionStorage.getItem(
+   'currentSourceDbName'
+ ) || ''
+).trim();
+
+const sourceDbType =
+(
+ sessionStorage.getItem(
+   'currentSourceDbType'
+ ) || 'postgresql'
+)
+.trim()
+.toLowerCase();
+    
+  const currentEntity = getCurrentCompanyName();
 
   const mountNode = document.getElementById('schemaHtmlMount');
   const statusNode = document.getElementById('schemaStatus');
@@ -52,18 +100,204 @@
       .node span{
    margin-left:auto;
 }
-      .panel{
-        overflow-x:auto;
-      }
+/* =========================
+TABLE RESPONSIVE FIX
+========================= */
 
-      table{
-        width:100%;
-      }
+.panel{
+
+  width:100%;
+
+  overflow-x:hidden;
+
+  padding:12px 18px 18px;
+
+  box-sizing:border-box;
+}
+
+/* TABLE */
+
+table{
+  width:100%;
+  table-layout:auto;
+  border-collapse:collapse;
+}
+
+/* HEADER + DATA CELLS */
+
+table th,
+table td{
+
+  padding:10px 12px;
+
+  vertical-align:top;
+
+  text-align:left;
+
+  white-space:normal;
+
+  word-break:break-word;
+
+  overflow-wrap:anywhere;
+
+  line-height:1.5;
+
+  max-width:260px;
+}
+
+/* LONG VALUES / URLS / PATHS */
+
+table td{
+
+  font-size:13px;
+
+  color:#1f2937;
+}
+
+/* HEADER */
+
+table th{
+
+ 
+  font-weight:700;
+
+  background:#fefce8;
+
+  color:#5b21b6;
+
+  position:sticky;
+  top:0;
+
+  border-bottom:1px solid #ede9fe;
+}
+
+/* ROW HEIGHT AUTO */
+
+table tr{
+  height:auto;
+}
+.panel table:not(.summary-table) td:hover{
+  background:rgba(99,102,241,0.04);
+  transition:.2s;
+}
+  .panel table td *{
+  white-space:normal !important;
+  word-break:break-word !important;
+  overflow-wrap:anywhere !important;
+}
+  /* SERIAL NUMBER COLUMN */
+
+/* ONLY MAIN DATA TABLE SERIAL NUMBER */
+
+.panel table:not(.summary-table) th:first-child,
+.panel table:not(.summary-table) td:first-child{
+
+  width:55px;
+  min-width:55px;
+  max-width:55px;
+
+  text-align:center;
+}
 
       .binary-highlight{
         background:#fee2e2 !important;
       }
         /* =========================
+DDL MODAL
+========================= */
+
+.ddl-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  z-index:99999;
+
+  display:none;
+  align-items:center;
+  justify-content:center;
+
+  padding:30px;
+  box-sizing:border-box;
+}
+
+.ddl-modal.open{
+  display:flex;
+}
+
+.ddl-box{
+  width:95%;
+  max-width:1400px;
+  height:85vh;
+
+  background:white;
+  border-radius:24px;
+
+  overflow:hidden;
+
+  display:flex;
+  flex-direction:column;
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.25);
+}
+
+.ddl-header{
+  padding:18px 24px;
+  background:#6d28d9;
+  color:white;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.ddl-title{
+  font-size:18px;
+  font-weight:700;
+}
+
+.ddl-close{
+  cursor:pointer;
+  font-size:26px;
+  font-weight:bold;
+}
+
+.ddl-content{
+  flex:1;
+
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  gap:0;
+
+  overflow:hidden;
+}
+
+.ddl-panel{
+  overflow:auto;
+  background:#0f172a;
+}
+
+.ddl-panel-title{
+  padding:12px 16px;
+  background:#111827;
+  color:white;
+  font-weight:700;
+  border-bottom:1px solid #374151;
+}
+
+.ddl-panel pre{
+  margin:0;
+  padding:20px;
+  min-height:100%;
+  overflow:auto;
+}
+
+.ddl-panel code{
+  font-size:13px;
+  line-height:1.6;
+}
+/* =========================
    SUMMARY OVERVIEW
 ========================= */
 
@@ -80,7 +314,123 @@
     0 8px 30px rgba(124,58,237,0.05),
     inset 0 1px 0 rgba(255,255,255,0.55);
 }
+/* =========================
+SCHEMA OVERVIEW TOGGLE
+========================= */
 
+.summary-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+  border-radius:22px;
+  cursor:pointer;
+  user-select:none;
+
+  background:rgba(255,255,255,0.35);
+
+  border:1px solid rgba(168,85,247,0.18);
+
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+
+  transition:all .28s ease;
+
+  box-shadow:
+    0 6px 18px rgba(124,58,237,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
+.summary-toggle:hover{
+  transform:translateY(-1px);
+
+  background:rgba(237,233,254,0.55);
+
+  border-color:rgba(124,58,237,0.28);
+
+  box-shadow:
+    0 10px 25px rgba(124,58,237,0.10);
+}
+
+.summary-toggle.active{
+  background:linear-gradient(
+    135deg,
+    rgba(237,233,254,0.72),
+    rgba(255,255,255,0.55)
+  );
+
+  border-color:rgba(124,58,237,0.32);
+}
+
+.summary-toggle-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.summary-toggle-icon{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:rgba(124,58,237,0.10);
+
+  color:#7c3aed;
+
+  font-size:18px;
+  font-weight:700;
+}
+
+.summary-toggle-text{
+  display:flex;
+  flex-direction:column;
+}
+
+.summary-toggle-title{
+  font-size:15px;
+  font-weight:800;
+  color:#5b21b6;
+}
+
+.summary-toggle-sub{
+  font-size:12px;
+  color:#6b7280;
+  margin-top:2px;
+}
+
+.summary-arrow{
+  font-size:18px;
+  color:#7c3aed;
+  transition:transform .25s ease;
+}
+
+.summary-toggle.active .summary-arrow{
+  transform:rotate(180deg);
+}
+
+/* CONTENT AREA */
+
+.summary-content{
+  overflow:hidden;
+  max-height:0;
+  opacity:0;
+
+  transition:
+    max-height .35s ease,
+    opacity .25s ease,
+    margin-top .25s ease;
+}
+
+.summary-content.open{
+  max-height:600px;
+  opacity:1;
+  margin-top:16px;
+}
 /* TITLE */
 
 .summary-title{
@@ -102,11 +452,17 @@
 
 /* TABLE */
 
+/* =========================
+SUMMARY TABLE
+========================= */
+
 .summary-table{
   width:100%;
   border-collapse:separate;
   border-spacing:0 10px;
 }
+
+/* HEADER */
 
 .summary-head th{
   background:#fefce8;
@@ -131,23 +487,20 @@
 /* ROWS */
 
 .summary-table tr td{
-  padding:15px 15px;
+  padding:15px 18px;
   font-size:14px;
-  border-top:1px solid rgba(255,255,255,0.6);
-  border-bottom:1px solid rgba(255,255,255,0.6);
+  border:none;
+  background-clip:padding-box;
+  vertical-align:middle;
 }
 
-.summary-table tr td:first-child{
-  border-top-left-radius:18px;
-  border-bottom-left-radius:18px;
+/* REMOVE HOVER EFFECT */
+
+.summary-table tr:hover td{
+  background-color:inherit !important;
 }
 
-.summary-table tr td:last-child{
-  border-top-right-radius:18px;
-  border-bottom-right-radius:18px;
-}
-
-/* COLORS */
+/* ROW COLORS */
 
 .summary-green td{
   background:rgba(220,252,231,0.72);
@@ -161,14 +514,30 @@
   background:rgba(237,233,254,0.72);
 }
 
-/* STATUS */
+/* ROUNDED ROWS */
+
+.summary-table tr td:first-child{
+  border-top-left-radius:18px;
+  border-bottom-left-radius:18px;
+}
+
+.summary-table tr td:last-child{
+  border-top-right-radius:18px;
+  border-bottom-right-radius:18px;
+}
+
+/* STATUS CELL */
 
 .summary-status{
   font-weight:800;
   display:flex;
   align-items:center;
   gap:12px;
+
+  white-space:nowrap;
 }
+
+/* STATUS COLORS */
 
 .summary-green .summary-status{
   color:#16a34a;
@@ -187,6 +556,7 @@
 .summary-desc{
   color:#111827 !important;
   font-weight:500;
+  width:100%;
 }
 
 /* DOT */
@@ -201,6 +571,71 @@
     `;
 
     document.head.appendChild(style);
+    if (!document.getElementById('ddlModal')) {
+
+  document.body.insertAdjacentHTML(
+    'beforeend',
+    `
+    <div class="ddl-modal" id="ddlModal">
+
+      <div class="ddl-box">
+
+        <div class="ddl-header">
+
+          <div class="ddl-title" id="ddlTitle">
+            Table DDL
+          </div>
+
+          <div class="ddl-close"
+               id="ddlCloseBtn">
+            ×
+          </div>
+
+        </div>
+
+        <div class="ddl-content">
+
+          <div class="ddl-panel">
+
+            <div class="ddl-panel-title">
+              SOURCE
+            </div>
+
+            <pre>
+<code class="sql" id="sourceDDL"></code>
+            </pre>
+
+          </div>
+
+          <div class="ddl-panel">
+
+            <div class="ddl-panel-title">
+              TARGET
+            </div>
+
+            <pre>
+<code class="sql" id="targetDDL"></code>
+            </pre>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+    `
+  );
+
+  document
+    .getElementById('ddlCloseBtn')
+    .onclick = function () {
+
+      document
+        .getElementById('ddlModal')
+        .classList.remove('open');
+    };
+}
 
     // =========================
     // REMOVE DUPLICATES
@@ -283,18 +718,21 @@
         const hasBinaryBtn =
           tableNode.querySelector('.binary-btn');
 
-        if (hasBinaryBtn) {
+       if (hasBinaryBtn) {
 
-          // SHOW ONLY BINARY TABLES
-          tableNode.style.display = 'flex';
+  // SHOW BIN BUTTON
+  hasBinaryBtn.style.display = 'inline-block';
 
-          hasVisibleBinaryTable = true;
+  // SHOW ONLY BINARY TABLES
+  tableNode.style.display = 'flex';
 
-          if (tablePanel) {
-            tablePanel.style.display = 'none';
-          }
+  hasVisibleBinaryTable = true;
 
-        } else {
+  if (tablePanel) {
+    tablePanel.style.display = 'none';
+  }
+
+} else {
 
           // HIDE NORMAL TABLES
           tableNode.style.display = 'none';
@@ -324,16 +762,24 @@
 
       schemaPanel.style.display = 'none';
 
-      schemaPanel.querySelectorAll('.node.table-node').forEach(tableNode => {
+    schemaPanel.querySelectorAll('.node.table-node').forEach(tableNode => {
 
-        tableNode.style.display = 'flex';
+  tableNode.style.display = 'flex';
 
-        const tablePanel = tableNode.nextElementSibling;
+  // HIDE BIN BUTTON AGAIN
+  const binBtn =
+    tableNode.querySelector('.binary-btn');
 
-        if (tablePanel) {
-          tablePanel.style.display = 'none';
-        }
-      });
+  if (binBtn) {
+    binBtn.style.display = 'none';
+  }
+
+  const tablePanel = tableNode.nextElementSibling;
+
+  if (tablePanel) {
+    tablePanel.style.display = 'none';
+  }
+});
     }
   });
 };
@@ -433,14 +879,36 @@ const summaryBox =
   document.getElementById('summaryBox');
 
 summaryBox.innerHTML = `
-  <div class="summary-title">
-    <span>▦</span>
-    <span>Schema Overview</span>
+
+<div class="summary-toggle" id="summaryToggle">
+
+  <div class="summary-toggle-left">
+
+    <div class="summary-toggle-icon">
+      ▦
+    </div>
+
+    <div class="summary-toggle-text">
+
+      <div class="summary-toggle-title">
+         Legend
+      </div>
+
+      <div class="summary-toggle-sub">
+        Click to view schema comparison summary
+      </div>
+
+    </div>
+
   </div>
 
-  <div class="summary-subtitle">
-    Summary of row comparison across schemas
+  <div class="summary-arrow">
+    ⌄
   </div>
+
+</div>
+
+<div class="summary-content" id="summaryContent">
 
   <table class="summary-table">
 
@@ -451,18 +919,23 @@ summaryBox.innerHTML = `
 
     <tr class="summary-green">
       <td class="summary-status">
-        <span class="summary-dot" style="background:#22c55e"></span>
-        Updated Rows
+        <span class="summary-dot"
+          style="background:#22c55e"></span>
+
+        Retained Rows
       </td>
 
       <td class="summary-desc">
-        Rows updated in target
+        Rows retained in target
       </td>
     </tr>
 
     <tr class="summary-red">
       <td class="summary-status">
-        <span class="summary-dot" style="background:#ef4444"></span>
+
+        <span class="summary-dot"
+          style="background:#ef4444"></span>
+
         BIN-Map Rows
       </td>
 
@@ -473,7 +946,10 @@ summaryBox.innerHTML = `
 
     <tr class="summary-purple">
       <td class="summary-status">
-        <span class="summary-dot" style="background:#7c3aed"></span>
+
+        <span class="summary-dot"
+          style="background:#7c3aed"></span>
+
         Mismatched Rows
       </td>
 
@@ -483,40 +959,58 @@ summaryBox.innerHTML = `
     </tr>
 
   </table>
+
+</div>
 `;
 controls.parentNode.insertBefore(summaryBox, controls);
+// =========================
+// SUMMARY TOGGLE
+// =========================
+
+const summaryToggle =
+  document.getElementById('summaryToggle');
+
+const summaryContent =
+  document.getElementById('summaryContent');
+
+summaryToggle.onclick = function () {
+
+  const isOpen =
+    summaryContent.classList.contains('open');
+
+  if (isOpen) {
+
+    summaryContent.classList.remove('open');
+
+    summaryToggle.classList.remove('active');
+
+  } else {
+
+    summaryContent.classList.add('open');
+
+    summaryToggle.classList.add('active');
+  }
+};
       }
     }
-
-
     // =========================
     // MAP COUNTS
     // =========================
-    
     setTimeout(() => {
-
       const payload = readStore();
-
 const totalRows =
   payload.totalRows ||
   payload.total_rows ||
   0;
-
 const dbChip = document.getElementById('dbIdChip');
-
 if (dbChip) {
   dbChip.innerHTML =
     `adworks: ${formatCount(totalRows)} rows`;
 }
-
 const raw = payload['table-counts'] || payload['table_counts'];
-
       let tableMap = {};
-
       if (raw) {
-
         try {
-
           const dataStr = typeof raw === 'string'
             ? raw
                 .replace(/\(/g, '[')
@@ -524,235 +1018,332 @@ const raw = payload['table-counts'] || payload['table_counts'];
                 .replace(/'/g, '"')
                 .replace(/,\s*]/g, ']')
             : JSON.stringify(raw);
-
           const parsed = JSON.parse(dataStr);
-
           const list =
             parsed.table_counts ||
             (Array.isArray(parsed) ? parsed : []);
-
           list.forEach(([fullName, count]) => {
-
             tableMap[
               fullName.toLowerCase().trim()
             ] = parseInt(count) || 0;
-
           });
-
         } catch (e) {
-
           console.error("Data Parse Error", e);
         }
       }
-
       // =========================
       // LOOP SCHEMAS
       // =========================
-
       mountNode.querySelectorAll('.node.schema-node').forEach(schemaNode => {
-
         const panel = schemaNode.nextElementSibling;
-
         if (!panel) return;
-
         const schemaName = schemaNode.innerText
           .toLowerCase()
           .replace('schema:', '')
           .split('(')[0]
           .trim();
-
         let schemaTotal = 0;
-
         // =========================
         // LOOP TABLES
         // =========================
-
         panel.querySelectorAll('.node.table-node').forEach(tableNode => {
-
           const tableName = tableNode.innerText
             .toLowerCase()
             .replace('table:', '')
             .split('(')[0]
             .trim();
-
           const key = `${schemaName}.${tableName}`;
-
           const count = tableMap[key] || 0;
-
           const tablePanel = tableNode.nextElementSibling;
 
           // =========================
           // BIN-MAPPED
           // =========================
+const isBinMappedTable =
+  tablePanel &&
+  tablePanel.innerHTML.includes('BIN-MAPPED');
 
-          if (
-            tablePanel &&
-            tablePanel.innerHTML.includes('BIN-MAPPED')
-          ) {
+if (isBinMappedTable) {
+  schemaNode.dataset.hasBinary = "true";
+}
 
-            schemaNode.dataset.hasBinary = "true";
+// Prevent duplicate buttons
+if (!tableNode.querySelector('.ddl-btn')) {
 
-            if (!tableNode.querySelector('.binary-btn')) {
+  // =========================
+  // DDL BUTTON (ALL TABLES)
+  // =========================
 
-              const btn = document.createElement('button');
+  const ddlBtn =
+    document.createElement('button');
 
-              btn.textContent = 'BIN_Map';
+  ddlBtn.textContent = 'DDL';
+  ddlBtn.className = 'ddl-btn';
 
-              btn.className = 'binary-btn';
+  ddlBtn.style.cssText = `
+    padding:4px 12px;
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    background:#ede9fe;
+    color:#6d28d9;
+    font-size:11px;
+    font-weight:700;
+  `;
 
-              // SMALL LIGHT BUTTON
-              btn.style.cssText = `
-       padding: 4px 13px;
-  margin-left: 6px;
-  margin-right: 8px;
-  cursor: pointer;
-  border: 1px solid rgba(34,197,94,0.35);
-  border-radius: 999px;
-  background: rgba(34,197,94,0.10);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #16a34a;
-  font-size: 10px;
-  font-weight: 700;
-  height: auto;
-  line-height: normal;
-  box-shadow: 0 2px 8px rgba(34,197,94,0.08);
-              `;
+  ddlBtn.onclick = function (e) {
+  e.stopPropagation();
 
-              btn.onclick = function (e) {
+  const modal = document.getElementById('ddlModal');
+  modal.classList.add('open');
 
-                e.stopPropagation();
+  document.getElementById('ddlTitle').innerText = `${schemaName}.${tableName}`;
+  document.getElementById('sourceDDL').textContent = 'Loading...';
+  document.getElementById('targetDDL').textContent = 'Loading...';
 
-                const isOpen =
-                  tablePanel.style.display === 'block';
+  // Using $.ajax technique from dashboard.js with the 5 required parameters
+  // table, schema, db_name, entity, db_type
+  $.ajax({
+    url: 'https://ond2jedt7gztroeiac2hoclsc4da0fyzlm.lambda-url.ap-south-1.on.aws/',
+    type: 'POST',
+    crossDomain: true,
+    data: {
+      table: tableName,
+      schema: schemaName,
+      db_name: sourceDbName,
+      entity: getCurrentCompanyName(), // Fetches 'livision' if present in session/DOM
+      db_type: sourceDbType            // e.g., 'postgresql'
+    },
+    dataType: 'json',
+    success: function (result) {
+      console.log('DDL RESPONSE SUCCESS', result);
 
-                // CLOSE
-                if (isOpen) {
+      // store response
+      const ddlStoreKey = `ddl_${schemaName}_${tableName}`;
+      sessionStorage.setItem(ddlStoreKey, JSON.stringify(result));
 
-                  tablePanel.style.display = 'none';
+      // Extract DDL content with fallbacks
+      const sourceDDL = result.source || result.source_ddl || result.sourceDDL || result.ddl || '-- No Source DDL --';
+      const targetDDL = result.target || result.target_ddl || result.targetDDL || '-- No Target DDL --';
 
-                  tablePanel.querySelectorAll('tr').forEach(row => {
-                    row.classList.remove('binary-highlight');
-                  });
+      // update modal content
+      document.getElementById('sourceDDL').textContent = sourceDDL;
+      document.getElementById('targetDDL').textContent = targetDDL;
 
-                } else {
+      // update title if message exists
+      if (result.message) {
+        document.getElementById('ddlTitle').innerText = `${schemaName}.${tableName} - ${result.message}`;
+      }
 
-                  // OPEN
-                  panel.style.display = 'block';
+      // Apply syntax highlighting
+      if (typeof hljs !== 'undefined') {
+        hljs.highlightElement(document.getElementById('sourceDDL'));
+        hljs.highlightElement(document.getElementById('targetDDL'));
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error('DDL API ERROR', status, error, xhr.status, xhr.responseText);
+      document.getElementById('sourceDDL').textContent = 
+        `Error ${xhr.status}: ${error || 'Access Denied'}. If you see CORS origin 'null' errors, you MUST use VS Code Live Server instead of opening the HTML file directly.`;
+      document.getElementById('targetDDL').textContent = 'Failed to fetch target DDL.';
+    }
+  });
+};
+  // =========================
+  // RIGHT SIDE CONTAINER
+  // =========================
 
-                  tablePanel.style.display = 'block';
+  const span =
+    tableNode.querySelector('span');
 
-                  tableNode.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                  });
+  const rightBox =
+    document.createElement('div');
 
-                  tablePanel.querySelectorAll('tr').forEach(row => {
+  rightBox.style.display = 'flex';
+  rightBox.style.alignItems = 'center';
+  rightBox.style.marginLeft = 'auto';
+  rightBox.style.gap = '6px';
 
-                    if (row.innerText.includes('BIN-MAPPED')) {
+  // Remove old count span
+  if (span) {
+    span.remove();
+  }
 
-                      row.classList.add('binary-highlight');
-                    }
-                  });
-                }
-              };
+  // Add DDL button ALWAYS
+  rightBox.appendChild(ddlBtn);
 
-              // RIGHT SIDE BUTTON + COUNT
-              const span = tableNode.querySelector('span');
+  // =========================
+  // BIN MAP BUTTON
+  // ONLY FOR BIN TABLES
+  // =========================
 
-              const rightBox = document.createElement('div');
+  if (isBinMappedTable) {
 
-              rightBox.style.display = 'flex';
-              rightBox.style.alignItems = 'center';
-              rightBox.style.marginLeft = 'auto';
-              rightBox.style.gap = '6px';
+    const btn =
+      document.createElement('button');
 
-              span.remove();
+    btn.textContent =
+      'BIN_Map';
 
-              rightBox.appendChild(btn);
-              rightBox.appendChild(span);
+    btn.className =
+      'binary-btn';
 
-              tableNode.appendChild(rightBox);
+    btn.style.cssText = `
+      padding:4px 13px;
+      margin-left:6px;
+      margin-right:8px;
+      cursor:pointer;
+      border:1px solid rgba(34,197,94,0.35);
+      border-radius:999px;
+      background:
+        rgba(34,197,94,0.10);
+      color:#16a34a;
+      font-size:10px;
+      font-weight:700;
+      box-shadow:
+        0 2px 8px
+        rgba(34,197,94,0.08);
+    `;
+
+    btn.style.display = 'none';
+
+    btn.onclick = function (e) {
+
+      e.stopPropagation();
+
+      const isOpen =
+        tablePanel.style.display
+        === 'block';
+
+      if (isOpen) {
+
+        tablePanel.style.display =
+          'none';
+
+        tablePanel
+          .querySelectorAll('tr')
+          .forEach(row => {
+
+            row.style.display = '';
+
+            row.classList.remove(
+              'binary-highlight'
+            );
+          });
+
+      } else {
+
+        panel.style.display =
+          'block';
+
+        tablePanel.style.display =
+          'block';
+
+        tableNode.scrollIntoView({
+          behavior:'smooth',
+          block:'center'
+        });
+
+        tablePanel
+          .querySelectorAll('tr')
+          .forEach(row => {
+
+            if (
+              row.querySelector('th')
+            ) {
+              row.style.display = '';
+              return;
             }
-          }
 
+            const isRedRow =
+              row.style.backgroundColor
+              ===
+              'rgb(254, 226, 226)' ||
+              row.innerText.includes(
+                'BIN-MAPPED'
+              );
+
+            if (isRedRow) {
+
+              row.style.display = '';
+
+              row.classList.add(
+                'binary-highlight'
+              );
+
+            } else {
+
+              row.style.display =
+                'none';
+            }
+          });
+      }
+    };
+
+    rightBox.appendChild(btn);
+  }
+
+  // Add count back
+  if (span) {
+    rightBox.appendChild(span);
+  }
+
+  tableNode.appendChild(rightBox);
+}
           schemaTotal += count;
-
           // =========================
           // COUNT
           // =========================
-
           const spanId = `${schemaName}.${tableName}_c`;
-
           const span = tableNode.querySelector(
             `#${CSS.escape(spanId)}`
           );
-
           if (span) {
-
             span.textContent = formatCount(count);
-
             span.style.cssText = `
               color:#10b981;
               font-weight:bold;
               margin-left: auto;
             `;
           }
-
         });
-
         // =========================
         // SCHEMA COUNT
         // =========================
-
         const span = schemaNode.querySelector('span');
-
         if (span) {
-
           span.textContent = formatCount(schemaTotal);
-
           span.style.cssText = `
             color:#6366f1;
             font-weight:bold;
           `;
         }
-
       });
-
     }, 400);
-
     function normalizeType(t) {
       const raw = (t || '').trim();
       const lower = raw.toLowerCase();
-
       // Special mapped pairs — source → expected target canonical form
       // character varying → VARCHAR(n) family
       if (lower.includes('character varying')) return 'VARCHAR';
-
       // timestamp without time zone → TIMESTAMP_NTZ
       if (lower.includes('timestamp')) return 'TIMESTAMP_NTZ';
-
       // character / char(n) → CHAR
       if (lower === 'character' || lower.startsWith('char(') || lower === 'char') return 'CHAR';
-
       // For everything else — uppercase the source type and strip
       // size qualifiers like (10), (10,2) so INTEGER matches INTEGER etc.
       // This means: integer → INTEGER, smallint → SMALLINT, boolean → BOOLEAN etc.
       let normalized = raw.toUpperCase().trim();
-
       // Strip size qualifiers e.g. VARCHAR(50) → VARCHAR, NUMBER(10,2) → NUMBER
       normalized = normalized.replace(/\s*\([\d,\s]+\)$/, '').trim();
-
       // Strip " WITHOUT TIME ZONE" suffix
       normalized = normalized.replace(' WITHOUT TIME ZONE', '').trim();
-
       // Source-specific expansions that map to Snowflake types
       if (normalized === 'TEXT') return 'STRING';
       if (normalized === 'BYTEA') return 'BINARY';
       if (normalized === 'INTEGER' || normalized === 'INT') return 'INTEGER';
       if (normalized === 'NUMERIC') return 'NUMBER';
       if (normalized === 'TIME') return 'TIME';
-
       // xml and VARIANT are DIFFERENT — do NOT normalize together
       // xml stays as XML, VARIANT stays as VARIANT → will be flagged as mismatch
       if (normalized === 'XML') return 'XML';
@@ -760,7 +1351,6 @@ const raw = payload['table-counts'] || payload['table_counts'];
 
       return normalized;
     }
-
     function normalizeDefault(d) {
       d = (d || '').toLowerCase().trim();
       if (d === 'none' || d === '' || d === 'null') return '__none__';
@@ -772,29 +1362,22 @@ const raw = payload['table-counts'] || payload['table_counts'];
       d = d.replace(/^'(.*)'$/, '$1');
       return d;
     }
-
     setTimeout(() => {
       const unmatchedTables = new Set();
       const unmatchedSchemas = new Set();
-
       mountNode.querySelectorAll('.panel table tr').forEach(tr => {
         const tds = tr.querySelectorAll('td');
         if (tds.length < 6) return;
-
         const srcType = tds[2].textContent.trim();
         const tgtType = tds[3].textContent.trim();
         const srcDef  = tds[4].textContent.trim();
         const tgtDef  = tds[5].textContent.trim();
-
         const typeMismatch = normalizeType(srcType) !== normalizeType(tgtType);
         const defMismatch  = normalizeDefault(srcDef) !== normalizeDefault(tgtDef);
-
         if (typeMismatch || defMismatch) {
           tr.classList.add('mismatch-row');
-
           const isBinMapped = tr.innerText.includes('BIN-MAPPED') || srcType.includes('bin-mapped') || tgtType.includes('bin-mapped');
           const isAtSign = tgtDef.includes('@');
-
           if (isBinMapped) {
             // RED for bin mapped
             tr.style.backgroundColor = '#fee2e2';
@@ -808,7 +1391,6 @@ const raw = payload['table-counts'] || payload['table_counts'];
             tr.style.backgroundColor = '#ede9fe';
             tr.style.borderLeft = '3px solid #7c3aed';
           }
-
           // Find parent table-node and schema-node
           const tablePanel = tr.closest('.panel');
           if (tablePanel) {
@@ -827,97 +1409,82 @@ const raw = payload['table-counts'] || payload['table_counts'];
           }
         }
       });
-
       // Store on mountNode for the button to access
       mountNode._unmatchedTables = unmatchedTables;
       mountNode._unmatchedSchemas = unmatchedSchemas;
     }, 600);
   }
-
   // =========================
   // FETCH
   // =========================
-
   statusNode.textContent = 'Loading...';
-
   fetch('https://dpm44skvaxno5gkzadi3kpodyu0vfzct.lambda-url.ap-south-1.on.aws/', {
-
     method: 'POST',
-
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-
     body: new URLSearchParams({
       db_id: dbId
     })
-
   })
   .then(r => r.text())
   .then(html => {
-
     statusNode.style.display = 'none';
-
     mountNode.innerHTML = html;
-
     processSchema();
-
   })
   .catch(err => {
-
     console.error("API Fetch Error:", err);
-
     statusNode.innerHTML = `
       <b style="color:red">
         Connection Error
       </b>
     `;
   });
-
 })();
-
 window.toggle = function (el) {
 
   const panel = el.nextElementSibling;
 
   if (panel) {
 
+    const opening =
+      panel.style.display === 'none' ||
+      panel.style.display === '';
+
     panel.style.display =
-      (panel.style.display === 'none' || panel.style.display === '')
-      ? 'block'
-      : 'none';
+      opening ? 'block' : 'none';
+
+    // RESTORE ALL ROWS DURING NORMAL OPEN
+    if (opening) {
+
+      panel.querySelectorAll('tr').forEach(row => {
+
+        row.style.display = '';
+
+      });
+    }
   }
 };
-
 // =========================
 // GLOBAL TOGGLE FUNCTION
 // =========================
 window.expandAll = function (expand) {
-
   const mountNode = document.getElementById('schemaHtmlMount');
-
   if (!mountNode) return;
-
   // LOOP ALL SCHEMA NODES
   mountNode.querySelectorAll('.node.schema-node').forEach(schemaNode => {
-
     const schemaPanel = schemaNode.nextElementSibling;
-
     // OPEN/CLOSE ONLY SCHEMA PANELS
     if (schemaPanel) {
-
       schemaPanel.style.display = expand
         ? 'block'
         : 'none';
     }
-
     // KEEP TABLE DATA CLOSED
     schemaPanel?.querySelectorAll('.node.table-node').forEach(tableNode => {
-
       const tablePanel = tableNode.nextElementSibling;
-
       if (tablePanel) {
-
         // ALWAYS KEEP TABLE DATA CLOSED
         tablePanel.style.display = 'none';
       }
