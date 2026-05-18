@@ -599,7 +599,7 @@ const SCHEMA_API_URL = 'https://dpm44skvaxno5gkzadi3kpodyu0vfzct.lambda-url.ap-s
       console.error('Status reader error in approval:', err);
     });
 
-    // ── Approve button ─────────────────────────────────────────────────────
+    //Approve button 
     approveBtn.addEventListener('click', function() {
       approveBtn.disabled = true;
       approveBtn.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-right:8px;"></i>Approving...';

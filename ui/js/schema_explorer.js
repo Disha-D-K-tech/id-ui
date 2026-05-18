@@ -44,10 +44,10 @@ const sourceDbType =
 (
  sessionStorage.getItem(
    'currentSourceDbType'
- ) || 'postgresql'
+ ) || 'PostgreSQL'
 )
 .trim()
-.toLowerCase();
+
     
   const currentEntity = getCurrentCompanyName();
 
@@ -1091,64 +1091,96 @@ if (!tableNode.querySelector('.ddl-btn')) {
     font-weight:700;
   `;
 
-  ddlBtn.onclick = function (e) {
+ddlBtn.onclick = function (e) {
+
   e.stopPropagation();
 
-  const modal = document.getElementById('ddlModal');
+  const modal =
+    document.getElementById('ddlModal');
+
   modal.classList.add('open');
 
-  document.getElementById('ddlTitle').innerText = `${schemaName}.${tableName}`;
-  document.getElementById('sourceDDL').textContent = 'Loading...';
-  document.getElementById('targetDDL').textContent = 'Loading...';
+  document.getElementById('sourceDDL').textContent =
+    'Loading...';
 
-  // Using $.ajax technique from dashboard.js with the 5 required parameters
-  // table, schema, db_name, entity, db_type
-  $.ajax({
-    url: 'https://ond2jedt7gztroeiac2hoclsc4da0fyzlm.lambda-url.ap-south-1.on.aws/',
-    type: 'POST',
-    crossDomain: true,
-    data: {
-      table: tableName,
-      schema: schemaName,
-      db_name: sourceDbName,
-      entity: getCurrentCompanyName(), // Fetches 'livision' if present in session/DOM
-      db_type: sourceDbType            // e.g., 'postgresql'
-    },
-    dataType: 'json',
-    success: function (result) {
-      console.log('DDL RESPONSE SUCCESS', result);
+  document.getElementById('targetDDL').textContent =
+    'Loading...';
+const dbId = sessionStorage.getItem('currentSchemaDbId');
+const dbType = sessionStorage.getItem('currentSourceDbType');
+const dbName = sessionStorage.getItem('currentSourceDbName');
 
-      // store response
-      const ddlStoreKey = `ddl_${schemaName}_${tableName}`;
-      sessionStorage.setItem(ddlStoreKey, JSON.stringify(result));
+function getSafeUserId() {
+    const direct = sessionStorage.getItem("userid");
 
-      // Extract DDL content with fallbacks
-      const sourceDDL = result.source || result.source_ddl || result.sourceDDL || result.ddl || '-- No Source DDL --';
-      const targetDDL = result.target || result.target_ddl || result.targetDDL || '-- No Target DDL --';
-
-      // update modal content
-      document.getElementById('sourceDDL').textContent = sourceDDL;
-      document.getElementById('targetDDL').textContent = targetDDL;
-
-      // update title if message exists
-      if (result.message) {
-        document.getElementById('ddlTitle').innerText = `${schemaName}.${tableName} - ${result.message}`;
-      }
-
-      // Apply syntax highlighting
-      if (typeof hljs !== 'undefined') {
-        hljs.highlightElement(document.getElementById('sourceDDL'));
-        hljs.highlightElement(document.getElementById('targetDDL'));
-      }
-    },
-    error: function (xhr, status, error) {
-      console.error('DDL API ERROR', status, error, xhr.status, xhr.responseText);
-      document.getElementById('sourceDDL').textContent = 
-        `Error ${xhr.status}: ${error || 'Access Denied'}. If you see CORS origin 'null' errors, you MUST use VS Code Live Server instead of opening the HTML file directly.`;
-      document.getElementById('targetDDL').textContent = 'Failed to fetch target DDL.';
+    if (
+        direct &&
+        direct !== 'undefined' &&
+        direct !== 'null' &&
+        direct.trim() !== ''
+    ) {
+        return direct.trim();
     }
-  });
-};
+
+    try {
+        const userJson = JSON.parse(
+            (sessionStorage.getItem("userJson") || '{}')
+                .replace(/'/g, '"')
+        );
+
+        return String(
+            userJson.userid ||
+            userJson.user_id ||
+            userJson.id ||
+            ''
+        ).trim();
+
+    } catch (e) {
+        return '';
+    }
+}
+
+function getCurrentCompanyName() {
+    return (
+        sessionStorage.getItem("company") ||
+        "Welcome"
+    ).trim();
+}
+
+$.ajax({
+    url: 'https://d2jedt7gztroeiac2hoclsc4da0fyzlm.lambda-url.ap-south-1.on.aws',
+    type: 'POST',
+
+    data: {
+        table: tableName,
+        schema: schemaName,
+        db_name: dbName,
+        entity: getCurrentCompanyName(),
+        db_type: dbType
+    },
+
+    success: function(response) {
+
+        console.log(response);
+
+        document.getElementById('sourceDDL').textContent =
+            response.source || '-- No Source DDL --';
+
+        document.getElementById('targetDDL').textContent =
+            response.target || '-- No Target DDL --';
+    },
+
+    error: function(xhr) {
+
+        console.log(xhr.responseText);
+
+        document.getElementById('sourceDDL').textContent =
+            'API Error';
+
+        document.getElementById('targetDDL').textContent =
+            'API Error';
+    }
+})};
+ 
   // =========================
   // RIGHT SIDE CONTAINER
   // =========================
