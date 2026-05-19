@@ -30,6 +30,73 @@ const SCHEMA_API_URL = 'https://dpm44skvaxno5gkzadi3kpodyu0vfzct.lambda-url.ap-s
     console.log('Approver email decoded from token:', approverEmail);
     console.log('Final Approval Parameters:', { userId, dbId, dbName, entity, dbType });
 
+    // ── STATUS GATE — check if already approved before loading page ──────────
+    const FETCH_DB_URL = 'https://dkg2bnh5lu4vregv4of3sbbite0arjgx.lambda-url.ap-south-1.on.aws/';
+
+    fetch(FETCH_DB_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ user_id: userId })
+    })
+    .then(r => r.json())
+    .then(function(response) {
+      const raw = Array.isArray(response?.databases) ? response.databases
+        : Array.isArray(response) ? response
+        : Array.isArray(response?.data) ? response.data
+        : [];
+
+      // Find the record matching our dbId
+      let matchedStatus = '';
+      raw.forEach(function(row) {
+        if (Array.isArray(row)) {
+          const rowId = String(row[1] || '').trim();
+          if (rowId === String(dbId).trim()) {
+            matchedStatus = String(row[5] || '').trim().toLowerCase();
+          }
+        } else if (row && typeof row === 'object') {
+          const rowId = String(row.id || row.bu_id || row.db_id || '').trim();
+          if (rowId === String(dbId).trim()) {
+            matchedStatus = String(row.status || '').trim().toLowerCase();
+          }
+        }
+      });
+
+      console.log('Approval page — matched DB status:', matchedStatus);
+      const blockedStatuses = [
+        'Data Extracted', 'Data Extrated'
+      ];
+      const isAlreadyApproved = blockedStatuses.some(s => matchedStatus.includes(s.toLowerCase()));
+
+      if (isAlreadyApproved) {
+        // Replace entire page content with "already approved" message
+        document.querySelector('main.main').innerHTML = `
+          <div style="
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            min-height:60vh;text-align:center;gap:16px;
+          ">
+            <div style="
+              width:72px;height:72px;border-radius:50%;
+              background:linear-gradient(135deg,#bbf7d0,#86efac);
+              display:flex;align-items:center;justify-content:center;
+              box-shadow:0 8px 24px rgba(34,197,94,0.2);
+            ">
+              <i class="fa-solid fa-circle-check" style="font-size:32px;color:#15803d;"></i>
+            </div>
+            <div style="font-size:22px;font-weight:800;color:#5b3ed6;">Approval Already Completed</div>
+            <div style="font-size:15px;color:#6b7280;max-width:420px;line-height:1.6;">
+              This migration request has already been reviewed and approved.
+            </div>
+          </div>
+        `;
+        return;
+      }
+      loadApprovalPage();
+    })
+    .catch(function(err) {
+      console.error('Status gate fetch error:', err);
+      loadApprovalPage();
+    });
+
     const dbIdChip     = document.getElementById('dbIdChip');
     const schemaStatus = document.getElementById('schemaStatus');
     const schemaMount  = document.getElementById('schemaMount');
@@ -39,6 +106,7 @@ const SCHEMA_API_URL = 'https://dpm44skvaxno5gkzadi3kpodyu0vfzct.lambda-url.ap-s
 
     dbIdChip.textContent = 'Loading row counts...';
 
+function loadApprovalPage() {
    if (!dbId) {
   schemaStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626"></i> No db_id found in URL.';
   binaryStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626"></i> No db_id found in URL.';
@@ -672,3 +740,4 @@ const SCHEMA_API_URL = 'https://dpm44skvaxno5gkzadi3kpodyu0vfzct.lambda-url.ap-s
       });
     });
 }
+} // end loadApprovalPage
