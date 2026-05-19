@@ -608,9 +608,37 @@ function fetchSchemaExplorerAssessment(dbId) {
 }
 
 function openSchemaExplorerPage(dbId) {
+
   if (!dbId) return;
-  sessionStorage.setItem('currentSchemaDbId', dbId);
-  window.location.href = schemaExplorerPage;
+
+  // find selected DB record
+  const srcRec =
+    dbHistoryRecords.find(
+      r =>
+        r.source &&
+        String(r.source.id)
+          === String(dbId)
+    )?.source || {};
+
+  // existing code (keep)
+  sessionStorage.setItem(
+    'currentSchemaDbId',
+    dbId
+  );
+
+  // NEW (safe additions)
+  sessionStorage.setItem(
+    'currentSourceDbName',
+    srcRec.name || ''
+  );
+
+  sessionStorage.setItem(
+    'currentSourceDbType',
+    srcRec.type || ''
+  );
+
+  window.location.href =
+    schemaExplorerPage;
 }
 
 function simulateStep(cardIdx, stepIdx) {
