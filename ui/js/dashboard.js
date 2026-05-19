@@ -79,7 +79,16 @@ const targetTabWrap = document.getElementById('targetTabWrap');
 const sourceTab = bootstrap.Tab.getOrCreateInstance(sourceTabBtn);
 const targetTab = bootstrap.Tab.getOrCreateInstance(targetTabBtn);
 
-document.getElementById("addDbModal").addEventListener("hide.bs.modal", function () {
+document.getElementById("addDbModal").addEventListener("hide.bs.modal", function (e) {
+  if (sourceDetailsLocked) {
+    e.preventDefault();
+    $('#targetModalAlert')
+      .removeClass()
+      .addClass('alert alert-warning')
+      .text('You must save the target database details before exiting.')
+      .show();
+    return;
+  }
   if (document.activeElement) document.activeElement.blur();
 });
 document.getElementById("addDbModal").addEventListener("hidden.bs.modal", function () {
@@ -1608,13 +1617,14 @@ function populateSrcBuDropdown(items) {
 }
 
 function setTargetTabLocked(isLocked) {
-  // TEMPORARILY DISABLED — allow direct access to target tab for testing
-  // $('#nav-profile-tab').prop('disabled', isLocked);
-  $('#nav-profile-tab').prop('disabled', false); // hardcoded open for testing
+  $('#nav-profile-tab').prop('disabled', isLocked);
   if (targetTabWrap) {
-    targetTabWrap.title = 'Target database form is ready';
+    targetTabWrap.title = isLocked
+      ? 'Available only after source database is tested and saved'
+      : 'Target database form is ready';
   }
 }
+
 
 function resetSourceForm() {
   $('#modalAlert').hide();
@@ -1651,8 +1661,7 @@ function resetMigrationFlow() {
   sourceDetailsLocked = false;
   resetSourceForm();
   resetTargetForm();
-  // setTargetTabLocked(true); // disabled for testing — target tab always accessible
-  setTargetTabLocked(false);
+  setTargetTabLocked(true);
   sourceTab.show();
 }
 
@@ -1758,18 +1767,18 @@ $('#saveDetailsBtn').on('click', function () {
   messageDiv.removeClass('success error').text('');
 
   //Check for duplicate source database in history
-  // const dbExists = dbHistoryRecords.some(function(r) {
-  //   return r.source && 
-  //          r.source.name.toLowerCase() === dbName.toLowerCase() && 
-  //          r.source.host.toLowerCase() === dbHost.toLowerCase();
-  // });
+  const dbExists = dbHistoryRecords.some(function(r) {
+    return r.source && 
+           r.source.name.toLowerCase() === dbName.toLowerCase() && 
+           r.source.host.toLowerCase() === dbHost.toLowerCase();
+  });
 
-  // if (dbExists) {
-  //   hideOverlay();
-  //   $('#modalAlert').removeClass().addClass('alert alert-danger')
-  //     .text('A source database with this Hostname and Database Name already exists.').show();
-  //   return;
-  // }
+  if (dbExists) {
+    hideOverlay();
+    $('#modalAlert').removeClass().addClass('alert alert-danger')
+      .text('A source database with this Hostname and Database Name already exists.').show();
+    return;
+  }
 
   if (!isCompanyEmail(approver1)) {
     hideOverlay();
@@ -1946,6 +1955,7 @@ const missingRequired = !buVal || required.some(function (sel) {
       targetMessageDiv.removeClass('error').addClass('success').text('Target Database Saved');
       fetchPreviousDatabases();
       setTimeout(function () {
+        sourceDetailsLocked = false;
         addDbModal.hide();
         resetMigrationFlow();
       }, 500);

@@ -248,8 +248,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let approverEmailFromApi = '';
         try {
           const dbs = result?.databases || [];
-          if (dbs.length > 0 && Array.isArray(dbs[0])) {
-            approverEmailFromApi = dbs[0][0] || '';
+          if (dbs.length > 0) {
+            if (Array.isArray(dbs[0])) {
+              // Format: [["email@domain.com", null]]
+              approverEmailFromApi = dbs[0][0] || '';
+            } else if (typeof dbs[0] === 'string') {
+              // Format: ["email@domain.com", null]
+              approverEmailFromApi = dbs[0] || '';
+            }
           }
         } catch(e) {
           console.warn('Could not extract approver email from save response:', e);
@@ -295,7 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
     db_id: dbId,
     db_name: data.db_name || '',
     entity: data.entity || '',
-    db_type: data.db_type || ''
+    db_type: data.db_type || '',
+    approver_email: data.approverEmailFromApi || ''
   };
   const token = btoa(JSON.stringify(tokenPayload));
   const basePath = window.location.href.split('?')[0];
