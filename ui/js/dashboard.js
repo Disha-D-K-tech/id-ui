@@ -253,7 +253,16 @@ function showBinaryExplorerButton(cardIdx) {
   if (!card) return;
   const button = card.querySelector('[data-binary-explorer-btn]');
   if (!button) return;
-  button.hidden = false;
+
+  const record = dbHistoryRecords[cardIdx];
+  const status = String(record?.source?.status || '').trim().toLowerCase();
+
+  // Hide binary button for "Pending Approval" and everything beyond it
+  // Only show for "Binary Col. Scanned" — the only status where mapping still needs to be done
+  const hideStatuses = ['pending approval', 'binary col. mapped', 'data extracted', 'ddl extracted', 'ddl - extracted'];
+  const shouldHide = hideStatuses.some(s => status.includes(s)) || (status !== 'binary col. scanned' && status !== '');
+
+  button.hidden = shouldHide;
 }
 function formatCompactNumber(num) {
   if (!num || isNaN(num)) return '';
@@ -441,6 +450,7 @@ updateDashboardRowCount(cardIdx, totalRows);
               pill.style.background = '#fff7ed';
               pill.style.color = '#c2410c';
               pill.style.borderColor = '#fed7aa';
+              setCardTransferState(cardIdx, 'running');
             }
           
           }
@@ -452,6 +462,7 @@ updateDashboardRowCount(cardIdx, totalRows);
 
         // Restore pipeline visuals if DDL confirmed ---
         if (ddlConfirmed) {
+          setCardTransferState(cardIdx, '');
           setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
           setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
           setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
@@ -533,8 +544,9 @@ statsContainer.innerHTML = '';
         store[String(dbId)].binaryCols = binaryColsData;
         store[String(dbId)].db_id = dbId;
         writeSchemaExplorerStore(store);
-        showBinaryExplorerButton(cardIdx);
       }
+      // Always re-evaluate binary button visibility based on status
+      showBinaryExplorerButton(cardIdx);
 
      
       if (ddlConfirmed && pipelineStates[cardIdx]) {
@@ -644,6 +656,11 @@ function openSchemaExplorerPage(dbId) {
   sessionStorage.setItem(
     'currentSourceDbType',
     srcRec.type || ''
+  );
+
+  sessionStorage.setItem(
+    'currentSchemaDbStatus',
+    srcRec.status || ''
   );
 
   window.location.href =
@@ -888,8 +905,8 @@ $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
       binaryCols: payload.binaryCols,
       db_name: srcRec.name || '',
       db_type: srcRec.type || '',
-      entity: getCurrentCompanyName()
-      // status: srcRec.status || ''  // reserved for read-only mapping enforcement
+      entity: getCurrentCompanyName(),
+      status: srcRec.status || ''
     }));
     window.location.href = 'binary_explorer.html';
     return;
@@ -930,8 +947,8 @@ $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
         binaryCols: binaryColsData,
         db_name: srcRec.name || '',
         db_type: srcRec.type || '',
-        entity: getCurrentCompanyName()
-        // status: srcRec.status || ''  // reserved for read-only mapping enforcement
+        entity: getCurrentCompanyName(),
+        status: srcRec.status || ''
       }));
       window.location.href = 'binary_explorer.html';
     }
@@ -1346,6 +1363,11 @@ card.dataset.dbId = dbId;
   if (!restoredDbId) return;
 
   const apiStatus = String((src && src.status) || '').trim().toLowerCase();
+
+  if (apiStatus.includes('in progress') || apiStatus.includes('in-progress')) {
+    setCardTransferState(idx, 'running');
+  }
+
   const isDdlDone = apiStatus.includes('binary') ||
                     apiStatus.includes('scanned') ||
                     apiStatus.includes('extracted') ||
@@ -1385,12 +1407,9 @@ card.dataset.dbId = dbId;
     }
   }
 
-  // Restore Schema Explorer and Binary Explorer buttons
+  // Restore Schema Explorer button
   showSchemaExplorerButton(idx);
-  //const store = readSchemaExplorerStore();
-  //if (store[restoredDbId] && store[restoredDbId].binaryCols) {
-  //  showBinaryExplorerButton(idx);
-  //}
+  // Binary button — visibility is status-driven inside showBinaryExplorerButton
   showBinaryExplorerButton(idx);
 });
 }

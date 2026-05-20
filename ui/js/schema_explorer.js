@@ -83,6 +83,16 @@ const sourceDbType =
     return;
   }
 
+  // Read status from currentSchemaDbStatus or binaryExplorerData session
+  const _beData = JSON.parse(sessionStorage.getItem('binaryExplorerData') || '{}');
+  const _currentStatus = String(sessionStorage.getItem('currentSchemaDbStatus') || _beData.status || '').trim().toLowerCase();
+
+  // Show binary mapping section below schema for any status beyond "binary col. scanned"
+  // i.e. when mapping is done: "binary col. mapped", "pending approval", "data extracted" etc.
+  const _showReadOnlyBinary = _currentStatus !== ''
+    && _currentStatus !== 'new'
+    && _currentStatus !== 'binary col. scanned';
+
   function processSchema() {
 
     // =========================
@@ -2075,6 +2085,81 @@ rightBox.className = 'right-actions';
     statusNode.style.display = 'none';
     mountNode.innerHTML = html;
     processSchema();
+
+    // Show read-only binary mappings below schema
+    // Only when binary mapping is done (status is beyond "binary col. scanned")
+    if (!_showReadOnlyBinary) return;
+
+    const BINARY_READ_URL = 'https://zw2ahet7yyteveqhv53euau5ym0obgpj.lambda-url.ap-south-1.on.aws';
+
+    const binarySection = document.createElement('div');
+    binarySection.style.cssText = 'margin-top:32px;';
+    binarySection.innerHTML = `
+      <div style="font-size:15px;font-weight:800;color:#5b3ed6;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        <i class="fa-solid fa-table-columns"></i> Binary Column Mappings
+      </div>
+      <div id="readOnlyBinaryStatus" style="padding:12px 16px;border-radius:10px;background:rgba(124,99,255,0.08);color:#334155;font-weight:600;margin-bottom:12px;">
+        Loading binary mappings...
+      </div>
+      <div id="readOnlyBinaryMount"></div>
+    `;
+    mountNode.parentNode.appendChild(binarySection);
+
+    fetch(BINARY_READ_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ db_id: dbId })
+    })
+    .then(r => r.json())
+    .then(function(data) {
+      const binaryStatusEl = document.getElementById('readOnlyBinaryStatus');
+      const binaryMountEl  = document.getElementById('readOnlyBinaryMount');
+      if (binaryStatusEl) binaryStatusEl.style.display = 'none';
+
+      const binCols = data.bin_cols || [];
+
+      if (!binCols.length) {
+        if (binaryMountEl) binaryMountEl.innerHTML = '<p style="color:#94a3b8;font-size:13px;">No binary columns mapped for this database.</p>';
+        return;
+      }
+
+      let rowsHtml = '';
+      binCols.forEach(function(col) {
+        rowsHtml += `
+          <tr>
+            <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-weight:600;color:#5b3ed6;">${col.schema || '—'}.${col.table || '—'}</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;">${col.column_name || '—'}</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;">${col.binary_type || '—'}</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;">
+              <span style="display:inline-flex;padding:3px 10px;border-radius:999px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-size:11px;font-weight:700;">
+                ${col.mapping_column || '—'}
+              </span>
+            </td>
+          </tr>`;
+      });
+
+      if (binaryMountEl) {
+        binaryMountEl.innerHTML = `
+          <div style="border:1px solid rgba(120,110,220,0.15);border-radius:12px;overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;background:white;font-size:13px;text-align:left;">
+              <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;color:#334155;">
+                <tr>
+                  <th style="padding:12px 16px;font-weight:700;">Table</th>
+                  <th style="padding:12px 16px;font-weight:700;">Binary Column</th>
+                  <th style="padding:12px 16px;font-weight:700;">Type</th>
+                  <th style="padding:12px 16px;font-weight:700;">Mapped To</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>`;
+      }
+    })
+    .catch(function(err) {
+      console.error('Read-only binary fetch error:', err);
+      const binaryStatusEl = document.getElementById('readOnlyBinaryStatus');
+      if (binaryStatusEl) binaryStatusEl.innerHTML = '<b style="color:#dc2626">Failed to load binary mappings.</b>';
+    });
   })
   .catch(err => {
     console.error("API Fetch Error:", err);
