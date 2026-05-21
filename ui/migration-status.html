@@ -212,7 +212,7 @@
 
       .page-card {
         margin-top: 18px;
-        background: rgba(255, 255, 255, 0.95);
+        background: #fdfbff; /* Changed to a very light purple-white */
         border: 1px solid rgba(120, 110, 220, 0.08);
         border-radius: 18px;
         padding: 22px;
@@ -232,13 +232,124 @@
         font-weight: 600;
       }
 
+      /* Schema Explorer UI Replica Styles */
+      .node {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 18px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-top: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 700;
+        color: #172033;
+      }
+
+      .node:hover {
+        background: #f1f5f9;
+        transform: translateX(4px);
+      }
+
+      .node.active {
+        border-color: var(--lv-purple-2);
+        background: white;
+        box-shadow: 0 4px 12px rgba(124, 99, 255, 0.08);
+      }
+
+      .node .arrow {
+        transition: transform 0.2s ease;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .node.active .arrow {
+        transform: rotate(180deg);
+      }
+
+      .schema-node {
+        border-left: 4px solid var(--lv-indigo);
+      }
+
+      .table-node {
+        margin-left: 20px;
+        background: #eef2ff; /* Changed to a slightly more distinct light blue */
+      }
+
       #migrationResponse {
         margin: 0;
-        font-size: 14px;
-        line-height: 1.65;
-        white-space: pre-wrap;
-        word-break: break-word;
-        color: #1f2937;
+      }
+
+      .panel {
+        overflow: hidden;
+      }
+
+      /* Styles for the migration table, similar to schema explorer */
+      .migration-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+
+      .migration-table th,
+      .migration-table td {
+        padding: 10px 12px;
+        text-align: left;
+        border: 1px solid #e2e8f0; /* Light gray border */
+        font-size: 13px;
+        color: #334155;
+        vertical-align: top;
+      }
+
+      .migration-table th {
+        background-color: #fefce8;
+        font-weight: 700;
+        color: #5b21b6;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        border-bottom: 1px solid #ede9fe;
+      }
+
+      .migration-table tbody tr:nth-child(even) {
+        background-color: #fcfcfc; /* Zebra striping */
+      }
+
+      .migration-table tbody tr:hover {
+        background-color: #f0f4ff; /* Hover effect */
+      }
+
+      .status-success {
+        color: #16a34a; /* Green for success */
+        font-weight: 600;
+      }
+
+      .status-error {
+        color: #dc2626; /* Red for error */
+        font-weight: 600;
+      }
+
+      .status-inprogress {
+        color: #f59e0b; /* Orange for in progress */
+        font-weight: 600;
+      }
+
+      /* Panel-like container for the table, to match page-card styling */
+      .panel {
+        width: 100%;
+        overflow-x: auto;
+        padding: 0; /* Remove padding here, it's handled by page-card */
+        box-sizing: border-box;
+        background: transparent; /* Transparent as it's inside page-card */
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      /* Adjust page-card padding to accommodate inner panel */
+      .page-card {
+        padding: 22px; /* Restored padding for the page card */
       }
 
       footer {
@@ -334,7 +445,9 @@
           <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading Migration
           Status...
         </div>
-        <pre id="migrationResponse"></pre>
+        <!-- The migration table will be injected here -->
+        <!-- The .panel class is added by JS to the table wrapper -->
+        <div id="migrationResponse"></div>
       </section>
     </main>
 
