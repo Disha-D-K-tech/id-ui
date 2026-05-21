@@ -1,0 +1,111 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <title>Migration Status</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <style>
+      body {
+        margin: 0;
+
+        font-family: Inter, sans-serif;
+
+        background: linear-gradient(135deg, #f5f3ff, #eef2ff);
+
+        min-height: 100vh;
+      }
+
+      .migration-page {
+        padding: 24px;
+      }
+
+      .migration-topbar {
+        display: flex;
+
+        align-items: center;
+
+        gap: 16px;
+
+        margin-bottom: 24px;
+      }
+
+      .back-btn {
+        border: none;
+
+        background: #7c3aed;
+
+        color: white;
+
+        padding: 10px 18px;
+
+        border-radius: 12px;
+
+        cursor: pointer;
+
+        font-weight: 700;
+      }
+
+      .migration-title {
+        font-size: 28px;
+
+        font-weight: 800;
+
+        color: #4c1d95;
+      }
+
+      .migration-card {
+        background: white;
+
+        border-radius: 24px;
+
+        padding: 24px;
+
+        box-shadow: 0 10px 30px rgba(124, 58, 237, 0.08);
+
+        border: 1px solid rgba(124, 58, 237, 0.12);
+      }
+
+      #migrationLoading {
+        color: #6b7280;
+
+        font-weight: 600;
+      }
+
+      #migrationResponse {
+        margin-top: 18px;
+
+        white-space: pre-wrap;
+
+        word-break: break-word;
+
+        font-size: 14px;
+
+        line-height: 1.7;
+
+        color: #111827;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="migration-page">
+      <div class="migration-topbar">
+        <button id="backBtn" class="back-btn">← Back To Dashboard</button>
+
+        <div class="migration-title">Migration Status</div>
+      </div>
+
+      <div class="migration-card">
+        <div id="migrationLoading">Loading Migration Status...</div>
+
+        <pre id="migrationResponse"></pre>
+      </div>
+    </div>
+
+    <script src="js/migration-status.js"></script>
+  </body>
+</html>

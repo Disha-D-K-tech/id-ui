@@ -24,6 +24,47 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+      .metric-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        min-width: 120px;
+
+        transition: all 0.25s ease;
+      }
+
+      .metric-content {
+        display: flex;
+        flex-direction: column;
+
+        line-height: 1.1;
+      }
+
+      .metric-label {
+        font-size: 10px;
+        font-weight: 800;
+
+        letter-spacing: 1px;
+
+        text-transform: uppercase;
+      }
+
+      .metric-value {
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .metric-purple .metric-label,
+      .metric-purple .metric-value {
+        color: #7c3aed;
+      }
+
+      .metric-cyan .metric-label,
+      .metric-cyan .metric-value {
+        color: #0891b2;
+      }
       /* Pipeline */
       .pipeline-flow {
         display: flex;
@@ -281,6 +322,27 @@
         align-items: center;
         gap: 10px;
         flex-shrink: 0;
+      }
+      .prev-db-migration-btn {
+        padding: 4px 12px;
+
+        border-radius: 999px;
+
+        cursor: pointer;
+
+        background: #ede9fe;
+
+        color: #6d28d9;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        margin-left: 8px;
+
+        display: inline-flex;
+
+        align-items: center;
       }
       .prev-db-schema-btn {
         display: inline-flex;
@@ -1492,6 +1554,14 @@
             </div>
             <div class="prev-db-toggle-side">
               <span
+                class="prev-db-migration-btn"
+                data-migration-status-btn
+                role="button"
+                tabindex="0"
+              >
+                Migration Status
+              </span>
+              <span
                 class="prev-db-schema-btn"
                 role="button"
                 tabindex="0"
@@ -1578,9 +1648,24 @@
                 <div data-target-content>
                   <div class="prev-db-side-heading">
                     <span class="prev-db-heading-label">Target</span>
-                    <span class="prev-db-heading-meta" data-target-status
-                      >...</span
+                    <span
+                      class="prev-db-heading-meta metric-chip metric-cyan"
+                      data-target-status
                     >
+                      <lord-icon
+                        src="https://cdn.lordicon.com/xjovhxra.json"
+                        trigger="loop"
+                        delay="1200"
+                        colors="primary:#06b6d4,secondary:#67e8f9"
+                        style="width: 26px; height: 26px"
+                      >
+                      </lord-icon>
+
+                      <div class="metric-content">
+                        <span class="metric-label">TARGET</span>
+                        <span class="metric-value">Loading</span>
+                      </div>
+                    </span>
                   </div>
                   <div data-target-type></div>
                   <div data-target-details></div>
@@ -2115,5 +2200,6 @@
     <script src="js/sidebar.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/logout.js"></script>
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
   </body>
 </html>

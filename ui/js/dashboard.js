@@ -301,7 +301,26 @@ function updateDashboardRowCount(cardIdx, totalRows) {
    const header = card.querySelector('[data-source-count]');
 
 if (header) {
-  header.textContent = `row_count : ${formatCompactNumber(totalRows)}`;
+header.innerHTML = `
+  <div class="metric-chip metric-purple">
+
+    <lord-icon
+      src="https://cdn.lordicon.com/lecprnjb.json"
+      trigger="loop"
+      delay="2000"
+      colors="primary:#7c3aed,secondary:#a78bfa"
+      style="width:26px;height:26px">
+    </lord-icon>
+
+    <div class="metric-content">
+      <span class="metric-label">ROWS</span>
+      <span class="metric-value">
+        ${formatCompactNumber(totalRows)}
+      </span>
+    </div>
+
+  </div>
+`;
 }
   }
 
@@ -666,6 +685,36 @@ function openSchemaExplorerPage(dbId) {
   window.location.href =
     schemaExplorerPage;
 }
+function openMigrationStatusPage(dbId) {
+
+  if (!dbId) return;
+
+  const srcRec =
+    dbHistoryRecords.find(
+      r =>
+        r.source &&
+        String(r.source.id)
+          === String(dbId)
+    )?.source || {};
+
+  sessionStorage.setItem(
+    'migrationDbId',
+    dbId
+  );
+
+  sessionStorage.setItem(
+    'migrationDbName',
+    srcRec.name || ''
+  );
+
+  sessionStorage.setItem(
+    'migrationDbType',
+    srcRec.type || ''
+  );
+
+  window.location.href =
+    'migration-status.html';
+}
 
 function simulateStep(cardIdx, stepIdx) {
   const state = pipelineStates[cardIdx];
@@ -860,6 +909,33 @@ $(document).on('click keydown', '[data-schema-explorer-btn]', function(e) {
   if (!dbId) return;
   openSchemaExplorerPage(dbId);
 });
+$(document).on(
+  'click keydown',
+  '[data-migration-status-btn]',
+  function(e) {
+
+    if (
+      e.type === 'keydown' &&
+      e.key !== 'Enter' &&
+      e.key !== ' '
+    ) return;
+
+    e.preventDefault();
+
+    e.stopPropagation();
+
+    const $card =
+      $(this).closest('[data-prev-db-card]');
+
+    const dbId = String(
+      $card.data('dbId') || ''
+    ).trim();
+
+    if (!dbId) return;
+
+    openMigrationStatusPage(dbId);
+  }
+);
 
 // $(document).on('click keydown', '[data-binary-explorer-btn]', function(e) {
 //   if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
