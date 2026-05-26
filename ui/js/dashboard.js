@@ -142,6 +142,7 @@ const PIPELINE_STEPS = [
 ];
 
 const SCHEMA_EXPLORER_API_URL = 'https://dpm44skvaxno5gkzadi3kpodyu0vfzct.lambda-url.ap-south-1.on.aws';
+const MIGRATION_STATUS_API_URL = 'https://eknzie3ujercqevbcx3rhjjtrq0fwgph.lambda-url.ap-south-1.on.aws/';
 const SCHEMA_EXPLORER_STORAGE_KEY = 'schemaExplorerResults';
 const schemaExplorerPage = 'schema_explorer.html';
 
@@ -531,17 +532,19 @@ statsContainer.innerHTML = '';
             const iconClass = icons[type.toLowerCase()] || icons.unknown;
             const chip = document.createElement('div');
             chip.title = type + ': ' + stats.total;
-            chip.style.display = 'inline-flex';
+            chip.style.display = 'flex';
             chip.style.alignItems = 'center';
+            chip.style.justifyContent = 'center';
             chip.style.gap = '5px';
-            chip.style.padding = '4px 10px';
-            chip.style.borderRadius = '999px';
+            chip.style.padding = '6px 10px';
+            chip.style.borderRadius = '10px';
             chip.style.border = '1px solid #d1d5db';
             chip.style.background = '#fff';
             chip.style.color = '#374151';
             chip.style.fontSize = '12px';
             chip.style.fontWeight = '600';
             chip.style.cursor = 'default';
+            chip.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
             const displayCount = type.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
             chip.innerHTML = '<i class="fa-solid ' + iconClass + '" style="font-size:11px;color:#6b7280;"></i><span>' + displayCount + '</span>';
             statsContainer.appendChild(chip);
@@ -1405,7 +1408,7 @@ card.dataset.dbId = dbId;
 
   const chipsCol = document.createElement('div');
   chipsCol.className = 'stat-chips-container';
-  chipsCol.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end;padding-top:2px;';
+  chipsCol.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;flex-shrink:0;padding-top:2px;';
   detailsRow.appendChild(chipsCol);
 
   targetDetailsMount.appendChild(detailsRow);

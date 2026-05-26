@@ -1400,19 +1400,19 @@ SUMMARY TABLE
               return;
             }
 
-            // Unmatched mode — hide schemas with no mismatches
+            // Unmatched mode 
             if (!unmatchedSchemas.has(schemaNode)) {
               schemaNode.style.display = 'none';
               if (schemaPanel) schemaPanel.style.display = 'none';
               return;
             }
 
-            // Show schema and its panel
+            
             schemaNode.style.display = 'flex';
             if (schemaPanel) {
               schemaPanel.style.display = 'block';
 
-              // Hide/show table nodes
+              
               schemaPanel.querySelectorAll('.node.table-node').forEach(tn => {
                 const tp = tn.nextElementSibling;
                 if (unmatchedTables.has(tn)) {
@@ -1440,7 +1440,7 @@ SUMMARY TABLE
         };
 
         controls.appendChild(unmatchedBtn);
-        // =========================
+// =========================
 // SUMMARY BOX
 // =========================
 

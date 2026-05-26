@@ -250,6 +250,1114 @@ function loadApprovalPage() {
       schemaStatus.style.display = 'none';
       schemaMount.innerHTML = html;
 
+const style = document.createElement("style");
+
+    style.innerHTML = `
+
+      .node{
+        display:flex;
+        align-items:center;
+      }
+      .node span{
+   margin-left:auto;
+}
+.node.table-node{
+  position:relative;
+
+  /* enough space for DDL + BIN + count */
+  padding-right:170px;
+}
+
+.node.table-node .right-actions{
+
+  position:absolute;
+
+  right:18px;   /* SAME distance from right */
+  top:50%;
+
+  transform:translateY(-50%);
+
+  display:flex;
+  align-items:center;
+  
+
+  gap:0px;
+
+  
+}
+
+/* COUNT TEXT */
+
+.node.table-node .right-actions span{
+margin-left:25px;   /* distance from DDL */
+  min-width:42px;
+
+  text-align:right;
+
+  display:inline-block;
+
+  color:#10b981;
+  font-weight:700;
+}
+
+/* DDL BUTTON */
+
+.ddl-btn{
+
+  min-width:52px;
+
+  text-align:center;
+}
+/* =========================
+TABLE RESPONSIVE FIX
+========================= */
+
+.panel{
+
+  width:100%;
+
+  overflow-x:hidden;
+
+  padding:12px 18px 18px;
+
+  box-sizing:border-box;
+}
+
+/* TABLE */
+
+table{
+  width:100%;
+  table-layout:auto;
+  border-collapse:collapse;
+}
+
+/* HEADER + DATA CELLS */
+
+table th,
+table td{
+
+  padding:10px 12px;
+
+  vertical-align:top;
+
+  text-align:left;
+
+  white-space:normal;
+
+  word-break:break-word;
+
+  overflow-wrap:anywhere;
+
+  line-height:1.5;
+
+  max-width:260px;
+}
+
+/* LONG VALUES / URLS / PATHS */
+
+table td{
+
+  font-size:13px;
+
+  color:#1f2937;
+}
+
+/* HEADER */
+
+table th{
+
+ 
+  font-weight:700;
+
+  background:#fefce8;
+
+  color:#5b21b6;
+
+  position:sticky;
+  top:0;
+
+  border-bottom:1px solid #ede9fe;
+}
+
+/* ROW HEIGHT AUTO */
+
+table tr{
+  height:auto;
+}
+.panel table:not(.summary-table) td:hover{
+  background:rgba(99,102,241,0.04);
+  transition:.2s;
+}
+  .panel table td *{
+  white-space:normal !important;
+  word-break:break-word !important;
+  overflow-wrap:anywhere !important;
+}
+  /* SERIAL NUMBER COLUMN */
+
+/* ONLY MAIN DATA TABLE SERIAL NUMBER */
+
+.panel table:not(.summary-table) th:first-child,
+.panel table:not(.summary-table) td:first-child{
+
+  width:55px;
+  min-width:55px;
+  max-width:55px;
+
+  text-align:center;
+}
+
+      .binary-highlight{
+        background:#fee2e2 !important;
+      }
+/* =========================
+   MODERN DDL MODAL
+========================= */
+/* =========================
+DDL DB HEADER
+========================= */
+
+.ddl-db-head{
+
+  display:flex;
+  align-items:center;
+
+  padding:14px 16px;
+
+  background:#111827;
+
+  border-bottom:1px solid #1e293b;
+}
+
+.ddl-db-info{
+
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  padding:10px 14px;
+
+  border-radius:14px;
+
+  background:rgba(255,255,255,0.04);
+
+  border:1px solid rgba(255,255,255,0.06);
+}
+
+.ddl-db-icon{
+
+  width:30px;
+  height:30px;
+
+  object-fit:contain;
+}
+
+.ddl-db-info span{
+
+  font-size:15px;
+  font-weight:700;
+
+  color:#f8fafc;
+}
+/* =========================
+   PREMIUM GLASS DDL MODAL
+========================= */
+
+.ddl-modal{
+  position:fixed;
+  inset:0;
+
+  display:none;
+  align-items:center;
+  justify-content:center;
+
+  padding:30px;
+
+  z-index:99999;
+
+  background:
+    radial-gradient(circle at top left,
+      rgba(168,85,247,.18),
+      transparent 35%),
+
+    radial-gradient(circle at bottom right,
+      rgba(99,102,241,.18),
+      transparent 35%),
+
+    rgba(15,23,42,.20);
+
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+
+.ddl-modal.open{
+  display:flex;
+}
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.ddl-box{
+
+  width:94vw;
+  max-width:1400px;
+
+  max-height:88vh;
+
+  overflow:hidden;
+
+  border-radius:34px;
+
+  position:relative;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.72),
+      rgba(255,255,255,.50)
+    );
+
+  border:1px solid rgba(255,255,255,.45);
+
+  backdrop-filter:blur(28px);
+  -webkit-backdrop-filter:blur(28px);
+
+  box-shadow:
+    0 30px 80px rgba(91,33,182,.18),
+    0 10px 40px rgba(15,23,42,.12),
+    inset 0 1px 0 rgba(255,255,255,.65);
+
+  display:flex;
+  flex-direction:column;
+}
+
+/* TOP GLOW */
+
+.ddl-box::before{
+  content:"";
+
+  position:absolute;
+  top:-120px;
+  left:-120px;
+
+  width:320px;
+  height:320px;
+
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(168,85,247,.30),
+      transparent 70%
+    );
+
+  pointer-events:none;
+}
+
+.ddl-box::after{
+  content:"";
+
+  position:absolute;
+  right:-120px;
+  bottom:-120px;
+
+  width:300px;
+  height:300px;
+
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(99,102,241,.22),
+      transparent 70%
+    );
+
+  pointer-events:none;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.ddl-header{
+
+  height:72px;
+
+  padding:0 28px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  background:
+    linear-gradient(
+      90deg,
+      #7c3aed,
+      #8b5cf6,
+      #6366f1
+    );
+
+  position:relative;
+
+  overflow:hidden;
+}
+
+.ddl-header::after{
+  content:"";
+
+  position:absolute;
+  inset:0;
+
+  background:
+    linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(255,255,255,.14) 50%,
+      transparent 80%
+    );
+
+  animation:shine 5s linear infinite;
+}
+
+@keyframes shine{
+  from{
+    transform:translateX(-100%);
+  }
+  to{
+    transform:translateX(100%);
+  }
+}
+
+.ddl-title{
+
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  color:white;
+
+  font-size:18px;
+  font-weight:800;
+
+  position:relative;
+  z-index:2;
+}
+
+/* =========================
+   CLOSE BUTTON
+========================= */
+
+.ddl-close{
+
+  width:40px;
+  height:40px;
+
+  border-radius:14px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+
+  color:white;
+
+  font-size:22px;
+  font-weight:300;
+
+  background:
+    rgba(255,255,255,.16);
+
+  border:
+    1px solid rgba(255,255,255,.22);
+
+  transition:.25s ease;
+
+  position:relative;
+  z-index:2;
+}
+
+.ddl-close:hover{
+
+  transform:scale(1.08) rotate(90deg);
+
+  background:
+    rgba(255,255,255,.26);
+}
+
+/* =========================
+   FLOW SECTION
+========================= */
+
+.ddl-flow{
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:26px;
+
+  padding:20px 24px;
+
+  background:
+    rgba(255,255,255,.28);
+
+  border-bottom:
+    1px solid rgba(255,255,255,.45);
+
+  backdrop-filter:blur(14px);
+}
+
+/* DB CHIP */
+
+.ddl-db-chip{
+
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  padding:14px 22px;
+
+  border-radius:22px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.70),
+      rgba(255,255,255,.40)
+    );
+
+  border:
+    1px solid rgba(255,255,255,.55);
+
+  box-shadow:
+    0 8px 20px rgba(124,58,237,.08);
+
+  transition:.25s ease;
+}
+
+.ddl-db-chip:hover{
+
+  transform:
+    translateY(-3px)
+    scale(1.02);
+
+  box-shadow:
+    0 12px 28px rgba(124,58,237,.14);
+}
+
+.ddl-db-chip img{
+
+  width:34px;
+  height:34px;
+
+  object-fit:contain;
+}
+
+.ddl-db-chip span{
+
+  font-size:15px;
+  font-weight:800;
+
+  color:#111827;
+}
+
+/* FLOW ICON */
+
+.ddl-flow-arrow{
+
+  font-size:34px;
+  font-weight:900;
+
+  color:#f97316;
+
+  transform:translateY(-2px);
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.ddl-content{
+
+  flex:1;
+
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:18px;
+
+  padding:20px;
+
+  overflow:hidden;
+}
+
+/* =========================
+   PANELS
+========================= */
+
+.ddl-panel{
+
+  display:flex;
+  flex-direction:column;
+
+  min-height:0;
+}
+
+/* TITLE */
+
+.ddl-panel-title{
+
+  padding:16px 18px;
+
+  border-radius:22px 22px 0 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.62),
+      rgba(255,255,255,.38)
+    );
+
+  border:
+    1px solid rgba(255,255,255,.50);
+
+  border-bottom:none;
+
+  font-size:12px;
+  font-weight:900;
+
+  letter-spacing:.18em;
+
+  color:#64748b;
+}
+
+/* CODE BLOCK */
+
+.ddl-panel pre{
+
+  flex:1;
+
+  margin:0;
+
+  overflow:auto;
+
+  padding:26px;
+
+  border-radius:
+    0 0 26px 26px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.62),
+      rgba(255,255,255,.36)
+    );
+
+  border:
+    1px solid rgba(255,255,255,.52);
+
+  border-top:none;
+
+  backdrop-filter:blur(18px);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.45);
+}
+
+/* CODE */
+
+.ddl-panel code{
+
+  display:block;
+
+  color:#0f172a;
+
+  font-size:13px;
+
+  line-height:1.9;
+
+  white-space:pre-wrap !important;
+
+  word-break:break-word;
+
+  overflow-wrap:anywhere;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+}
+
+/* =========================
+   HIGHLIGHT COLORS
+========================= */
+
+.hljs{
+  background:transparent !important;
+  color:#0f172a !important;
+}
+
+.hljs-keyword{
+  color:#ff6b57 !important;
+  font-weight:700;
+}
+
+.hljs-string{
+  color:#60a5fa !important;
+}
+
+.hljs-number{
+  color:#fb7185 !important;
+}
+
+.hljs-built_in{
+  color:#8b5cf6 !important;
+}
+
+/* =========================
+   SCROLLBAR
+========================= */
+
+.ddl-panel pre::-webkit-scrollbar{
+  width:6px;
+  height:6px;
+}
+
+.ddl-panel pre::-webkit-scrollbar-thumb{
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(124,58,237,.45),
+      rgba(99,102,241,.45)
+    );
+
+  border-radius:20px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:950px){
+
+  .ddl-box{
+    width:96vw;
+    max-height:90vh;
+  }
+
+  .ddl-content{
+    grid-template-columns:1fr;
+  }
+
+  .ddl-flow{
+    gap:14px;
+  }
+
+  .ddl-db-chip{
+    padding:12px 16px;
+  }
+}
+/* =========================
+   SUMMARY OVERVIEW
+========================= */
+
+.summary-box{
+  width: 92%;
+  margin: 22px auto 18px auto;
+  padding: 15px 15px 20px;
+  border-radius: 26px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(168,85,247,0.12);
+  box-shadow:
+    0 8px 30px rgba(124,58,237,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+}
+/* =========================
+SCHEMA OVERVIEW TOGGLE
+========================= */
+
+.summary-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+  border-radius:22px;
+  cursor:pointer;
+  user-select:none;
+
+  background:rgba(255,255,255,0.35);
+
+  border:1px solid rgba(168,85,247,0.18);
+
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+
+  transition:all .28s ease;
+
+  box-shadow:
+    0 6px 18px rgba(124,58,237,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
+.summary-toggle:hover{
+  transform:translateY(-1px);
+
+  background:rgba(237,233,254,0.55);
+
+  border-color:rgba(124,58,237,0.28);
+
+  box-shadow:
+    0 10px 25px rgba(124,58,237,0.10);
+}
+
+.summary-toggle.active{
+  background:linear-gradient(
+    135deg,
+    rgba(237,233,254,0.72),
+    rgba(255,255,255,0.55)
+  );
+
+  border-color:rgba(124,58,237,0.32);
+}
+
+.summary-toggle-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.summary-toggle-icon{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:rgba(124,58,237,0.10);
+
+  color:#7c3aed;
+
+  font-size:18px;
+  font-weight:700;
+}
+
+.summary-toggle-text{
+  display:flex;
+  flex-direction:column;
+}
+
+.summary-toggle-title{
+  font-size:15px;
+  font-weight:800;
+  color:#5b21b6;
+}
+
+.summary-toggle-sub{
+  font-size:12px;
+  color:#6b7280;
+  margin-top:2px;
+}
+
+.summary-arrow{
+  font-size:18px;
+  color:#7c3aed;
+  transition:transform .25s ease;
+}
+
+.summary-toggle.active .summary-arrow{
+  transform:rotate(180deg);
+}
+
+/* CONTENT AREA */
+
+.summary-content{
+  overflow:hidden;
+  max-height:0;
+  opacity:0;
+
+  transition:
+    max-height .35s ease,
+    opacity .25s ease,
+    margin-top .25s ease;
+}
+
+.summary-content.open{
+  max-height:600px;
+  opacity:1;
+  margin-top:16px;
+}
+/* TITLE */
+
+.summary-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:16px;
+  font-weight:800;
+  color:#6d28d9;
+  margin-bottom:6px;
+}
+
+.summary-subtitle{
+  color:#6b7280;
+  font-size:13px;
+  margin-left:26px;
+  margin-bottom:18px;
+}
+
+/* TABLE */
+
+/* =========================
+SUMMARY TABLE
+========================= */
+
+.summary-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 10px;
+}
+
+/* HEADER */
+
+.summary-head th{
+  background:#fefce8;
+  color:#5b21b6;
+  font-size:13px;
+  text-align:left;
+  padding:12px 16px;
+  border-top:1px solid #ede9fe;
+  border-bottom:1px solid #ede9fe;
+}
+
+.summary-head th:first-child{
+  border-top-left-radius:14px;
+  border-bottom-left-radius:14px;
+}
+
+.summary-head th:last-child{
+  border-top-right-radius:14px;
+  border-bottom-right-radius:14px;
+}
+
+/* ROWS */
+
+.summary-table tr td{
+  padding:15px 18px;
+  font-size:14px;
+  border:none;
+  background-clip:padding-box;
+  vertical-align:middle;
+}
+
+/* REMOVE HOVER EFFECT */
+
+.summary-table tr:hover td{
+  background-color:inherit !important;
+}
+
+/* ROW COLORS */
+
+.summary-green td{
+  background:rgba(220,252,231,0.72);
+}
+
+.summary-red td{
+  background:rgba(254,226,226,0.72);
+}
+
+.summary-purple td{
+  background:rgba(237,233,254,0.72);
+}
+
+/* ROUNDED ROWS */
+
+.summary-table tr td:first-child{
+  border-top-left-radius:18px;
+  border-bottom-left-radius:18px;
+}
+
+.summary-table tr td:last-child{
+  border-top-right-radius:18px;
+  border-bottom-right-radius:18px;
+}
+
+/* STATUS CELL */
+
+.summary-status{
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  white-space:nowrap;
+}
+
+/* STATUS COLORS */
+
+.summary-green .summary-status{
+  color:#16a34a;
+}
+
+.summary-red .summary-status{
+  color:#ef4444;
+}
+
+.summary-purple .summary-status{
+  color:#7c3aed;
+}
+
+/* DESCRIPTION */
+
+.summary-desc{
+  color:#111827 !important;
+  font-weight:500;
+  width:100%;
+}
+
+/* DOT */
+
+.summary-dot{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  flex-shrink:0;
+  box-shadow:0 0 10px rgba(0,0,0,0.08);
+}
+    `;
+
+    document.head.appendChild(style);
+
+if (!document.getElementById('ddlModal')) {
+
+  document.body.insertAdjacentHTML(
+    'beforeend',
+    `
+    <div class="ddl-modal" id="ddlModal">
+
+  <div class="ddl-box">
+
+    <!-- HEADER -->
+
+    <div class="ddl-header">
+
+      <div class="ddl-title">
+
+        <lord-icon
+          src="https://cdn.lordicon.com/jectmwqf.json"
+          trigger="loop"
+          delay="2000"
+          colors="primary:#ffffff,secondary:#ddd6fe"
+          style="width:28px;height:28px">
+        </lord-icon>
+
+        <span>Table DDL Comparison</span>
+
+      </div>
+
+      <div class="ddl-close" id="ddlCloseBtn">
+        ×
+      </div>
+
+    </div>
+
+    <!-- SOURCE → TARGET -->
+
+    <div class="ddl-flow">
+
+      <div class="ddl-db-chip">
+
+        <img
+          id="sourceDbIcon"
+          src=""
+          alt=""
+        />
+
+        <span id="sourceDbLabel">
+          PostgreSQL
+        </span>
+
+      </div>
+
+      <div class="ddl-flow-arrow">
+        →
+      </div>
+
+      <div class="ddl-db-chip">
+
+        <img
+          id="targetDbIcon"
+          src=""
+          alt=""
+        />
+
+        <span id="targetDbLabel">
+          Snowflake
+        </span>
+
+      </div>
+
+    </div>
+
+    <!-- CONTENT -->
+
+    <div class="ddl-content">
+
+      <!-- SOURCE -->
+
+      <div class="ddl-panel">
+
+        <div class="ddl-panel-title">
+          SOURCE DDL
+        </div>
+
+        <pre>
+<code class="sql" id="sourceDDL"></code>
+        </pre>
+
+      </div>
+
+      <!-- TARGET -->
+
+      <div class="ddl-panel">
+
+        <div class="ddl-panel-title">
+          TARGET DDL
+        </div>
+
+        <pre>
+<code class="sql" id="targetDDL"></code>
+        </pre>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+    `
+  );
+
+  document
+    .getElementById('ddlCloseBtn')
+    .onclick = function () {
+
+      document
+        .getElementById('ddlModal')
+        .classList.remove('open');
+    }
+
+
       // Re-execute injected scripts
       schemaMount.querySelectorAll('script').forEach(function(old) {
         const s = document.createElement('script');
@@ -314,48 +1422,321 @@ function loadApprovalPage() {
 
             const tablePanel = tableNode.nextElementSibling;
 
-            // Binary mapping logic from schema_explorer.js
-            if (tablePanel && tablePanel.innerHTML.includes('BIN-MAPPED')) {
+            // DDL and Binary logic
+const isBinMappedTable =
+              tablePanel &&
+              tablePanel.innerHTML.includes('BIN-MAPPED');
+            
+            if (isBinMappedTable) {
               schemaNode.dataset.hasBinary = "true";
-              if (!tableNode.querySelector('.binary-btn')) {
-                const btn = document.createElement('button');
-                btn.textContent = 'Show Binary';
-                btn.className = 'binary-btn';
-                btn.onclick = function(e) {
+            }
+            
+            // Prevent duplicate buttons
+            if (!tableNode.querySelector('.ddl-btn')) {
+            
+              // =========================
+              // DDL BUTTON (ALL TABLES)
+              // =========================
+            
+              const ddlBtn =
+                document.createElement('button');
+            
+              ddlBtn.textContent = 'DDL';
+              ddlBtn.className = 'ddl-btn';
+            
+              ddlBtn.style.cssText = `
+                padding:4px 12px;
+                border:none;
+                border-radius:999px;
+                cursor:pointer;
+                background:#ede9fe;
+                color:#6d28d9;
+                font-size:11px;
+                font-weight:700;
+              `;
+            
+            ddlBtn.onclick = function (e) {
+            
+              e.stopPropagation();
+            
+              const modal =
+                document.getElementById('ddlModal');
+            
+              modal.classList.add('open');
+            
+              document.getElementById('sourceDDL').textContent =
+                'Loading...';
+            
+              document.getElementById('targetDDL').textContent =
+                'Loading...';
+            
+               const sourceType =
+                sessionStorage.getItem('currentSourceDbType')
+                || 'PostgreSQL';
+            
+              const targetType = 'Snowflake';
+            
+              const dbIcons = {
+            
+                PostgreSQL:
+                  'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
+            
+                Snowflake:
+                  'snowflake-logo.png',
+            
+                MySQL:
+                  'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg',
+            
+                Oracle:
+                  'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/oracle/oracle-original.svg'
+              };
+            
+              // SOURCE
+              document.getElementById('sourceDbLabel')
+                .textContent = sourceType;
+            
+              document.getElementById('sourceDbIcon')
+                .src = dbIcons[sourceType] || dbIcons.PostgreSQL;
+            
+              // TARGET
+              document.getElementById('targetDbLabel')
+                .textContent = targetType;
+            
+              document.getElementById('targetDbIcon')
+                .src = dbIcons[targetType]; 
+            const dbId = sessionStorage.getItem('currentSchemaDbId');
+            const dbType = sessionStorage.getItem('currentSourceDbType');
+            const dbName = sessionStorage.getItem('currentSourceDbName');
+            
+            function getSafeUserId() {
+                const direct = sessionStorage.getItem("userid");
+            
+                if (
+                    direct &&
+                    direct !== 'undefined' &&
+                    direct !== 'null' &&
+                    direct.trim() !== ''
+                ) {
+                    return direct.trim();
+                }
+            
+                try {
+                    const userJson = JSON.parse(
+                        (sessionStorage.getItem("userJson") || '{}')
+                            .replace(/'/g, '"')
+                    );
+            
+                    return String(
+                        userJson.userid ||
+                        userJson.user_id ||
+                        userJson.id ||
+                        ''
+                    ).trim();
+            
+                } catch (e) {
+                    return '';
+                }
+            }
+            
+            function getCurrentCompanyName() {
+                return (
+                    sessionStorage.getItem("company") ||
+                    "Welcome"
+                ).trim();
+            }
+            
+            $.ajax({
+                url: 'https://d2jedt7gztroeiac2hoclsc4da0fyzlm.lambda-url.ap-south-1.on.aws/',
+                type: 'POST',
+            
+                data: {
+                    table: tableName,
+                    schema: schemaName,
+                    db_name: dbName,
+                    entity: getCurrentCompanyName(),
+                    db_type: dbType
+                },
+            
+                success: function(response) {
+            
+                console.log(response);
+            
+                const sourceEl =
+                  document.getElementById('sourceDDL');
+            
+                const targetEl =
+                  document.getElementById('targetDDL');
+            
+                sourceEl.textContent =
+                  response.source || '-- No Source DDL --';
+            
+                targetEl.textContent =
+                  response.target || '-- No Target DDL --';
+            
+                // RESET HIGHLIGHT.JS
+                sourceEl.removeAttribute('data-highlighted');
+                targetEl.removeAttribute('data-highlighted');
+            
+                sourceEl.innerHTML =
+                  sourceEl.textContent;
+            
+                targetEl.innerHTML =
+                  targetEl.textContent;
+            
+                // APPLY AGAIN
+                hljs.highlightElement(sourceEl);
+                hljs.highlightElement(targetEl);
+            },
+            
+                error: function(xhr) {
+            
+                    console.log(xhr.responseText);
+            
+                    document.getElementById('sourceDDL').textContent =
+                        'API Error';
+            
+                    document.getElementById('targetDDL').textContent =
+                        'API Error';
+                }
+            })};
+             
+              // =========================
+              // RIGHT SIDE CONTAINER
+              // =========================
+            
+              const span =
+                tableNode.querySelector('span');
+            
+              const rightBox =
+                document.createElement('div');
+            
+            rightBox.className = 'right-actions';
+            
+              // Remove old count span
+              if (span) {
+                span.remove();
+              }
+            
+              // Add DDL button ALWAYS
+              rightBox.appendChild(ddlBtn);
+            
+              // =========================
+              // BIN MAP BUTTON
+              // ONLY FOR BIN TABLES
+              // =========================
+            
+              if (isBinMappedTable) {
+            
+                const btn =
+                  document.createElement('button');
+            
+                btn.textContent =
+                  'BIN_Map';
+            
+                btn.className =
+                  'binary-btn';
+            
+                btn.style.cssText = `
+                  padding:4px 13px;
+                  margin-left:6px;
+                  margin-right:8px;
+                  cursor:pointer;
+                  border:1px solid rgba(34,197,94,0.35);
+                  border-radius:999px;
+                  background:
+                    rgba(34,197,94,0.10);
+                  color:#16a34a;
+                  font-size:10px;
+                  font-weight:700;
+                  box-shadow:
+                    0 2px 8px
+                    rgba(34,197,94,0.08);
+                `;
+            
+                btn.style.display = 'none';
+            
+                btn.onclick = function (e) {
+            
                   e.stopPropagation();
-                  const isOpen = tablePanel.style.display === 'block';
+            
+                  const isOpen =
+                    tablePanel.style.display
+                    === 'block';
+            
                   if (isOpen) {
-                    tablePanel.style.display = 'none';
-                    tablePanel.querySelectorAll('tr').forEach(r => r.classList.remove('binary-highlight'));
+            
+                    tablePanel.style.display =
+                      'none';
+            
+                    tablePanel
+                      .querySelectorAll('tr')
+                      .forEach(row => {
+            
+                        row.style.display = '';
+            
+                        row.classList.remove(
+                          'binary-highlight'
+                        );
+                      });
+            
                   } else {
-                    panel.style.display = 'block';
-                    tablePanel.style.display = 'block';
-                    tableNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    tablePanel.querySelectorAll('tr').forEach(r => {
-                      if (r.innerText.includes('BIN-MAPPED')) r.classList.add('binary-highlight');
+            
+                    panel.style.display =
+                      'block';
+            
+                    tablePanel.style.display =
+                      'block';
+            
+                    tableNode.scrollIntoView({
+                      behavior:'smooth',
+                      block:'center'
                     });
+            
+                    tablePanel
+                      .querySelectorAll('tr')
+                      .forEach(row => {
+            
+                        if (
+                          row.querySelector('th')
+                        ) {
+                          row.style.display = '';
+                          return;
+                        }
+            
+                        const isRedRow =
+                          row.style.backgroundColor
+                          ===
+                          'rgb(254, 226, 226)' ||
+                          row.innerText.includes(
+                            'BIN-MAPPED'
+                          );
+            
+                        if (isRedRow) {
+            
+                          row.style.display = '';
+            
+                          row.classList.add(
+                            'binary-highlight'
+                          );
+            
+                        } else {
+            
+                          row.style.display =
+                            'none';
+                        }
+                      });
                   }
                 };
-
-                // RIGHT SIDE BUTTON + COUNT
-                const spanId = schemaName + '.' + tableName + '_c';
-                const span = tableNode.querySelector('#' + CSS.escape(spanId));
-
-                const rightBox = document.createElement('div');
-                rightBox.style.display = 'flex';
-                rightBox.style.alignItems = 'center';
-                rightBox.style.marginLeft = 'auto';
-                rightBox.style.gap = '6px';
-
-                if (span) {
-                  span.remove();
-                  rightBox.appendChild(btn);
-                  rightBox.appendChild(span);
-                } else {
-                  rightBox.appendChild(btn);
-                }
-                tableNode.appendChild(rightBox);
+            
+                rightBox.appendChild(btn);
               }
+            
+              // Add count back
+              if (span) {
+                rightBox.appendChild(span);
+              }
+            
+              tableNode.appendChild(rightBox);
             }
 
             // Table Count Display
@@ -377,21 +1758,35 @@ function loadApprovalPage() {
       }, 400);
 
       function normalizeType(t) {
-        t = (t || '').toLowerCase().trim();
-        if (t === 'character' || t.includes('char(') || t.startsWith('char')) return 'char';
-        if (t.includes('character varying') || t.startsWith('varchar')) return 'varchar';
-        if (t === 'text' || t === 'string') return 'string';
-        if (t === 'integer' || t === 'int') return 'integer';
-        if (t === 'smallint') return 'smallint';
-        if (t === 'boolean') return 'boolean';
-        if (t === 'date') return 'date';
-        if (t.includes('timestamp')) return 'timestamp';
-        if (t === 'numeric' || t.startsWith('number')) return 'numeric';
-        if (t === 'uuid') return 'uuid';
-        if (t === 'xml' || t === 'variant') return 'variant';
-        if (t === 'bytea' || t === 'bin-mapped') return 'binary';
-        if (t === 'time without time zone' || t === 'time') return 'time';
-        return t;
+        const raw = (t || '').trim();
+        const lower = raw.toLowerCase();
+        // Special mapped pairs — source → expected target canonical form
+        // character varying → VARCHAR(n) family
+        if (lower.includes('character varying')) return 'VARCHAR';
+        // timestamp without time zone → TIMESTAMP_NTZ
+        if (lower.includes('timestamp')) return 'TIMESTAMP_NTZ';
+        // character / char(n) → CHAR
+        if (lower === 'character' || lower.startsWith('char(') || lower === 'char') return 'CHAR';
+        // For everything else — uppercase the source type and strip
+        // size qualifiers like (10), (10,2) so INTEGER matches INTEGER etc.
+        // This means: integer → INTEGER, smallint → SMALLINT, boolean → BOOLEAN etc.
+        let normalized = raw.toUpperCase().trim();
+        // Strip size qualifiers e.g. VARCHAR(50) → VARCHAR, NUMBER(10,2) → NUMBER
+        normalized = normalized.replace(/\s*\([\d,\s]+\)$/, '').trim();
+        // Strip " WITHOUT TIME ZONE" suffix
+        normalized = normalized.replace(' WITHOUT TIME ZONE', '').trim();
+        // Source-specific expansions that map to Snowflake types
+        if (normalized === 'TEXT') return 'STRING';
+        if (normalized === 'BYTEA') return 'BINARY';
+        if (normalized === 'INTEGER' || normalized === 'INT') return 'INTEGER';
+        if (normalized === 'NUMERIC') return 'NUMBER';
+        if (normalized === 'TIME') return 'TIME';
+        // xml and VARIANT are DIFFERENT — do NOT normalize together
+        // xml stays as XML, VARIANT stays as VARIANT → will be flagged as mismatch
+        if (normalized === 'XML') return 'XML';
+        if (normalized === 'VARIANT') return 'VARIANT';
+
+        return normalized;
       }
 
       function normalizeDefault(d) {
@@ -740,4 +2135,5 @@ function loadApprovalPage() {
       });
     });
 }
-} // end loadApprovalPage
+} 
+}

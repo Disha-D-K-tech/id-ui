@@ -22,7 +22,7 @@
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
-        db_id: 128
+        db_id: dbId
       })
     })
     .then(r => r.text())
