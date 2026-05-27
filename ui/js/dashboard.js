@@ -339,12 +339,10 @@ header.innerHTML = `
   <div class="metric-chip metric-purple">
 
     <lord-icon
-      src="https://cdn.lordicon.com/lecprnjb.json"
-      trigger="loop"
-      delay="2000"
-      colors="primary:#7c3aed,secondary:#a78bfa"
-      style="width:26px;height:26px">
-    </lord-icon>
+  src="https://cdn.lordicon.com/bkzrrccj.json"
+  trigger="hover"
+  style="width:24px;height:24px">
+</lord-icon>
 
     <div class="metric-content">
       <span class="metric-label">ROWS</span>
@@ -368,10 +366,18 @@ function updateTargetRowCount(cardIdx, totalRows = 0) {
   const targetHeader = card.querySelector('[data-target-status]');
 
   if (targetHeader) {
-    targetHeader.textContent =
-      totalRows && totalRows > 0
-        ? `row_count : ${formatCompactNumber(totalRows)}`
-        : 'Pending';
+    const val = totalRows && totalRows > 0 ? formatCompactNumber(totalRows) : 'Pending';
+    targetHeader.innerHTML = `
+      <lord-icon
+        src="https://cdn.lordicon.com/kkdnopsh.json"
+        trigger="hover"
+        style="width:24px;height:24px">
+      </lord-icon>
+      <div class="metric-content">
+        <span class="metric-label">TARGET</span>
+        <span class="metric-value">${val}</span>
+      </div>
+    `;
   }
 }
 
@@ -721,6 +727,23 @@ function callMigrationStatusForCard(cardIdx, dbId) {
 
     console.log('Validation success rate (card ' + cardIdx + '):', successCount + '/' + total);
 
+    // ── Console: VALIDATION SUCCESS grouped by schema ──
+    const nameIdx = cols.indexOf('name');
+    const schemaBreakdown = {};
+    rows.forEach(function(row) {
+      const rowStatus = String(row[statusIdx] || '');
+      const fullName = String(row[nameIdx] || '');
+      const schema = fullName.includes('.') ? fullName.split('.')[0] : 'public';
+      if (!schemaBreakdown[schema]) schemaBreakdown[schema] = { tables: 0, src_rows: 0, tgt_rows: 0 };
+      if (rowStatus.includes('VALIDATION SUCCESS')) {
+        schemaBreakdown[schema].tables++;
+        schemaBreakdown[schema].src_rows += parseInt(row[srcCountIdx]) || 0;
+        schemaBreakdown[schema].tgt_rows += parseInt(row[tgtCountIdx]) || 0;
+      }
+    });
+    console.log('VALIDATION SUCCESS by schema (card ' + cardIdx + '):');
+    console.table(schemaBreakdown);
+
     // ── Pipeline step progression ──
 
     // Step: DDL Extraction (2) → Data Loading (3)
@@ -791,13 +814,13 @@ function callMigrationStatusForCard(cardIdx, dbId) {
 
     // ── TARGET SIDE CHIPS from migration API ─────────────────────────
     // type mapping: T=Tables, V=Views, F=Functions, Q=Sequences, P=Procedures
-    const targetTypeCfg = {
-      'T': { label: 'Tables',     icon: 'fa-table',    color: '#6366f1' },
-      'V': { label: 'Views',      icon: 'fa-eye',      color: '#0ea5e9' },
-      'F': { label: 'Functions',  icon: 'fa-code',     color: '#f59e0b' },
-      'Q': { label: 'Sequences',  icon: 'fa-list-ol',  color: '#10b981' },
-      'P': { label: 'Procedures', icon: 'fa-gear',     color: '#8b5cf6' }
-    };
+    // Always show all 4 core types — display 0 if not found
+    const targetTypeCfg = [
+      { key: 'T', label: 'Tables',     icon: 'fa-table',    color: '#6366f1' },
+      { key: 'V', label: 'Views',      icon: 'fa-eye',      color: '#0ea5e9' },
+      { key: 'F', label: 'Functions',  icon: 'fa-code',     color: '#f59e0b' },
+      { key: 'Q', label: 'Sequences',  icon: 'fa-list-ol',  color: '#10b981' }
+    ];
 
     // Count rows per type
     const tgtTypeCounts = {};
@@ -814,19 +837,12 @@ function callMigrationStatusForCard(cardIdx, dbId) {
 
     // Create or reuse target chips container
     let tgtChipsContainer = tgtCard.querySelector('[data-target-chips]');
-    if (!tgtChipsContainer) {
-      tgtChipsContainer = document.createElement('div');
-      tgtChipsContainer.setAttribute('data-target-chips', '');
-      tgtChipsContainer.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;';
-      const tgtDetailsMount = tgtCard.querySelector('[data-target-details]');
-      if (tgtDetailsMount) tgtDetailsMount.appendChild(tgtChipsContainer);
-    }
+    if (!tgtChipsContainer) return;
 
     tgtChipsContainer.innerHTML = '';
 
-    Object.entries(tgtTypeCounts).forEach(function([type, count]) {
-      const cfg = targetTypeCfg[type];
-      if (!cfg) return;
+    targetTypeCfg.forEach(function(cfg) {
+      const count = tgtTypeCounts[cfg.key] || 0;
       const chip = document.createElement('div');
       chip.title = cfg.label + ': ' + count;
       chip.style.cssText = `
@@ -838,7 +854,7 @@ function callMigrationStatusForCard(cardIdx, dbId) {
       `;
       chip.innerHTML = `
         <i class="fa-solid ${cfg.icon}" style="font-size:11px;color:${cfg.color};"></i>
-        <span>${formatCompactNumber(count)}</span>
+        <span>${formatCompactNumber(count) || '0'}</span>
       `;
       tgtChipsContainer.appendChild(chip);
     });
@@ -1694,19 +1710,24 @@ card.dataset.dbId = dbId;
     card.querySelector('[data-target-type]').appendChild(targetTypeBlock);
   }
 
-  // Target details — no chips here anymore, chips moved to source side
+  // Target details
   const targetDetailsMount = card.querySelector('[data-target-details]');
-  const detailsRow = document.createElement('div');
-  detailsRow.className = 'target-details-row';
-  detailsRow.style.cssText = 'display:flex;align-items:flex-start;gap:12px;';
 
-  const detailsCol = document.createElement('div');
-  detailsCol.style.flex = '1 1 0';
-  detailsRow.appendChild(detailsCol);
+  const targetDetailsRow = document.createElement('div');
+  targetDetailsRow.style.cssText = 'display:flex;align-items:flex-start;gap:12px;';
 
-  targetDetailsMount.appendChild(detailsRow);
+  const targetDetailsCol = document.createElement('div');
+  targetDetailsCol.style.flex = '1 1 0';
 
-  appendDbDetails(detailsCol, [
+  const targetChipsCol = document.createElement('div');
+  targetChipsCol.setAttribute('data-target-chips', '');
+  targetChipsCol.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;flex-shrink:0;padding-top:2px;align-self:flex-start;';
+
+  targetDetailsRow.appendChild(targetDetailsCol);
+  targetDetailsRow.appendChild(targetChipsCol);
+  targetDetailsMount.appendChild(targetDetailsRow);
+
+  appendDbDetails(targetDetailsCol, [
     { label: 'DB Name', value: t.name },
     { label: 'Host', value: t.host },
     { label: 'Status', value: t.status },
@@ -1816,6 +1837,22 @@ function bindPreviousDbToggles() {
 
     $card.toggleClass('is-open', !isOpen);
     $toggle.attr('aria-expanded', String(!isOpen));
+  });
+
+  // Handle card selection for Schema Explorer navigation
+  $('[data-prev-db-card]').off('click.navSelect').on('click.navSelect', function() {
+    const dbId = $(this).attr('data-db-id');
+    
+    // Visual selection highlight
+    $('[data-prev-db-card]').css('border', '1px solid rgba(120, 110, 220, 0.08)');
+    $(this).css('border', '2px solid var(--lv-indigo)');
+    
+    if (dbId) {
+      sessionStorage.setItem('navSelectedDbId', dbId);
+      $('#navSchemaLink')
+        .css({ 'opacity': '1', 'cursor': 'pointer', 'pointer-events': 'auto' })
+        .removeClass('nav-disabled');
+    }
   });
 }
 
@@ -2554,6 +2591,20 @@ $('#startMigrationBtn').on('keypress', function (e) {
 $(document).ready(function () {
   showDashboardLoadOverlay();
   $('.card-compact').css('transform', 'translateY(8px)').animate({ opacity: 1 }, 300);
+
+  // Initialize Schema Explorer nav link
+  sessionStorage.removeItem('navSelectedDbId');
+  const $navSchema = $('#navSchemaLink');
+  if ($navSchema.length) {
+    $navSchema.css({ 'opacity': '0.5', 'cursor': 'not-allowed', 'pointer-events': 'none' }).addClass('nav-disabled');
+    $navSchema.off('click.navLink').on('click.navLink', function(e) {
+      e.preventDefault();
+      const selectedDbId = sessionStorage.getItem('navSelectedDbId');
+      if (selectedDbId && !$(this).hasClass('nav-disabled')) {
+        openSchemaExplorerPage(selectedDbId);
+      }
+    });
+  }
 
   // Read everything directly from what login flow stored 
   const sessionUserId = getSafeUserId();

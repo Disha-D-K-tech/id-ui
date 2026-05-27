@@ -1009,6 +1009,11 @@
         font-weight: 700;
         margin-left: 4px;
       }
+      .migration-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto; /* ✅ FIX */
+      }
       .migration-tabs {
         padding: 14px 16px 0;
         background: linear-gradient(
@@ -1083,6 +1088,10 @@
           border-color 0.2s ease,
           box-shadow 0.2s ease,
           background-color 0.2s ease;
+      }
+      .migration-table th {
+        white-space: nowrap;
+        overflow: visible;
       }
       .migration-field input:focus,
       .migration-field select:focus,
@@ -1402,10 +1411,7 @@
 
         <div style="height: 8px"></div>
 
-        <div class="nav-item" id="navMigrations">
-          <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
-          <span class="nav-text">Migrations</span>
-        </div>
+
         <div class="nav-item" id="navSettings">
           <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
           <span class="nav-text">Settings</span>
@@ -1675,12 +1681,10 @@
                       class="prev-db-heading-meta metric-chip metric-cyan"
                       data-target-status
                     >
-                      <lord-icon
-                        src="https://cdn.lordicon.com/xjovhxra.json"
-                        trigger="loop"
-                        delay="1200"
-                        colors="primary:#06b6d4,secondary:#67e8f9"
-                        style="width: 26px; height: 26px"
+                      <lord-icon 
+                        src="https://cdn.lordicon.com/kkdnopsh.json"
+                        trigger="hover"
+                        style="width: 24px; height: 24px"
                       >
                       </lord-icon>
 
