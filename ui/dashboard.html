@@ -1008,6 +1008,11 @@
         font-weight: 700;
         margin-left: 4px;
       }
+      .migration-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto; /* ✅ FIX */
+      }
       .migration-tabs {
         padding: 14px 16px 0;
         background: linear-gradient(
@@ -1082,6 +1087,10 @@
           border-color 0.2s ease,
           box-shadow 0.2s ease,
           background-color 0.2s ease;
+      }
+      .migration-table th {
+        white-space: nowrap;
+        overflow: visible;
       }
       .migration-field input:focus,
       .migration-field select:focus,

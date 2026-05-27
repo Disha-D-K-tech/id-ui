@@ -125,7 +125,20 @@
     });
 
     let html = `
-    `;
+  <div class="tables-container">
+
+    <div class="tables-header">
+  <lord-icon
+  src="https://cdn.lordicon.com/yrbmguoo.json"
+  trigger="loop"
+  colors="primary:#5b3ed6,secondary:#7c63ff"
+  style="width:28px;height:28px">
+</lord-icon>
+Tables
+</div>
+
+    <div class="tables-body">
+`;
 
     for (const [schemaName, tables] of Object.entries(grouped)) {
 
@@ -136,16 +149,13 @@
           onclick="toggle(this)"
         >
 
-          <span>
+         <span style="display:flex; align-items:center; gap:8px;">
 
-            <i
-              class="fa-solid fa-layer-group me-2"
-              style="color:var(--lv-indigo)"
-            ></i>
+  <i class="fa-solid fa-database" style="color:#5b3ed6;"></i>
 
-            ${schemaName}
+  ${schemaName}
 
-          </span>
+</span>
 
           <span class="arrow">▼</span>
 
@@ -156,7 +166,7 @@
           style="display:none; padding:12px 0;"
         >
 
-          <div class="table-responsive">
+          <div class="table-wrapper">
 
             <table class="migration-table">
 
@@ -169,7 +179,8 @@
         'src_lower_hash',
         'src_upper_hash',
         'tgt_lower_hash',
-        'tgt_upper_hash'
+        'tgt_upper_hash',
+        'type'
       ];
 
       data.cols.forEach(col => {
@@ -182,6 +193,25 @@
           col
             .replace(/_/g, ' ')
             .replace(/\b\w/g, l => l.toUpperCase());
+
+        if (col === 'name') {
+          formattedCol = 'Table';
+        }
+        if (col === 'created_at') {
+          formattedCol = 'Processed at';
+        }
+        if (col === 'src_count') {
+          formattedCol = 'Source #';
+        }
+        if (col === 'tgt_count') {
+          formattedCol = 'Target #';
+        }
+        if (col === 'mismatch_count') {
+          formattedCol = 'Mismatch #';
+        }
+        if (col === 'message') {
+          formattedCol = 'Columns';
+        }
 
         let thClass = '';
 
@@ -203,11 +233,11 @@
 
           html += `
             <th class="source-header">
-              Source
+              Source Hash
             </th>
 
             <th class="target-header">
-              Target
+              Target Hash
             </th>
           `;
         }
@@ -232,36 +262,36 @@
           rowObject[col] = rowData[idx];
         });
 
-       const srcLower =
-  Number(rowObject.src_lower_hash);
+       let sourceHash = '-';
+let targetHash = '-';
 
-const srcUpper =
-  Number(rowObject.src_upper_hash);
+// Source Hash (Exact using BigInt)
+try {
+  if (rowObject.src_lower_hash && rowObject.src_upper_hash) {
+    const srcLower = BigInt(rowObject.src_lower_hash);
+    const srcUpper = BigInt(rowObject.src_upper_hash);
 
-const tgtLower =
-  Number(rowObject.tgt_lower_hash);
+    sourceHash = (srcLower + srcUpper).toString();
+  }
+} catch (e) {
+  console.error('Source BigInt error:', e);
+}
 
-const tgtUpper =
-  Number(rowObject.tgt_upper_hash);
+// Target Hash (Exact using BigInt)
+try {
+  if (rowObject.tgt_lower_hash && rowObject.tgt_upper_hash) {
+    const tgtLower = BigInt(rowObject.tgt_lower_hash);
+    const tgtUpper = BigInt(rowObject.tgt_upper_hash);
 
-const sourceHash =
-  !isNaN(srcLower) && !isNaN(srcUpper)
-    ? srcLower + srcUpper
-    : '-';
-
-const targetHash =
-  !isNaN(tgtLower) && !isNaN(tgtUpper)
-    ? tgtLower + tgtUpper
-    : '-';
+    targetHash = (tgtLower + tgtUpper).toString();
+  }
+} catch (e) {
+  console.error('Target BigInt error:', e);
+}
 
         data.cols.forEach((col, index) => {
 
-          if (
-            col === 'src_lower_hash' ||
-            col === 'src_upper_hash' ||
-            col === 'tgt_lower_hash' ||
-            col === 'tgt_upper_hash'
-          ) {
+          if (hiddenCols.includes(col)) {
             return;
           }
 
@@ -279,9 +309,9 @@ const targetHash =
 
             html += `
 
-              <td>
-                ${cellContent}
-              </td>
+             <td>
+  ${cellContent}
+</td>
 
               <td
                 class="source-cell"
@@ -289,6 +319,7 @@ const targetHash =
                 onmouseenter="
                   showHashPopup(
                     event,
+                    'source',
                     '${rowObject.src_lower_hash}',
                     '${rowObject.src_upper_hash}',
                     '${rowObject.tgt_lower_hash}',
@@ -307,6 +338,7 @@ const targetHash =
                 onmouseenter="
                   showHashPopup(
                     event,
+                    'target',
                     '${rowObject.src_lower_hash}',
                     '${rowObject.src_upper_hash}',
                     '${rowObject.tgt_lower_hash}',
@@ -322,48 +354,115 @@ const targetHash =
 
             return;
           }
+if (col === 'status' && typeof cellContent === 'string') {
+
+  let statusText = cellContent;
+
+  if (statusText.includes('SUCCESS')) {
+    cellClass = 'status-success';
+  } else if (statusText.includes('FAILED') || statusText.includes('ERROR')) {
+    cellClass = 'status-error';
+  } else if (statusText.includes('IN PROGRESS')) {
+    cellClass = 'status-inprogress';
+  }
+
+  if (col === 'status' && typeof cellContent === 'string') {
+
+  let statusText = cellContent;
+
+  if (statusText.includes('SUCCESS')) {
+    cellClass = 'status-success';
+  } else if (statusText.includes('FAILED') || statusText.includes('ERROR')) {
+    cellClass = 'status-error';
+  } else if (statusText.includes('IN PROGRESS')) {
+    cellClass = 'status-inprogress';
+  }
+
+  
+  if (statusText.includes('VALIDATION SUCCESS')) {
+  cellContent = `
+    <div class="status-wrap">
+      
+      <div class="status-icon">
+        <i class="fa-solid fa-check"></i>
+      </div>
+
+      <div class="status-text">
+        <div class="status-title">Validation</div>
+        <div class="status-sub">Success</div>
+      </div>
+
+    </div>
+  `;
+}
+}
+
+}
+
+  if (col === 'message') {
+
+  let msg = String(cellContent || '').trim();
+
+  // Remove "Columns:"
+  msg = msg.replace(/^Columns:\s*/i, '');
+
+  // Split source and target
+  const parts = msg.split('|');
+
+  let source = (parts[0] || '').trim();
+  let target = (parts[1] || '').trim();
+
+  // Convert hyphen separators to commas
+  source = source.split('-').join(', ');
+  target = target.split('-').join(', ');
+
+  // Function to check if value is actually empty
+  const isMeaningful = (val) => {
+    return val.replace(/[,\s-]/g, '').length > 0;
+  };
+
+  const hasSource = isMeaningful(source);
+  const hasTarget = isMeaningful(target);
+
+  // BOTH EMPTY → show "-"
+  if (!hasSource && !hasTarget) {
+
+    cellContent = '-';
+
+  } else {
+
+    cellContent = `
+      <div style="line-height:1.5">
+        <div>
+          <span style="font-weight:400">Source :</span>
+          <span>${hasSource ? source : '-'}</span>
+        </div>
+
+        <div>
+          <span style="font-weight:400">Target :</span>
+          <span>${hasTarget ? target : '-'}</span>
+        </div>
+      </div>
+    `;
+  }
+}
 
           if (
-            col === 'status' &&
-            typeof cellContent === 'string'
-          ) {
-
-            if (cellContent.includes('SUCCESS')) {
-
-              cellClass = 'status-success';
-            }
-
-            else if (
-              cellContent.includes('FAILED') ||
-              cellContent.includes('ERROR')
-            ) {
-
-              cellClass = 'status-error';
-            }
-
-            else if (
-              cellContent.includes('IN PROGRESS')
-            ) {
-
-              cellClass = 'status-inprogress';
-            }
-          }
-
-          if (
-            col === 'created_at' &&
-            typeof cellContent === 'string'
-          ) {
-
-            try {
-
-              cellContent =
-                new Date(cellContent)
-                  .toLocaleString();
-
-            }
-
-            catch (e) {}
-          }
+  col === 'created_at' &&
+  typeof cellContent === 'string'
+) {
+  try {
+    cellContent = new Date(cellContent).toLocaleString('en-GB', {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false   
+    });
+  } catch (e) {}
+}
 
           html += `
 
@@ -387,6 +486,10 @@ const targetHash =
         </div>
       `;
     }
+    html += `
+    </div>
+  </div>
+  `;
 
     return html;
   }
@@ -438,6 +541,7 @@ const targetHash =
 
   window.showHashPopup = function (
     event,
+    type,
     srcLower,
     srcUpper,
     tgtLower,
@@ -447,53 +551,38 @@ const targetHash =
     const popup =
       document.getElementById('hashPopup');
 
-  popup.innerHTML = `
-
-  <div class="popup-title">
-    <i class="fa-solid fa-fingerprint"></i>
-    Hash Details
-  </div>
-
-  <div class="popup-row">
-    <span class="popup-label">
-      Src Lower Hash
-    </span>
-
-    <span class="popup-value">
-      ${srcLower || '-'}
-    </span>
-  </div>
-
-  <div class="popup-row">
-    <span class="popup-label">
-      Src Upper Hash
-    </span>
-
-    <span class="popup-value">
-      ${srcUpper || '-'}
-    </span>
-  </div>
-
-  <div class="popup-row">
-    <span class="popup-label">
-      Tgt Lower Hash
-    </span>
-
-    <span class="popup-value">
-      ${tgtLower || '-'}
-    </span>
-  </div>
-
-  <div class="popup-row">
-    <span class="popup-label">
-      Tgt Upper Hash
-    </span>
-
-    <span class="popup-value">
-      ${tgtUpper || '-'}
-    </span>
-  </div>
+      let content = `
 `;
+
+if (type === 'source') {
+  content += `
+    <div class="popup-row">
+      <span class="popup-label">Src Lower Fingerprint</span>
+      <span class="popup-value">${srcLower || '-'}</span>
+    </div>
+
+    <div class="popup-row">
+      <span class="popup-label">Src Upper Fingerprint</span>
+      <span class="popup-value">${srcUpper || '-'}</span>
+    </div>
+  `;
+}
+
+if (type === 'target') {
+  content += `
+    <div class="popup-row">
+      <span class="popup-label">Tgt Lower Fingerprint</span>
+      <span class="popup-value">${tgtLower || '-'}</span>
+    </div>
+
+    <div class="popup-row">
+      <span class="popup-label">Tgt Upper Fingerprint</span>
+      <span class="popup-value">${tgtUpper || '-'}</span>
+    </div>
+  `;
+}
+popup.innerHTML = content;
+
 
     popup.style.display = 'block';
 

@@ -305,12 +305,11 @@ header.innerHTML = `
   <div class="metric-chip metric-purple">
 
     <lord-icon
-      src="https://cdn.lordicon.com/lecprnjb.json"
-      trigger="loop"
-      delay="2000"
-      colors="primary:#7c3aed,secondary:#a78bfa"
-      style="width:26px;height:26px">
-    </lord-icon>
+  src="https://cdn.lordicon.com/qhviklyi.json"
+  trigger="hover"
+  colors="primary:#7c3aed"
+  style="width:24px;height:24px">
+</lord-icon>
 
     <div class="metric-content">
       <span class="metric-label">ROWS</span>
