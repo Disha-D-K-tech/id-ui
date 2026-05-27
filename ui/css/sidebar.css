@@ -43,10 +43,20 @@
 
 /* ---------- Nav items ---------- */
 .sidebar .nav-icon {
-  width: 20px;
+  width: 24px;
+  height: 24px;
   text-align: center;
   flex-shrink: 0;
   color: var(--lv-indigo);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar .nav-icon lord-icon {
+  width: 22px !important;
+  height: 22px !important;
+  display: block;
 }
 
 .sidebar .nav-text {
@@ -80,6 +90,7 @@
 .nav-sub .nav-arrow {
   display: none;
 }
+
 
 /*Hover */
 .sidebar .nav-item:hover,

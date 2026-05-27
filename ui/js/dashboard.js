@@ -386,10 +386,17 @@ function updateStatusBand(cardIdx, status) {
   const s = String(status || '').trim().toLowerCase();
 
   const config = {
-    'new':          { label: 'NEW',          bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
-    'in progress':  { label: 'IN PROGRESS',  bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
-    'ddl extracted':{ label: 'DDL EXTRACTED',bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
-    'ddl - extracted':{ label: 'DDL EXTRACTED',bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+    'new':                    { label: 'NEW',                bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+    'in progress':            { label: 'IN PROGRESS',        bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+    'ddl extracted':          { label: 'DDL EXTRACTED',      bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+    'ddl - extracted':        { label: 'DDL EXTRACTED',      bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+    'validation success':     { label: '✅ VALIDATION SUCCESS', bg: '#f0fdf4', color: '#14532d', border: '#86efac' },
+    'validation in progress': { label: 'IN PROGRESS',        bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+    // Intermediate statuses — shown as-is from API but styled neutrally
+    'binary col. scanned':    { label: 'BINARY COL. SCANNED',   bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+    'pending approval':       { label: 'PENDING APPROVAL',       bg: '#faf5ff', color: '#7c3aed', border: '#e9d5ff' },
+    'binary col. mapped':     { label: 'BINARY COL. MAPPED',     bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0' },
+    'data loaded':            { label: 'IN PROGRESS',            bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
   };
 
   let match = config[s];
@@ -407,6 +414,13 @@ function updateStatusBand(cardIdx, status) {
   band.style.color = match.color;
   band.style.borderBottom = '2px solid ' + match.border;
   band.textContent = match.label;
+
+  // Force arrow animation to match the band status
+  if (s === 'in progress' || s === 'validation in progress' || s === 'data loaded') {
+    setCardTransferState(cardIdx, 'running');
+  } else {
+    setCardTransferState(cardIdx, '');
+  }
 
   // Arrow label between DDL Extraction (step 2) and Data Loading (step 3) — arrowIdx 2
   // Show "PENDING APPROVAL" when status is pending, clear it when beyond
@@ -542,10 +556,14 @@ updateDashboardRowCount(cardIdx, totalRows);
               }
             } else if (anyInProgress) {
               pill.hidden = true;
-              setCardTransferState(cardIdx, 'running');
+
               const existingBand2 = String(card2?.querySelector('[data-status-band]')?.textContent || '').toLowerCase();
-              if (!existingBand2.includes('validation') && !existingBand2.includes('pending') && !existingBand2.includes('ddl')) {
+
+              if (!existingBand2.includes('validation') && !existingBand2.includes('pending') && !existingBand2.includes('ddl') && !existingBand2.includes('success')) {
+                setCardTransferState(cardIdx, 'running');
                 updateStatusBand(cardIdx, 'In Progress');
+              } else {
+                setCardTransferState(cardIdx, '');
               }
             }
           
@@ -562,9 +580,12 @@ updateDashboardRowCount(cardIdx, totalRows);
           setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
           setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
           setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
+          // Explicitly stop ALL arrows — none should be moving after DDL confirmed
           setArrowState(cardIdx, 0, 'arrow-done');
           setArrowState(cardIdx, 1, 'arrow-done');
           setArrowState(cardIdx, 2, 'arrow-done');
+          setArrowState(cardIdx, 3, '');
+          setArrowState(cardIdx, 4, '');
           // Disable Run Assessment button
           const pEl = document.getElementById('pipeline-' + cardIdx);
           if (pEl) {
@@ -706,11 +727,14 @@ function callMigrationStatusForCard(cardIdx, dbId) {
     setArrowState(cardIdx, 3, 'arrow-done');
 
     // Step: Validation (4)
-    if (successCount > 0) {
-      // At least one validation success — light up validation step
+    if (successCount > 0 && successRate < 0.9) {
+      // Partial validation — light up validation step but keep arrows static
       setPipelineStepState(cardIdx, 4, getPipelineStepStateClass(PIPELINE_STEPS[4].id, 'active'));
-      setArrowState(cardIdx, 4, 'arrow-moving');
+      // Do NOT set arrow-moving — arrows only move during Run Assessment polling
     }
+
+    // Always stop all arrows when migration status is called — never animate from here
+    setCardTransferState(cardIdx, '');
 
     // Step: Success (5) — only if 90%+ validation success
     if (successRate >= 0.9) {
@@ -719,6 +743,7 @@ function callMigrationStatusForCard(cardIdx, dbId) {
       setPipelineStepState(cardIdx, 5, getPipelineStepStateClass(PIPELINE_STEPS[5].id, 'complete'));
       updateStatusBand(cardIdx, 'Validation Success');
     } else if (successCount > 0) {
+      // Still calculating — show IN PROGRESS in band (via 'Validation In Progress' key)
       updateStatusBand(cardIdx, 'Validation In Progress');
     }
 
@@ -1093,15 +1118,15 @@ if (localStorage.getItem('assessment_stage_' + dbId) === 'ddl') {
         pollCount++;
         callStatusReaderForCard(cardIdx, srcRecord, dbId);
 
-        // Stop polling when DDL confirmed or max polls reached
         const ddlDone = pipelineStates[cardIdx]._ddlConfirmed;
         if (ddlDone || pollCount >= MAX_POLLS) {
           clearInterval(pipelineStates[cardIdx].pollInterval);
           pipelineStates[cardIdx].pollInterval = null;
+          hideOverlay();
+          state.running = false;
           if (ddlDone) {
-            // DDL confirmed — hide overlay and release running lock
-            hideOverlay();
-            state.running = false;
+            // DDL confirmed — refresh cards so everything is in sync with API
+            setTimeout(function() { fetchPreviousDatabases(); }, 500);
           }
         }
       }, 4000);
@@ -1612,6 +1637,12 @@ card.dataset.dbId = dbId;
     newPill.hidden = true; // status now shown in band at top of card
     updateStatusBand(idx, s.status || 'NEW');
 
+    // Stop transfer animation for all statuses except in progress
+    const initialStatus = String(s.status || '').trim().toLowerCase();
+    if (initialStatus !== 'in progress' && initialStatus !== 'in-progress') {
+      setTimeout(function() { setCardTransferState(idx, ''); }, 0);
+    }
+
     const schemaButton = card.querySelector('[data-schema-explorer-btn]');
     if (schemaButton) {
       schemaButton.hidden = true;
@@ -1698,8 +1729,18 @@ card.dataset.dbId = dbId;
 
   const apiStatus = String((src && src.status) || '').trim().toLowerCase();
 
-  if (apiStatus.includes('in progress') || apiStatus.includes('in-progress')) {
+  // Only animate arrows for exactly "in progress" — stop ALL arrows for every other status
+  if (apiStatus === 'in progress' || apiStatus === 'in-progress') {
     setCardTransferState(idx, 'running');
+  } else {
+    setCardTransferState(idx, '');
+    // Also explicitly reset every individual arrow to static — prevents stale arrow-moving class
+    for (let a = 0; a < PIPELINE_STEPS.length - 1; a++) {
+      const arrow = document.getElementById('arrow-' + idx + '-' + a);
+      if (arrow && arrow.classList.contains('arrow-moving')) {
+        arrow.className = 'pipeline-arrow';
+      }
+    }
   }
 
   const isDdlDone = apiStatus.includes('binary') ||
