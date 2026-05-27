@@ -220,6 +220,39 @@ function setArrowState(cardIdx, arrowIdx, state) {
   if (arrow) arrow.className = 'pipeline-arrow ' + state;
 }
 
+function setArrowLabel(cardIdx, arrowIdx, text) {
+  const arrow = document.getElementById('arrow-' + cardIdx + '-' + arrowIdx);
+  if (!arrow) return;
+
+  // Remove existing label if any
+  const existing = arrow.querySelector('[data-arrow-label]');
+  if (existing) existing.remove();
+
+  if (!text) return;
+
+  const label = document.createElement('div');
+  label.setAttribute('data-arrow-label', '');
+  label.textContent = text;
+  label.style.cssText = `
+    position:absolute;
+    top:-18px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:9px;
+    font-weight:800;
+    color:#7c3aed;
+    white-space:nowrap;
+    background:#faf5ff;
+    padding:2px 6px;
+    border-radius:999px;
+    border:1px solid #e9d5ff;
+    letter-spacing:0.04em;
+    pointer-events:none;
+  `;
+  arrow.style.position = 'relative';
+  arrow.appendChild(label);
+}
+
 function setCardTransferState(cardIdx, transferState) {
   const pipeline = document.getElementById('pipeline-' + cardIdx);
   const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
@@ -341,6 +374,48 @@ function updateTargetRowCount(cardIdx, totalRows = 0) {
         : 'Pending';
   }
 }
+
+function updateStatusBand(cardIdx, status) {
+  const pipeline = document.getElementById('pipeline-' + cardIdx);
+  const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+  if (!card) return;
+
+  const band = card.querySelector('[data-status-band]');
+  if (!band) return;
+
+  const s = String(status || '').trim().toLowerCase();
+
+  const config = {
+    'new':          { label: 'NEW',          bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+    'in progress':  { label: 'IN PROGRESS',  bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+    'ddl extracted':{ label: 'DDL EXTRACTED',bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+    'ddl - extracted':{ label: 'DDL EXTRACTED',bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+  };
+
+  let match = config[s];
+  if (!match) {
+    for (const key of Object.keys(config)) {
+      if (s.includes(key)) { match = config[key]; break; }
+    }
+  }
+  if (!match) {
+    match = { label: status.toUpperCase(), bg: '#f8fafc', color: '#334155', border: '#e2e8f0' };
+  }
+
+  band.style.display = 'block';
+  band.style.background = match.bg;
+  band.style.color = match.color;
+  band.style.borderBottom = '2px solid ' + match.border;
+  band.textContent = match.label;
+
+  // Arrow label between DDL Extraction (step 2) and Data Loading (step 3) — arrowIdx 2
+  // Show "PENDING APPROVAL" when status is pending, clear it when beyond
+  if (s.includes('pending approval')) {
+    setArrowLabel(cardIdx, 2, 'PENDING APPROVAL');
+  } else if (s.includes('data loaded') || s.includes('validation') || s.includes('success')) {
+    setArrowLabel(cardIdx, 2, ''); // clear label once past pending
+  }
+}
 /************* STATUS READER — REUSABLE CARD UPDATER *************/
 
 function callStatusReaderForCard(cardIdx, srcRecord, dbId) {
@@ -457,20 +532,21 @@ updateDashboardRowCount(cardIdx, totalRows);
           const pill = card2.querySelector('[data-new-pill]');
           if (pill) {
             if (ddlConfirmed) {
-              pill.textContent = 'DDL Extracted';
-              pill.hidden = false;
-              pill.style.background = '#f0fdf4';
-              pill.style.color = '#15803d';
-              pill.style.borderColor = '#bbf7d0';
+              pill.hidden = true;
               // Persist DDL stage
               localStorage.setItem('assessment_stage_' + dbId, 'ddl');
+              // Only update band to DDL Extracted if not already at a higher status
+              const existingBand = String(card2?.querySelector('[data-status-band]')?.textContent || '').toLowerCase();
+              if (!existingBand.includes('validation') && !existingBand.includes('pending')) {
+                updateStatusBand(cardIdx, 'DDL Extracted');
+              }
             } else if (anyInProgress) {
-              pill.textContent = 'In Progress';
-              pill.hidden = false;
-              pill.style.background = '#fff7ed';
-              pill.style.color = '#c2410c';
-              pill.style.borderColor = '#fed7aa';
+              pill.hidden = true;
               setCardTransferState(cardIdx, 'running');
+              const existingBand2 = String(card2?.querySelector('[data-status-band]')?.textContent || '').toLowerCase();
+              if (!existingBand2.includes('validation') && !existingBand2.includes('pending') && !existingBand2.includes('ddl')) {
+                updateStatusBand(cardIdx, 'In Progress');
+              }
             }
           
           }
@@ -488,6 +564,7 @@ updateDashboardRowCount(cardIdx, totalRows);
           setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
           setArrowState(cardIdx, 0, 'arrow-done');
           setArrowState(cardIdx, 1, 'arrow-done');
+          setArrowState(cardIdx, 2, 'arrow-done');
           // Disable Run Assessment button
           const pEl = document.getElementById('pipeline-' + cardIdx);
           if (pEl) {
@@ -516,39 +593,40 @@ updateDashboardRowCount(cardIdx, totalRows);
         const pipelineC = document.getElementById('pipeline-' + cardIdx);
         const cardC = pipelineC ? pipelineC.closest('[data-prev-db-card]') : null;
         if (cardC) {
-          // stat-chips-container is already created at render time inside target-details-row
+          // stat-chips-container is already created at render time inside source details
 const statsContainer = cardC.querySelector('.stat-chips-container');
 if (!statsContainer) return;
 statsContainer.innerHTML = '';
-          const icons = {
-            tables: 'fa-table',
-            views: 'fa-eye',
-            functions: 'fa-code',
-            sequences: 'fa-list-ol',
-            unknown: 'fa-database'
-          };
 
-          typeStats.forEach(function(stats, type) {
-            const iconClass = icons[type.toLowerCase()] || icons.unknown;
-            const chip = document.createElement('div');
-            chip.title = type + ': ' + stats.total;
-            chip.style.display = 'flex';
-            chip.style.alignItems = 'center';
-            chip.style.justifyContent = 'center';
-            chip.style.gap = '5px';
-            chip.style.padding = '6px 10px';
-            chip.style.borderRadius = '10px';
-            chip.style.border = '1px solid #d1d5db';
-            chip.style.background = '#fff';
-            chip.style.color = '#374151';
-            chip.style.fontSize = '12px';
-            chip.style.fontWeight = '600';
-            chip.style.cursor = 'default';
-            chip.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
-            const displayCount = type.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
-            chip.innerHTML = '<i class="fa-solid ' + iconClass + '" style="font-size:11px;color:#6b7280;"></i><span>' + displayCount + '</span>';
-            statsContainer.appendChild(chip);
-          });
+        // 2x2 grid layout
+        statsContainer.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;flex-shrink:0;padding-top:2px;';
+
+        const icons = {
+          tables:    { icon: 'fa-table',   color: '#6366f1' },
+          views:     { icon: 'fa-eye',     color: '#0ea5e9' },
+          functions: { icon: 'fa-code',    color: '#f59e0b' },
+          sequences: { icon: 'fa-list-ol', color: '#10b981' },
+          unknown:   { icon: 'fa-database',color: '#6b7280' }
+        };
+
+        typeStats.forEach(function(stats, type) {
+          const cfg = icons[type.toLowerCase()] || icons.unknown;
+          const displayCount = type.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
+          const chip = document.createElement('div');
+          chip.title = type + ': ' + stats.total;
+          chip.style.cssText = `
+            display:inline-flex;align-items:center;gap:6px;
+            padding:5px 10px;border-radius:8px;
+            border:1px solid #e5e7eb;background:#f9fafb;
+            color:#374151;font-size:12px;font-weight:700;cursor:default;
+            white-space:nowrap;
+          `;
+          chip.innerHTML = `
+            <i class="fa-solid ${cfg.icon}" style="font-size:11px;color:${cfg.color};"></i>
+            <span>${formatCompactNumber(displayCount)}</span>
+          `;
+          statsContainer.appendChild(chip);
+        });
 
           if (dbHistoryRecords[cardIdx]) {
             dbHistoryRecords[cardIdx].typeStats = typeStats;
@@ -575,6 +653,166 @@ statsContainer.innerHTML = '';
         pipelineStates[cardIdx]._ddlConfirmed = true;
       }
     }
+  });
+}
+
+/************* MIGRATION STATUS API — VALIDATION RESULTS *************/
+function callMigrationStatusForCard(cardIdx, dbId) {
+  fetch(MIGRATION_STATUS_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ db_id: dbId })
+  })
+  .then(r => r.text())
+  .then(function(text) {
+    let res;
+    try { res = JSON.parse(text); } catch(e) { console.error('Migration status parse error:', e); return; }
+    if (!res || !res.cols || !res.vals) return;
+
+    console.log('Migration status response (card ' + cardIdx + '):', res);
+
+    let rows = [];
+    try {
+      rows = typeof res.vals === 'string' ? JSON.parse(res.vals) : (Array.isArray(res.vals) ? res.vals : []);
+    } catch(e) {
+      console.error('Migration vals parse error:', e);
+      return;
+    }
+
+    if (!rows.length) return;
+
+    const cols      = res.cols;
+    const statusIdx  = cols.indexOf('status');
+    const srcCountIdx = cols.indexOf('src_count');
+    const tgtCountIdx = cols.indexOf('tgt_count');
+    const typeIdx    = cols.indexOf('type');
+
+    // Count validation success vs total (type === 'T' = table rows)
+    const tableRows   = rows.filter(r => (r[typeIdx] || '').toUpperCase() === 'T');
+    const successRows = tableRows.filter(r => String(r[statusIdx] || '').includes('VALIDATION SUCCESS'));
+    const total       = tableRows.length;
+    const successCount = successRows.length;
+    const successRate  = total > 0 ? successCount / total : 0;
+
+    console.log('Validation success rate (card ' + cardIdx + '):', successCount + '/' + total);
+
+    // ── Pipeline step progression ──
+
+    // Step: DDL Extraction (2) → Data Loading (3)
+    // Arrow 2 done — data is loading
+    setArrowState(cardIdx, 2, 'arrow-done');
+    setPipelineStepState(cardIdx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'complete'));
+    setPipelineStepState(cardIdx, 3, getPipelineStepStateClass(PIPELINE_STEPS[3].id, 'complete'));
+    setArrowState(cardIdx, 3, 'arrow-done');
+
+    // Step: Validation (4)
+    if (successCount > 0) {
+      // At least one validation success — light up validation step
+      setPipelineStepState(cardIdx, 4, getPipelineStepStateClass(PIPELINE_STEPS[4].id, 'active'));
+      setArrowState(cardIdx, 4, 'arrow-moving');
+    }
+
+    // Step: Success (5) — only if 90%+ validation success
+    if (successRate >= 0.9) {
+      setPipelineStepState(cardIdx, 4, getPipelineStepStateClass(PIPELINE_STEPS[4].id, 'complete'));
+      setArrowState(cardIdx, 4, 'arrow-done');
+      setPipelineStepState(cardIdx, 5, getPipelineStepStateClass(PIPELINE_STEPS[5].id, 'complete'));
+      updateStatusBand(cardIdx, 'Validation Success');
+    } else if (successCount > 0) {
+      updateStatusBand(cardIdx, 'Validation In Progress');
+    }
+
+    // Sum src/tgt row counts
+    let totalTgtRows = 0;
+    rows.forEach(function(row) {
+      totalTgtRows += parseInt(row[tgtCountIdx]) || 0;
+    });
+    updateTargetRowCount(cardIdx, totalTgtRows);
+
+    // Add/update validation chip in stat chips container
+    const pipeline = document.getElementById('pipeline-' + cardIdx);
+    const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
+    if (!card) return;
+
+    const statsContainer = card.querySelector('.stat-chips-container');
+    if (!statsContainer) return;
+
+    const existing = statsContainer.querySelector('[data-validation-chip]');
+    if (existing) existing.remove();
+
+    const validationChip = document.createElement('div');
+    validationChip.setAttribute('data-validation-chip', '');
+    validationChip.title = 'Validation: ' + successCount + '/' + total + ' tables passed';
+    validationChip.style.cssText = `
+      display:inline-flex;align-items:center;gap:5px;
+      padding:4px 10px;border-radius:999px;
+      border:1px solid ${successRate >= 0.9 ? '#bbf7d0' : '#fde047'};
+      background:${successRate >= 0.9 ? '#f0fdf4' : '#fefce8'};
+      color:${successRate >= 0.9 ? '#15803d' : '#854d0e'};
+      font-size:12px;font-weight:600;cursor:default;
+    `;
+    validationChip.innerHTML = `
+      <i class="fa-solid fa-circle-check" style="font-size:11px;"></i>
+      <span>${successCount}/${total} validated</span>
+    `;
+    statsContainer.appendChild(validationChip);
+
+    // ── TARGET SIDE CHIPS from migration API ─────────────────────────
+    // type mapping: T=Tables, V=Views, F=Functions, Q=Sequences, P=Procedures
+    const targetTypeCfg = {
+      'T': { label: 'Tables',     icon: 'fa-table',    color: '#6366f1' },
+      'V': { label: 'Views',      icon: 'fa-eye',      color: '#0ea5e9' },
+      'F': { label: 'Functions',  icon: 'fa-code',     color: '#f59e0b' },
+      'Q': { label: 'Sequences',  icon: 'fa-list-ol',  color: '#10b981' },
+      'P': { label: 'Procedures', icon: 'fa-gear',     color: '#8b5cf6' }
+    };
+
+    // Count rows per type
+    const tgtTypeCounts = {};
+    rows.forEach(function(row) {
+      const t = String(row[typeIdx] || '').toUpperCase();
+      if (!tgtTypeCounts[t]) tgtTypeCounts[t] = 0;
+      tgtTypeCounts[t]++;
+    });
+
+    // Find target chips container — in target side
+    const tgtPipeline = document.getElementById('pipeline-' + cardIdx);
+    const tgtCard = tgtPipeline ? tgtPipeline.closest('[data-prev-db-card]') : null;
+    if (!tgtCard) return;
+
+    // Create or reuse target chips container
+    let tgtChipsContainer = tgtCard.querySelector('[data-target-chips]');
+    if (!tgtChipsContainer) {
+      tgtChipsContainer = document.createElement('div');
+      tgtChipsContainer.setAttribute('data-target-chips', '');
+      tgtChipsContainer.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;';
+      const tgtDetailsMount = tgtCard.querySelector('[data-target-details]');
+      if (tgtDetailsMount) tgtDetailsMount.appendChild(tgtChipsContainer);
+    }
+
+    tgtChipsContainer.innerHTML = '';
+
+    Object.entries(tgtTypeCounts).forEach(function([type, count]) {
+      const cfg = targetTypeCfg[type];
+      if (!cfg) return;
+      const chip = document.createElement('div');
+      chip.title = cfg.label + ': ' + count;
+      chip.style.cssText = `
+        display:inline-flex;align-items:center;gap:6px;
+        padding:5px 10px;border-radius:8px;
+        border:1px solid #e5e7eb;background:#f9fafb;
+        color:#374151;font-size:12px;font-weight:700;cursor:default;
+        white-space:nowrap;
+      `;
+      chip.innerHTML = `
+        <i class="fa-solid ${cfg.icon}" style="font-size:11px;color:${cfg.color};"></i>
+        <span>${formatCompactNumber(count)}</span>
+      `;
+      tgtChipsContainer.appendChild(chip);
+    });
+  })
+  .catch(function(err) {
+    console.error('Migration status fetch error (card ' + cardIdx + '):', err);
   });
 }
 
@@ -781,13 +1019,8 @@ if (localStorage.getItem('assessment_stage_' + dbId) === 'ddl') {
   const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
   if (card) {
   const newPill = card.querySelector('[data-new-pill]');
-  if (newPill) {
-    newPill.textContent = 'In Progress';
-    newPill.hidden = false;
-    newPill.style.background = '#fff7ed';
-    newPill.style.color = '#c2410c';
-    newPill.style.borderColor = '#fed7aa';
-  }
+  if (newPill) newPill.hidden = true;
+  updateStatusBand(cardIdx, 'In Progress');
 }
 
   const srcRecord = (dbHistoryRecords[cardIdx] && dbHistoryRecords[cardIdx].source) || {};
@@ -851,6 +1084,7 @@ if (localStorage.getItem('assessment_stage_' + dbId) === 'ddl') {
       setArrowState(cardIdx, 0, 'arrow-done');
       setPipelineStepState(cardIdx, 0, getPipelineStepStateClass(PIPELINE_STEPS[0].id, 'complete'));
       setPipelineStepState(cardIdx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'active'));
+      setArrowState(cardIdx, 1, 'arrow-moving'); // only arrow between step 1 and 2 moves during in-progress
 
       // Poll status_reader every 4 seconds (max 15 calls = 60 s)
       let pollCount = 0;
@@ -1126,7 +1360,16 @@ function fetchPreviousDatabases() {
         if (status === 'NEW' || status === '—' || status === '') return;
         const cardDbId = String(srcRec.id && srcRec.id !== '—' ? srcRec.id : '').trim();
         if (!cardDbId) return;
+        
         callStatusReaderForCard(idx, srcRec, cardDbId);
+
+        // Also call migration status API directly for Pending Approval and beyond
+        const statusLower = status.toLowerCase();
+        if (statusLower.includes('pending approval') ||
+            statusLower.includes('data loaded') ||
+            statusLower.includes('validation')) {
+          callMigrationStatusForCard(idx, cardDbId);
+        }
       });
     },
     error: function(xhr) {
@@ -1366,7 +1609,8 @@ card.dataset.dbId = dbId;
     card.querySelector('[data-summary-meta]').textContent = `Database ${idx + 1} • ${summaryMeta}`;
 
     const newPill = card.querySelector('[data-new-pill]');
-    newPill.hidden = !isNewStatus;
+    newPill.hidden = true; // status now shown in band at top of card
+    updateStatusBand(idx, s.status || 'NEW');
 
     const schemaButton = card.querySelector('[data-schema-explorer-btn]');
     if (schemaButton) {
@@ -1378,7 +1622,23 @@ card.dataset.dbId = dbId;
     const sourceDetailsMount = card.querySelector('[data-source-details]');
     const sourceTypeBlock = createDbTypeBlock(s.type);
     if (sourceTypeBlock) sourceTypeMount.appendChild(sourceTypeBlock);
-    appendDbDetails(sourceDetailsMount, [
+
+    // Source details wrapper — details on left, stat chips on right
+    const sourceDetailsRow = document.createElement('div');
+    sourceDetailsRow.style.cssText = 'display:flex;align-items:flex-start;gap:12px;';
+
+    const sourceDetailsCol = document.createElement('div');
+    sourceDetailsCol.style.flex = '1 1 0';
+
+    const chipsCol = document.createElement('div');
+    chipsCol.className = 'stat-chips-container';
+    chipsCol.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;flex-shrink:0;padding-top:2px;align-self:flex-start;';
+
+    sourceDetailsRow.appendChild(sourceDetailsCol);
+    sourceDetailsRow.appendChild(chipsCol);
+    sourceDetailsMount.appendChild(sourceDetailsRow);
+
+    appendDbDetails(sourceDetailsCol, [
       { label: 'DB Name', value: s.name },
       { label: 'Host', value: s.host },
       { label: 'Status', value: s.status },
@@ -1396,20 +1656,15 @@ card.dataset.dbId = dbId;
     card.querySelector('[data-target-type]').appendChild(targetTypeBlock);
   }
 
-  // Wrap details + chips in a flex row at render time
+  // Target details — no chips here anymore, chips moved to source side
   const targetDetailsMount = card.querySelector('[data-target-details]');
   const detailsRow = document.createElement('div');
   detailsRow.className = 'target-details-row';
   detailsRow.style.cssText = 'display:flex;align-items:flex-start;gap:12px;';
-  
+
   const detailsCol = document.createElement('div');
   detailsCol.style.flex = '1 1 0';
   detailsRow.appendChild(detailsCol);
-
-  const chipsCol = document.createElement('div');
-  chipsCol.className = 'stat-chips-container';
-  chipsCol.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;flex-shrink:0;padding-top:2px;';
-  detailsRow.appendChild(chipsCol);
 
   targetDetailsMount.appendChild(detailsRow);
 
@@ -1459,20 +1714,32 @@ card.dataset.dbId = dbId;
   setArrowState(idx, 0, 'arrow-done');
   setPipelineStepState(idx, 1, getPipelineStepStateClass(PIPELINE_STEPS[1].id, 'complete'));
   setArrowState(idx, 1, 'arrow-done');
-  setPipelineStepState(idx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
+  setPipelineStepState(idx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'complete'));
+  setArrowState(idx, 2, 'arrow-done');
+
+  // If status is pending approval — show label above arrow 2
+  const restoredStatus = apiStatus.trim().toLowerCase();
+  if (restoredStatus.includes('pending approval')) {
+    setPipelineStepState(idx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
+    setArrowLabel(idx, 2, 'PENDING APPROVAL');
+  } else if (restoredStatus.includes('data loaded') ||
+             restoredStatus.includes('validation') ||
+             restoredStatus.includes('success')) {
+    // Data loading and beyond — steps 3+ handled by callMigrationStatusForCard
+    setPipelineStepState(idx, 3, getPipelineStepStateClass(PIPELINE_STEPS[3].id, 'complete'));
+    setArrowState(idx, 3, 'arrow-done');
+  } else {
+    // DDL done, waiting
+    setPipelineStepState(idx, 2, getPipelineStepStateClass(PIPELINE_STEPS[2].id, 'active'));
+  }
 
   // Restore DDL Extracted pill
   const pipeline = document.getElementById('pipeline-' + idx);
   const card = pipeline ? pipeline.closest('[data-prev-db-card]') : null;
   if (card) {
     const pill = card.querySelector('[data-new-pill]');
-    if (pill) {
-      pill.textContent = 'DDL Extracted';
-      pill.hidden = false;
-      pill.style.background = '#f0fdf4';
-      pill.style.color = '#15803d';
-      pill.style.borderColor = '#bbf7d0';
-    }
+    if (pill) pill.hidden = true;
+    updateStatusBand(idx, 'DDL Extracted');
   }
 
   // Disable Run Assessment button

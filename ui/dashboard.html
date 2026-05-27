@@ -324,25 +324,27 @@
         flex-shrink: 0;
       }
       .prev-db-migration-btn {
-        padding: 4px 12px;
-
-        border-radius: 999px;
-
-        cursor: pointer;
-
-        background: #ede9fe;
-
-        color: #6d28d9;
-
-        font-size: 11px;
-
-        font-weight: 700;
-
-        margin-left: 8px;
-
         display: inline-flex;
-
         align-items: center;
+        justify-content: center;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        cursor: pointer;
+        outline: none;
+        margin-left: 8px;
+        transition: all 0.25s ease;
+      }
+      .prev-db-migration-btn:hover {
+        background: #dcfce7;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(22, 101, 52, 0.1);
       }
       .prev-db-schema-btn {
         display: inline-flex;
@@ -358,11 +360,13 @@
         letter-spacing: 0.03em;
         text-transform: uppercase;
         cursor: pointer;
-        border: 1px solid #c7d2fe;
         outline: none;
+        transition: all 0.25s ease;
       }
       .prev-db-schema-btn:hover {
         background: #e0e7ff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(55, 48, 163, 0.1);
       }
       .prev-db-schema-btn:focus-visible {
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
