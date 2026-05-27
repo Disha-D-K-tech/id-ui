@@ -305,9 +305,8 @@ header.innerHTML = `
   <div class="metric-chip metric-purple">
 
     <lord-icon
-  src="https://cdn.lordicon.com/qhviklyi.json"
+  src="https://cdn.lordicon.com/bkzrrccj.json"
   trigger="hover"
-  colors="primary:#7c3aed"
   style="width:24px;height:24px">
 </lord-icon>
 
@@ -333,10 +332,18 @@ function updateTargetRowCount(cardIdx, totalRows = 0) {
   const targetHeader = card.querySelector('[data-target-status]');
 
   if (targetHeader) {
-    targetHeader.textContent =
-      totalRows && totalRows > 0
-        ? `row_count : ${formatCompactNumber(totalRows)}`
-        : 'Pending';
+    const val = totalRows && totalRows > 0 ? formatCompactNumber(totalRows) : 'Pending';
+    targetHeader.innerHTML = `
+      <lord-icon
+        src="https://cdn.lordicon.com/kkdnopsh.json"
+        trigger="hover"
+        style="width:24px;height:24px">
+      </lord-icon>
+      <div class="metric-content">
+        <span class="metric-label">TARGET</span>
+        <span class="metric-value">${val}</span>
+      </div>
+    `;
   }
 }
 /************* STATUS READER — REUSABLE CARD UPDATER *************/
@@ -519,12 +526,50 @@ const statsContainer = cardC.querySelector('.stat-chips-container');
 if (!statsContainer) return;
 statsContainer.innerHTML = '';
           const icons = {
-            tables: 'fa-table',
-            views: 'fa-eye',
-            functions: 'fa-code',
-            sequences: 'fa-list-ol',
-            unknown: 'fa-database'
-          };
+  tables: `
+  <script src="https://cdn.lordicon.com/lordicon.js"></script>
+<lord-icon
+    src="https://cdn.lordicon.com/xhjbtsvg.json"
+    trigger="hover"
+    style="width:14px;height:14px;display:block;flex-shrink:0;">
+</lord-icon>
+`,
+
+views: `
+  <script src="https://cdn.lordicon.com/lordicon.js"></script>
+<lord-icon
+    src="https://cdn.lordicon.com/wepoiyzv.json"
+    trigger="hover"
+    style="width:14px;height:14px;display:block;flex-shrink:0;">
+</lord-icon>
+`,
+
+  functions: `
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
+<lord-icon
+    src="https://cdn.lordicon.com/izhpqsis.json"
+    trigger="hover"
+    style="width:14px;height:14px;display:block;flex-shrink:0;">
+</lord-icon>
+  `,
+
+  sequences: `
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
+<lord-icon
+    src="https://cdn.lordicon.com/wgmzmyvv.json"
+    trigger="hover"
+    style="width:14px;height:14px;display:block;flex-shrink:0;">
+</lord-icon>
+  `,
+
+  unknown: `
+    <lord-icon
+      src="https://cdn.lordicon.com/sbnjyzil.json"
+      trigger="hover"
+      style="width:16px;height:16px">
+    </lord-icon>
+  `
+};
 
           typeStats.forEach(function(stats, type) {
             const iconClass = icons[type.toLowerCase()] || icons.unknown;
@@ -542,7 +587,7 @@ statsContainer.innerHTML = '';
             chip.style.fontWeight = '600';
             chip.style.cursor = 'default';
             const displayCount = type.toLowerCase() === 'sequences' ? stats.total : stats.extracted;
-            chip.innerHTML = '<i class="fa-solid ' + iconClass + '" style="font-size:11px;color:#6b7280;"></i><span>' + displayCount + '</span>';
+            chip.innerHTML = iconClass + '<span>' + displayCount + '</span>';
             statsContainer.appendChild(chip);
           });
 
@@ -1370,18 +1415,56 @@ card.dataset.dbId = dbId;
       schemaButton.textContent = 'Schema Explorer';
     }
 
-    const sourceTypeMount = card.querySelector('[data-source-type]');
-    const sourceDetailsMount = card.querySelector('[data-source-details]');
-    const sourceTypeBlock = createDbTypeBlock(s.type);
-    if (sourceTypeBlock) sourceTypeMount.appendChild(sourceTypeBlock);
-    appendDbDetails(sourceDetailsMount, [
-      { label: 'DB Name', value: s.name },
-      { label: 'Host', value: s.host },
-      { label: 'Status', value: s.status },
-      { label: 'Approver 1', value: s.approver1 },
-      { label: 'Approver 2', value: s.approver2 },
-      { label: 'Description', value: s.desc }
-    ]);
+   const sourceTypeMount = card.querySelector('[data-source-type]');
+const sourceDetailsMount = card.querySelector('[data-source-details]');
+const sourceTypeBlock = createDbTypeBlock(s.type);
+
+if (sourceTypeBlock) {
+  sourceTypeMount.appendChild(sourceTypeBlock);
+}
+
+/* SOURCE DETAILS + RIGHT CHIPS COLUMN */
+const sourceDetailsRow = document.createElement('div');
+
+sourceDetailsRow.className = 'source-details-row';
+
+sourceDetailsRow.style.cssText = `
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+`;
+
+const sourceDetailsCol = document.createElement('div');
+
+sourceDetailsCol.style.flex = '1 1 0';
+
+sourceDetailsRow.appendChild(sourceDetailsCol);
+
+const sourceChipsCol = document.createElement('div');
+
+sourceChipsCol.className = 'stat-chips-container';
+
+sourceChipsCol.style.cssText = `
+  display:grid;
+  grid-template-columns:repeat(2, max-content);
+  gap:8px;
+  flex-shrink:0;
+  align-items:start;
+  padding-top:2px;
+`;
+
+sourceDetailsRow.appendChild(sourceChipsCol);
+
+sourceDetailsMount.appendChild(sourceDetailsRow);
+
+appendDbDetails(sourceDetailsCol, [
+  { label: 'DB Name', value: s.name },
+  { label: 'Host', value: s.host },
+  { label: 'Status', value: s.status },
+  { label: 'Approver 1', value: s.approver1 },
+  { label: 'Approver 2', value: s.approver2 },
+  { label: 'Description', value: s.desc }
+]);
 
     const targetSide = card.querySelector('[data-target-side]');
     const targetContent = card.querySelector('[data-target-content]');
@@ -1393,28 +1476,30 @@ card.dataset.dbId = dbId;
   }
 
   // Wrap details + chips in a flex row at render time
-  const targetDetailsMount = card.querySelector('[data-target-details]');
-  const detailsRow = document.createElement('div');
-  detailsRow.className = 'target-details-row';
-  detailsRow.style.cssText = 'display:flex;align-items:flex-start;gap:12px;';
+  // const targetDetailsMount = card.querySelector('[data-target-details]');
+  // const detailsRow = document.createElement('div');
+  // detailsRow.className = 'target-details-row';
+  // detailsRow.style.cssText = 'display:flex;align-items:flex-start;gap:12px;';
   
-  const detailsCol = document.createElement('div');
-  detailsCol.style.flex = '1 1 0';
-  detailsRow.appendChild(detailsCol);
+  // const detailsCol = document.createElement('div');
+  // detailsCol.style.flex = '1 1 0';
+  // detailsRow.appendChild(detailsCol);
 
-  const chipsCol = document.createElement('div');
-  chipsCol.className = 'stat-chips-container';
-  chipsCol.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end;padding-top:2px;';
-  detailsRow.appendChild(chipsCol);
+  // const chipsCol = document.createElement('div');
+  // chipsCol.className = 'stat-chips-container';
+  // chipsCol.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end;padding-top:2px;';
+  // detailsRow.appendChild(chipsCol);
 
-  targetDetailsMount.appendChild(detailsRow);
+  // targetDetailsMount.appendChild(detailsRow);
 
-  appendDbDetails(detailsCol, [
-    { label: 'DB Name', value: t.name },
-    { label: 'Host', value: t.host },
-    { label: 'Status', value: t.status },
-    { label: 'Description', value: t.desc }
-  ]);
+ const targetDetailsMount = card.querySelector('[data-target-details]');
+
+appendDbDetails(targetDetailsMount, [
+  { label: 'DB Name', value: t.name },
+  { label: 'Host', value: t.host },
+  { label: 'Status', value: t.status },
+  { label: 'Description', value: t.desc }
+]);
       targetContent.hidden = false;
       targetEmpty.hidden = true;
       updateTargetRowCount(idx, 0);

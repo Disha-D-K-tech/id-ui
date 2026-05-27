@@ -175,13 +175,15 @@ Tables
                 <tr>
       `;
 
-      const hiddenCols = [
-        'src_lower_hash',
-        'src_upper_hash',
-        'tgt_lower_hash',
-        'tgt_upper_hash',
-        'type'
-      ];
+     const hiddenCols = [
+  'src_lower_hash',
+  'src_upper_hash',
+  'tgt_lower_hash',
+  'tgt_upper_hash',
+  'type',
+  'message',       
+  'created_at'     
+];
 
       data.cols.forEach(col => {
 
@@ -309,9 +311,21 @@ try {
 
             html += `
 
-             <td>
+<td
+  class="table-name-cell"
+
+  onmouseenter="
+    showTablePopup(
+      event,
+      '${rowObject.created_at || '-'}'
+    )
+  "
+
+  onmouseleave="hideHashPopup()"
+>
   ${cellContent}
 </td>
+
 
               <td
                 class="source-cell"
@@ -415,7 +429,16 @@ if (col === 'status' && typeof cellContent === 'string') {
   // Convert hyphen separators to commas
   source = source.split('-').join(', ');
   target = target.split('-').join(', ');
+    // remove fake empty characters
+const cleanSource =
+  source.replace(/[,\s-]/g, '').length > 0
+    ? source
+    : '';
 
+const cleanTarget =
+  target.replace(/[,\s-]/g, '').length > 0
+    ? target
+    : '';
   // Function to check if value is actually empty
   const isMeaningful = (val) => {
     return val.replace(/[,\s-]/g, '').length > 0;
@@ -464,12 +487,35 @@ if (col === 'status' && typeof cellContent === 'string') {
   } catch (e) {}
 }
 
-          html += `
+          if (col === 'status') {
 
-            <td class="${cellClass}">
-              ${cellContent}
-            </td>
-          `;
+  html += `
+
+  <td
+    class="${cellClass}"
+
+    onmouseenter="
+      showColumnsPopup(
+        event,
+        \`${(rowObject.message || '').replace(/`/g, '')}\`
+      )
+    "
+
+    onmouseleave="hideHashPopup()"
+  >
+    ${cellContent}
+  </td>
+  `;
+
+} else {
+
+  html += `
+
+  <td class="${cellClass}">
+    ${cellContent}
+  </td>
+  `;
+}
         });
 
         html += `</tr>`;
@@ -555,29 +601,94 @@ if (col === 'status' && typeof cellContent === 'string') {
 `;
 
 if (type === 'source') {
-  content += `
-    <div class="popup-row">
-      <span class="popup-label">Src Lower Fingerprint</span>
-      <span class="popup-value">${srcLower || '-'}</span>
-    </div>
 
-    <div class="popup-row">
-      <span class="popup-label">Src Upper Fingerprint</span>
-      <span class="popup-value">${srcUpper || '-'}</span>
+  content += `
+
+    <div class="popup-card">
+
+      <div class="popup-row">
+
+        <div class="popup-left">
+          <span class="popup-label">Lower</span>
+          <lord-icon
+            src="https://cdn.lordicon.com/bqlcwfjd.json"
+            trigger="hover"
+            colors="primary:#7c63ff"
+            style="width:34px;height:34px">
+          </lord-icon>
+
+        </div>
+
+        <span class="popup-value">${srcLower || '-'}</span>
+
+      </div>
+
+      <div class="popup-divider"></div>
+
+      <div class="popup-row">
+
+        <div class="popup-left">
+         <span class="popup-label">Upper</span>
+          <lord-icon
+            src="https://cdn.lordicon.com/bqlcwfjd.json"
+            trigger="hover"
+            colors="primary:#5b3ed6"
+            style="width:34px;height:34px">
+          </lord-icon>
+
+       
+
+        </div>
+
+        <span class="popup-value">${srcUpper || '-'}</span>
+
+      </div>
+
     </div>
   `;
 }
 
 if (type === 'target') {
-  content += `
-    <div class="popup-row">
-      <span class="popup-label">Tgt Lower Fingerprint</span>
-      <span class="popup-value">${tgtLower || '-'}</span>
-    </div>
 
-    <div class="popup-row">
-      <span class="popup-label">Tgt Upper Fingerprint</span>
-      <span class="popup-value">${tgtUpper || '-'}</span>
+  content += `
+
+    <div class="popup-card">
+
+      <div class="popup-row">
+
+        <div class="popup-left">
+        <span class="popup-label">Lower</span>
+          <lord-icon
+            src="https://cdn.lordicon.com/bqlcwfjd.json"
+            trigger="hover"
+            colors="primary:#3b82f6"
+            style="width:34px;height:34px">
+          </lord-icon>
+        </div>
+
+        <span class="popup-value">${tgtLower || '-'}</span>
+
+      </div>
+
+      <div class="popup-divider"></div>
+
+      <div class="popup-row">
+
+        <div class="popup-left">
+         <span class="popup-label">Upper</span>
+          <lord-icon
+            src="https://cdn.lordicon.com/bqlcwfjd.json"
+            trigger="hover"
+            colors="primary:#2563eb"
+            style="width:34px;height:34px">
+          </lord-icon>
+
+        </div>
+
+        <span class="popup-value">${tgtUpper || '-'}</span>
+
+      </div>
+
     </div>
   `;
 }
@@ -592,6 +703,123 @@ popup.innerHTML = content;
     popup.style.top =
       (event.pageY + 15) + 'px';
   };
+  window.showColumnsPopup = function (
+  event,
+  message
+) {
+
+  const popup =
+    document.getElementById('hashPopup');
+
+  let msg = String(message || '').trim();
+
+  msg = msg.replace(/^Columns:\s*/i, '');
+
+  const parts = msg.split('|');
+
+  let source = (parts[0] || '').trim();
+  let target = (parts[1] || '').trim();
+
+  source = source.split('-').join(', ');
+  target = target.split('-').join(', ');
+
+ // clean invalid values
+const cleanSource =
+  source.replace(/[,\s-]/g, '').length > 0
+    ? source
+    : '';
+
+const cleanTarget =
+  target.replace(/[,\s-]/g, '').length > 0
+    ? target
+    : '';
+
+popup.innerHTML = `
+
+<div class="popup-card popup-columns-layout">
+
+  <div class="popup-col">
+
+    <div class="popup-heading source-heading">
+      Source
+    </div>
+
+    <div class="popup-data">
+      ${cleanSource}
+    </div>
+
+  </div>
+
+  <div class="popup-col">
+
+    <div class="popup-heading target-heading">
+      Target
+    </div>
+
+    <div class="popup-data">
+      ${cleanTarget}
+    </div>
+
+  </div>
+
+</div>
+`;
+popup.style.display = 'block';
+
+const popupWidth = 320;
+const popupHeight = 140;
+
+let left = event.pageX + 15;
+let top = event.pageY + 15;
+
+if (left + popupWidth > window.innerWidth) {
+  left = window.innerWidth - popupWidth - 20;
+}
+
+if (top + popupHeight > window.innerHeight + window.scrollY) {
+  top = event.pageY - popupHeight - 20;
+}
+
+popup.style.left = left + 'px';
+popup.style.top = top + 'px';
+};
+
+window.showTablePopup = function (
+  event,
+  createdAt
+) {
+
+  const popup =
+    document.getElementById('hashPopup');
+
+  let formatted = '-';
+
+  try {
+
+    formatted = new Date(createdAt)
+      .toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+
+  } catch (e) {}
+
+  popup.innerHTML = `
+    <div class="simple-time-popup">
+      ${formatted}
+    </div>
+  `;
+
+  popup.style.display = 'block';
+  popup.style.left = (event.pageX + 10) + 'px';
+  popup.style.top = (event.pageY + 10) + 'px';
+};
+
 
   window.hideHashPopup = function () {
 
