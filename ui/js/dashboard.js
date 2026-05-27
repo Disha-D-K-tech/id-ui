@@ -617,6 +617,9 @@ updateDashboardRowCount(cardIdx, totalRows);
           // stat-chips-container is already created at render time inside source details
 const statsContainer = cardC.querySelector('.stat-chips-container');
 if (!statsContainer) return;
+
+// Only render source chips once — if already populated from DDL count, do not overwrite
+if (statsContainer.querySelector('[data-source-chip]')) return;
 statsContainer.innerHTML = '';
 
         // 2x2 grid layout
@@ -642,6 +645,7 @@ statsContainer.innerHTML = '';
             color:#374151;font-size:12px;font-weight:700;cursor:default;
             white-space:nowrap;
           `;
+          chip.setAttribute('data-source-chip', '');
           chip.innerHTML = `
             <i class="fa-solid ${cfg.icon}" style="font-size:11px;color:${cfg.color};"></i>
             <span>${formatCompactNumber(displayCount)}</span>
@@ -747,10 +751,13 @@ function callMigrationStatusForCard(cardIdx, dbId) {
       updateStatusBand(cardIdx, 'Validation In Progress');
     }
 
-    // Sum src/tgt row counts
+    // Sum tgt_count only for rows that have VALIDATION SUCCESS — these are confirmed migrated rows
     let totalTgtRows = 0;
     rows.forEach(function(row) {
-      totalTgtRows += parseInt(row[tgtCountIdx]) || 0;
+      const rowStatus = String(row[statusIdx] || '');
+      if (rowStatus.includes('VALIDATION SUCCESS')) {
+        totalTgtRows += parseInt(row[tgtCountIdx]) || 0;
+      }
     });
     updateTargetRowCount(cardIdx, totalTgtRows);
 
