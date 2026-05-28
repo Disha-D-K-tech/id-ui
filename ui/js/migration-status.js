@@ -274,39 +274,76 @@ Tables
           rowObject[col] = rowData[idx];
         });
 
-        // Check if status is Validation Success to color the whole row
+        
         const isValidationSuccess = String(rowObject.status || '').includes('VALIDATION SUCCESS');
         const rowStyle = isValidationSuccess ? 'style="background-color: #f0fdf4;"' : '';
 
         html += `<tr ${rowStyle}>`;
 
-       let sourceHash = '-';
+      let sourceHash = '-';
 let targetHash = '-';
 
-// Source Hash (Exact using BigInt)
-try {
-  if (rowObject.src_lower_hash && rowObject.src_upper_hash) {
-    const srcLower = BigInt(rowObject.src_lower_hash);
-    const srcUpper = BigInt(rowObject.src_upper_hash);
 
-    sourceHash = (srcLower + srcUpper).toString();
+try {
+
+  if (
+    rowObject.src_lower_hash &&
+    rowObject.src_upper_hash
+  ) {
+
+    const srcLower =
+      BigInt(rowObject.src_lower_hash);
+
+    const srcUpper =
+      BigInt(rowObject.src_upper_hash);
+
+   
+    const srcCombined =
+      srcLower + srcUpper;
+
+   
+    sourceHash =
+      srcCombined.toString(16).toUpperCase();
   }
+
 } catch (e) {
-  console.error('Source BigInt error:', e);
+
+  console.error(
+    'Source BigInt HEX error:',
+    e
+  );
 }
 
-// Target Hash (Exact using BigInt)
+
 try {
-  if (rowObject.tgt_lower_hash && rowObject.tgt_upper_hash) {
-    const tgtLower = BigInt(rowObject.tgt_lower_hash);
-    const tgtUpper = BigInt(rowObject.tgt_upper_hash);
 
-    targetHash = (tgtLower + tgtUpper).toString();
+  if (
+    rowObject.tgt_lower_hash &&
+    rowObject.tgt_upper_hash
+  ) {
+
+    const tgtLower =
+      BigInt(rowObject.tgt_lower_hash);
+
+    const tgtUpper =
+      BigInt(rowObject.tgt_upper_hash);
+
+    
+    const tgtCombined =
+      tgtLower + tgtUpper;
+
+    
+    targetHash =
+      tgtCombined.toString(16).toUpperCase();
   }
-} catch (e) {
-  console.error('Target BigInt error:', e);
-}
 
+} catch (e) {
+
+  console.error(
+    'Target BigInt HEX error:',
+    e
+  );
+}
         data.cols.forEach((col, index) => {
 
           if (hiddenCols.includes(col)) {
@@ -611,7 +648,51 @@ const cleanTarget =
 
     const popup =
       document.getElementById('hashPopup');
+      // Convert Source hashes to HEX
+try {
 
+  srcLower = srcLower
+    ? BigInt(srcLower)
+        .toString(16)
+        .toUpperCase()
+    : '-';
+
+  srcUpper = srcUpper
+    ? BigInt(srcUpper)
+        .toString(16)
+        .toUpperCase()
+    : '-';
+
+} catch (e) {
+
+  console.error(
+    'Source popup HEX error:',
+    e
+  );
+}
+
+// Convert Target hashes to HEX
+try {
+
+  tgtLower = tgtLower
+    ? BigInt(tgtLower)
+        .toString(16)
+        .toUpperCase()
+    : '-';
+
+  tgtUpper = tgtUpper
+    ? BigInt(tgtUpper)
+        .toString(16)
+        .toUpperCase()
+    : '-';
+
+} catch (e) {
+
+  console.error(
+    'Target popup HEX error:',
+    e
+  );
+}
       let content = `
 `;
 
