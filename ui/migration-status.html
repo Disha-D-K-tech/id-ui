@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Livision DataHub — Migration Report</title>
     <link rel="icon" type="image/x-icon" href="ld.png" />
+    <link rel="stylesheet" href="css/sidebar.css">
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
       rel="stylesheet"
@@ -108,7 +109,7 @@
   left: 0;
   height: 100vh;       
   width: 280px;
-  padding: 90px 20px 20px; 
+   padding: 20px 20px 20px; 
   background: var(--glass);
   border-right: 1px solid rgba(120, 110, 220, 0.06);
   box-shadow: 0 12px 40px rgba(91, 62, 214, 0.04);
@@ -1013,13 +1014,13 @@
   </head>
 
   <body>
-    <div class="top">
+    <!-- <div class="top">
       <a href="dashboard.html" title="Dashboard" class="logo">LD</a>
       <div class="brand">
         <div class="title">Livision DataHub</div>
         <div class="sub">Empowering smarter data</div>
       </div>
-    </div>
+    </div> -->
 
     <aside class="sidebar">
       <div class="brand-sidebar">
@@ -1040,18 +1041,64 @@
           <small>Empowering smarter data</small>
         </div>
       </div>
+<span class="nav-section">Workspace</span>
 
-      <span class="nav-section">Workspace</span>
-      <a class="nav-item" href="dashboard.html">
-        <i class="fa-solid fa-table-columns"></i>
-        <span>Dashboard</span>
-      </a>
-      <a class="nav-item active" href="migration-status.html">
-        <i class="fa-solid fa-rocket"></i>
-        <span>Migration Report</span>
-      </a>
-    </aside>
+<a class="nav-item" href="dashboard.html">
+  <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
+  <span class="nav-text">Dashboard</span>
+</a>
 
+<a class="nav-item active" href="migration-status.html">
+  <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
+  <span class="nav-text">Migration Report</span>
+</a>
+
+<!-- 🔽 ADD THIS WHOLE BLOCK -->
+<nav class="nav-section">
+
+  <div class="nav-item has-sub" id="navRdbms">
+    <span class="nav-icon"><i class="fa-solid fa-database"></i></span>
+    <span class="nav-text">Database</span>
+    <button class="nav-arrow">▼</button>
+  </div>
+
+  <div class="nav-sub" id="submenu-rdbms">
+    <div class="nav-leaf">Schema Explorer</div>
+  </div>
+
+  <div class="nav-item">
+    <span class="nav-icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+    <span class="nav-text">File Transfer</span>
+  </div>
+
+  <div class="nav-item has-sub">
+    <span class="nav-icon"><i class="fa-solid fa-cloud"></i></span>
+    <span class="nav-text">Cloud Platforms</span>
+    <button class="nav-arrow">▼</button>
+  </div>
+
+  <div class="nav-sub">
+    <div class="nav-leaf">AWS</div>
+    <div class="nav-leaf">GCP</div>
+    <div class="nav-leaf">Azure</div>
+  </div>
+
+  <div class="nav-item">
+    <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+    <span class="nav-text">Settings</span>
+  </div>
+
+  <div class="nav-item">
+    <span class="nav-icon"><i class="fa-solid fa-circle-question"></i></span>
+    <span class="nav-text">Help/FAQ</span>
+  </div>
+
+  <div class="nav-item">
+    <span class="nav-icon"><i class="fa-solid fa-sign-out"></i></span>
+    <span class="nav-text">Logout</span>
+  </div>
+
+</nav>
     <main class="main">
       <div class="topbar">
 
@@ -1108,6 +1155,17 @@
     </main>
     <div id="hashPopup" class="hash-popup"></div>
     <footer>© 2025 Livision DataHub — Empowering smarter decisions</footer>
+    <script>
+document.querySelectorAll('.nav-item.has-sub').forEach(item => {
+  item.addEventListener('click', () => {
+    const sub = item.nextElementSibling;
+    const arrow = item.querySelector('.nav-arrow');
+
+    sub.classList.toggle('is-open');
+    arrow.classList.toggle('is-open');
+  });
+});
+</script>
     <script src="js/migration-status.js"></script>
   </body>
 </html>

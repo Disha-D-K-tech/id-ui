@@ -33,7 +33,7 @@
         },
 
         body: new URLSearchParams({
-          db_id: 128
+          db_id: dbId
         })
       }
     )
