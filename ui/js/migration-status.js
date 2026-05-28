@@ -20,6 +20,7 @@
       loadingBox.innerHTML =
         '<i class="fa-solid fa-circle-exclamation me-2"></i> Missing Database ID. Please select a database from the Dashboard.';
 
+      loadingBox.style.color = '#dc2626'; // Make error message red
       return;
     }
 
@@ -33,7 +34,7 @@
         },
 
         body: new URLSearchParams({
-          db_id: dbId
+          db_id: 128
         })
       }
     )
@@ -123,6 +124,17 @@
 
       grouped[schemaName][tableName] = row;
     });
+
+    // If no data is grouped, display a message
+    if (Object.keys(grouped).length === 0) {
+      return `
+        <div class="tables-container">
+          <p class="p-4 text-muted">
+            No migration data available for this database.
+          </p>
+        </div>
+      `;
+    }
 
     let html = `
   <div class="tables-container">
@@ -256,13 +268,17 @@ Tables
 
       for (const [tableName, rowData] of Object.entries(tables)) {
 
-        html += `<tr>`;
-
         const rowObject = {};
 
         data.cols.forEach((col, idx) => {
           rowObject[col] = rowData[idx];
         });
+
+        // Check if status is Validation Success to color the whole row
+        const isValidationSuccess = String(rowObject.status || '').includes('VALIDATION SUCCESS');
+        const rowStyle = isValidationSuccess ? 'style="background-color: #f0fdf4;"' : '';
+
+        html += `<tr ${rowStyle}>`;
 
        let sourceHash = '-';
 let targetHash = '-';
@@ -402,8 +418,7 @@ if (col === 'status' && typeof cellContent === 'string') {
       </div>
 
       <div class="status-text">
-        <div class="status-title">Validation</div>
-        <div class="status-sub">Success</div>
+        <div class="status-title">Validation Success</div>
       </div>
 
     </div>

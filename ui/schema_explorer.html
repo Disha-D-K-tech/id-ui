@@ -52,6 +52,7 @@
       }
 
       body {
+        overflow-x: hidden;
         background:
           radial-gradient(
             1000px 400px at 10% 10%,
@@ -60,77 +61,32 @@
           ),
           linear-gradient(120deg, #eef0ff, #fbf8ff);
         color: #172033;
-        padding-bottom: 80px;
         -webkit-font-smoothing: antialiased;
-      }
-
-      .top {
-        height: 72px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 0 26px;
-        background: linear-gradient(
-          90deg,
-          rgba(255, 255, 255, 0.92),
-          rgba(250, 246, 255, 0.92)
-        );
-        border-bottom: 1px solid rgba(120, 110, 220, 0.06);
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        backdrop-filter: blur(6px);
-      }
-
-      .top .logo {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        overflow: hidden;
-        background: linear-gradient(
-          135deg,
-          var(--lv-purple-1),
-          var(--lv-indigo)
-        );
-        display: grid;
-        place-items: center;
-        color: white;
-        font-weight: 700;
-        text-decoration: none;
-      }
-
-      .top .brand .title {
-        font-size: 18px;
-        font-weight: 800;
-        color: var(--lv-indigo);
-      }
-
-      .top .brand .sub {
-        font-size: 13px;
-        color: var(--muted);
       }
 
       .sidebar {
         position: fixed;
+        top: 0;
         left: 0;
-        top: 72px;
-        bottom: 0;
+        height: 100vh;
         width: 280px;
-        padding: 22px 20px;
+        padding: 10px;
         background: var(--glass);
         border-right: 1px solid rgba(120, 110, 220, 0.06);
         box-shadow: 0 12px 40px rgba(91, 62, 214, 0.04);
         backdrop-filter: blur(6px);
+        overflow-y: auto;
+        z-index: 30;
       }
 
-      .brand {
+      .brand-sidebar {
         display: flex;
         gap: 12px;
         align-items: center;
         margin-bottom: 14px;
       }
 
-      .brand .logo-panel {
+      .brand-sidebar .logo-panel {
         width: 56px;
         height: 56px;
         border-radius: 12px;
@@ -146,14 +102,14 @@
         font-weight: 700;
       }
 
-      .brand h4 {
+      .brand-sidebar h4 {
         margin: 0;
         font-size: 16px;
         font-weight: 800;
         color: #172033;
       }
 
-      .brand small {
+      .brand-sidebar small {
         color: var(--muted);
       }
 
@@ -175,6 +131,9 @@
         margin-bottom: 6px;
         transition: all 0.12s ease;
         font-weight: 600;
+        cursor: pointer;
+        border: none;
+        background: none;
       }
 
       .nav-item i {
@@ -200,9 +159,63 @@
         color: white;
       }
 
+      .nav-arrow {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        font-size: 12px;
+        transition: transform 0.2s ease;
+        padding: 0;
+        display: flex;
+        align-items: center;
+      }
+
+      .nav-arrow.is-open {
+        transform: rotate(180deg);
+      }
+
+      .nav-sub {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+      }
+
+      .nav-sub.is-open {
+        max-height: 500px;
+      }
+
+      .nav-leaf {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        padding-left: 40px;
+        border-radius: 8px;
+        color: #333;
+        text-decoration: none;
+        margin-bottom: 6px;
+        transition: all 0.12s ease;
+        font-weight: 600;
+      }
+
+      .nav-leaf:hover {
+        background: rgba(124, 99, 255, 0.08);
+        color: var(--lv-indigo);
+      }
+
+      .nav-leaf.active {
+        background: rgba(124, 99, 255, 0.15);
+        color: var(--lv-indigo);
+        font-weight: 700;
+      }
+
       .main {
-        margin-left: 320px;
+        margin-left: 280px;
         padding: 22px 34px 140px 34px;
+        min-height: 100vh;
+        width: calc(100% - 280px);
       }
 
       .topbar {
@@ -310,11 +323,20 @@
       }
 
       footer {
-        text-align: center;
-        padding: 18px;
-        color: #6b6b80;
+        position: fixed;
+        left: 280px;
+        right: 0;
+        bottom: 0;
+        height: 72px;
+        background: linear-gradient(180deg, #fff, #fbfbff);
+        border-top: 1px solid rgba(120, 110, 220, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
         font-size: 13px;
-        margin-top: 26px;
+        box-shadow: 0 -6px 20px rgba(91, 62, 214, 0.02);
+        z-index: 20;
       }
 
       @media (max-width: 980px) {
@@ -327,22 +349,18 @@
 
         .main {
           margin-left: 0;
-          padding: 16px;
+          width: 100%;
+        }
+
+        footer {
+          left: 0;
         }
       }
     </style>
   </head>
   <body>
-    <div class="top">
-      <a href="dashboard.html" title="Dashboard" class="logo">LD</a>
-      <div class="brand">
-        <div class="title">Livision DataHub</div>
-        <div class="sub">Empowering smarter data</div>
-      </div>
-    </div>
-
-    <aside class="sidebar" role="navigation" aria-label="Main sidebar">
-      <div class="brand">
+    <aside class="sidebar">
+      <div class="brand-sidebar">
         <div class="logo-panel">
           <img
             src="ld.png"
@@ -362,14 +380,64 @@
       </div>
 
       <span class="nav-section">Workspace</span>
+
       <a class="nav-item" href="dashboard.html">
-        <i class="fa-solid fa-table-columns"></i>
-        <span>Dashboard</span>
+        <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
+        <span class="nav-text">Dashboard</span>
       </a>
-      <a class="nav-item active" href="schema_explorer.html">
-        <i class="fa-solid fa-diagram-project"></i>
-        <span>Schema Explorer</span>
+
+      <a class="nav-item" href="migration-status.html">
+        <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
+        <span class="nav-text">Migration Report</span>
       </a>
+
+      <nav class="nav-section">
+        <div class="nav-item has-sub" id="navRdbms">
+          <span class="nav-icon"><i class="fa-solid fa-database"></i></span>
+          <span class="nav-text">Database</span>
+          <button class="nav-arrow">▼</button>
+        </div>
+
+        <div class="nav-sub" id="submenu-rdbms">
+          <a class="nav-leaf" href="schema_explorer.html">Schema Explorer</a>
+        </div>
+
+        <div class="nav-item">
+          <span class="nav-icon"
+            ><i class="fa-solid fa-file-arrow-up"></i
+          ></span>
+          <span class="nav-text">File Transfer</span>
+        </div>
+
+        <div class="nav-item has-sub">
+          <span class="nav-icon"><i class="fa-solid fa-cloud"></i></span>
+          <span class="nav-text">Cloud Platforms</span>
+          <button class="nav-arrow">▼</button>
+        </div>
+
+        <div class="nav-sub">
+          <div class="nav-leaf">AWS</div>
+          <div class="nav-leaf">GCP</div>
+          <div class="nav-leaf">Azure</div>
+        </div>
+
+        <div class="nav-item">
+          <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+          <span class="nav-text">Settings</span>
+        </div>
+
+        <a class="nav-item" href="contact.html" id="navContactUs">
+          <span class="nav-icon">
+            <i class="fa-solid fa-circle-question"></i>
+          </span>
+          <span class="nav-text">Help/FAQ</span>
+        </a>
+
+        <a class="nav-item logout-btn" href="#">
+          <span class="nav-icon"><i class="fa-solid fa-sign-out"></i></span>
+          <span class="nav-text">Logout</span>
+        </a>
+      </nav>
     </aside>
 
     <main class="main">
@@ -382,9 +450,10 @@
         </div>
         <a class="nav-item" href="dashboard.html" style="margin: 0">
           <lord-icon
-              src="https://cdn.lordicon.com/ztwejevt.json"
-              trigger="hover"
-              style="width:30px;height:30px">
+            src="https://cdn.lordicon.com/ztwejevt.json"
+            trigger="hover"
+            style="width: 30px; height: 30px"
+          >
           </lord-icon>
           <span>Back to Dashboard</span>
         </a>
@@ -393,11 +462,12 @@
       <section class="page-card">
         <div class="page-actions">
           <div class="schema-chip" style="font-size: 14px; padding: 10px 16px">
-       <lord-icon
-        src="https://cdn.lordicon.com/noncoqhc.json"
-        trigger="hover"
-        style="width:20px;height:20px">
-    </lord-icon>
+            <lord-icon
+              src="https://cdn.lordicon.com/noncoqhc.json"
+              trigger="hover"
+              style="width: 20px; height: 20px"
+            >
+            </lord-icon>
             <span id="dbIdChip">adworks: -- total rows</span>
           </div>
         </div>
@@ -411,7 +481,50 @@
 
     <footer>© 2025 Livision DataHub — Empowering smarter decisions</footer>
     <script src="https://cdn.lordicon.com/lordicon.js"></script>
-    <script src="js/schema_explorer.js"></script>
+    <script>
+      // Toggle Database submenu
+      document.querySelectorAll(".nav-item.has-sub").forEach((item) => {
+        item.addEventListener("click", () => {
+          const sub = item.nextElementSibling;
+          const arrow = item.querySelector(".nav-arrow");
 
+          sub.classList.toggle("is-open");
+          arrow.classList.toggle("is-open");
+        });
+      });
+
+      // Set active states on page load
+      function setActiveNavigation() {
+        // Get current page filename
+        const currentPage =
+          window.location.pathname.split("/").pop() || "schema_explorer.html";
+
+        // If on schema_explorer.html
+        if (currentPage === "schema_explorer.html" || currentPage === "") {
+          // Activate Database button
+          const dbButton = document.getElementById("navRdbms");
+          if (dbButton) {
+            dbButton.classList.add("active");
+            // Open the submenu
+            const submenu = dbButton.nextElementSibling;
+            const arrow = dbButton.querySelector(".nav-arrow");
+            if (submenu) submenu.classList.add("is-open");
+            if (arrow) arrow.classList.add("is-open");
+          }
+
+          // Activate Schema Explorer link
+          const schemaLink = document.querySelector(
+            'a[href="schema_explorer.html"]',
+          );
+          if (schemaLink) {
+            schemaLink.classList.add("active");
+          }
+        }
+      }
+
+      // Call on page load
+      document.addEventListener("DOMContentLoaded", setActiveNavigation);
+    </script>
+    <script src="js/schema_explorer.js"></script>
   </body>
 </html>
